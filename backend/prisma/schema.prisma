@@ -1,0 +1,275 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Role {
+  id          String   @id @default(uuid())
+  type        RoleType @unique
+  permissions Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  users       User[]
+}
+
+model User {
+  id                 String          @id @default(uuid())
+  name               String
+  email              String          @unique
+  password           String
+  roleId             String
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+  theme              String          @default("ocean")
+  accent             String          @default("blue")
+  counselingSessions CounselingLog[] @relation("CounselorSessions")
+  followUps          FollowUp[]      @relation("CounselorFollowUps")
+  leads              Lead[]          @relation("CounselorLeads")
+  leadNotes          LeadNote[]      @relation("CounselorNotes")
+  role               Role            @relation(fields: [roleId], references: [id])
+}
+
+model Program {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  baseFee      Float         @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  admissions   Admission[]
+  applications Application[]
+  leads        Lead[]
+}
+
+model Campaign {
+  id        String    @id @default(uuid())
+  name      String
+  source    String
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  leads     Lead[]
+}
+
+model Lead {
+  id                   String                @id @default(uuid())
+  name                 String
+  phone                String
+  email                String?
+  location             String?
+  eduBackground        String?
+  qualification        String?
+  interestedProgramId  String?
+  leadSource           String
+  campaignId           String?
+  enquiryDate          DateTime              @default(now())
+  stage                LeadStage             @default(NEW_LEAD)
+  priority             Int                   @default(0)
+  tag                  LeadTag?
+  counselorId          String?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  application          Application?
+  communicationLogs    CommunicationLog[]
+  counselingLogs       CounselingLog[]
+  followUps            FollowUp[]
+  campaign             Campaign?             @relation(fields: [campaignId], references: [id])
+  counselor            User?                 @relation("CounselorLeads", fields: [counselorId], references: [id])
+  program              Program?              @relation(fields: [interestedProgramId], references: [id])
+  notes                LeadNote[]
+  webinarRegistrations WebinarRegistration[]
+
+  @@index([phone])
+  @@index([email])
+}
+
+model FollowUp {
+  id          String    @id @default(uuid())
+  leadId      String
+  counselorId String
+  notes       String?
+  scheduledAt DateTime
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  counselor   User      @relation("CounselorFollowUps", fields: [counselorId], references: [id])
+  lead        Lead      @relation(fields: [leadId], references: [id])
+}
+
+model Webinar {
+  id            String                @id @default(uuid())
+  title         String
+  description   String?
+  date          DateTime
+  createdAt     DateTime              @default(now())
+  meetingId     String?
+  meetingUrl    String?
+  registrations WebinarRegistration[]
+}
+
+model WebinarRegistration {
+  id        String   @id @default(uuid())
+  webinarId String
+  leadId    String
+  attended  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  lead      Lead     @relation(fields: [leadId], references: [id])
+  webinar   Webinar  @relation(fields: [webinarId], references: [id])
+}
+
+model CounselingLog {
+  id             String   @id @default(uuid())
+  leadId         String
+  counselorId    String
+  notes          String?
+  recommendation String?
+  createdAt      DateTime @default(now())
+  counselor      User     @relation("CounselorSessions", fields: [counselorId], references: [id])
+  lead           Lead     @relation(fields: [leadId], references: [id])
+}
+
+model Application {
+  id          String            @id @default(uuid())
+  leadId      String            @unique
+  programId   String
+  status      ApplicationStatus @default(STARTED)
+  submittedAt DateTime?
+  createdAt   DateTime          @default(now())
+  admission   Admission?
+  lead        Lead              @relation(fields: [leadId], references: [id])
+  program     Program           @relation(fields: [programId], references: [id])
+  documents   Document[]
+}
+
+model Document {
+  id            String      @id @default(uuid())
+  applicationId String
+  type          String
+  url           String
+  name          String      @default("Document")
+  status        String      @default("PENDING")
+  remarks       String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  application   Application @relation(fields: [applicationId], references: [id])
+}
+
+model Admission {
+  id            String      @id @default(uuid())
+  applicationId String      @unique
+  enrollmentId  String      @unique
+  programId     String
+  admittedAt    DateTime    @default(now())
+  application   Application @relation(fields: [applicationId], references: [id])
+  program       Program     @relation(fields: [programId], references: [id])
+  fees          Fee[]
+}
+
+model Fee {
+  id          String    @id @default(uuid())
+  admissionId String
+  amount      Float
+  dueDate     DateTime?
+  status      String
+  createdAt   DateTime  @default(now())
+  admission   Admission @relation(fields: [admissionId], references: [id])
+  payments    Payment[]
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  feeId         String
+  amount        Float
+  method        String
+  transactionId String?
+  status        PaymentStatus @default(PENDING)
+  createdAt     DateTime      @default(now())
+  fee           Fee           @relation(fields: [feeId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  details   Json?
+  createdAt DateTime @default(now())
+}
+
+model CommunicationLog {
+  id        String   @id @default(uuid())
+  leadId    String
+  type      String
+  direction String
+  message   String
+  status    String
+  timestamp DateTime @default(now())
+  lead      Lead     @relation(fields: [leadId], references: [id])
+}
+
+model LeadNote {
+  id          String   @id @default(uuid())
+  leadId      String
+  counselorId String
+  content     String
+  createdAt   DateTime @default(now())
+  counselor   User     @relation("CounselorNotes", fields: [counselorId], references: [id])
+  lead        Lead     @relation(fields: [leadId], references: [id])
+}
+
+model MessageTemplate {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  channel   String
+  subject   String?
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum RoleType {
+  ADMIN
+  MARKETING_TEAM
+  TELECALLER
+  COUNSELOR
+  FINANCE
+}
+
+enum LeadStage {
+  NEW_LEAD
+  CONTACT_ATTEMPTED
+  RESPONDED
+  INTERESTED
+  COUNSELING_SCHEDULED
+  WEBINAR_REGISTERED
+  WEBINAR_ATTENDED
+  APPLICATION_STARTED
+  APPLICATION_SUBMITTED
+  ADMISSION_CONFIRMED
+  LOST_LEAD
+  RE_ENGAGEMENT
+}
+
+enum LeadTag {
+  HOT
+  WARM
+  COLD
+}
+
+enum ApplicationStatus {
+  STARTED
+  SUBMITTED
+  VERIFICATION_PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}

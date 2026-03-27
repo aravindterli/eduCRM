@@ -1,0 +1,10 @@
+:8080 {
+    # Reverse proxy for API requests
+    reverse_proxy /api/* localhost:5000
+
+    # Reverse proxy for all other requests (Next.js frontend)
+    reverse_proxy /* localhost:3000
+
+    # Optional: Enable compression
+    encode gzip
+}

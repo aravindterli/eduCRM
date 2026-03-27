@@ -1,0 +1,136 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 222 47% 11%;
+  --foreground: 213 31% 91%;
+  --card: 222 47% 11%;
+  --card-foreground: 213 31% 91%;
+  --popover: 222 47% 11%;
+  --popover-foreground: 213 31% 91%;
+  --primary: 210 100% 50%;
+  --primary-foreground: 210 100% 98%;
+  --secondary: 222 47% 11%;
+  --secondary-foreground: 210 100% 98%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 100% 98%;
+  --destructive: 0 63% 31%;
+  --destructive-foreground: 210 100% 98%;
+  --border: 217 33% 17%;
+  --input: 217 33% 17%;
+  --ring: 213 27% 84%;
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+}
+
+.theme-slate {
+  --background: 222 0% 10%;
+  --foreground: 213 0% 91%;
+  --card: 222 0% 10%;
+  --card-foreground: 213 0% 91%;
+  --popover: 222 0% 10%;
+  --popover-foreground: 213 0% 91%;
+  --muted: 217 0% 17%;
+  --muted-foreground: 215 0% 65%;
+  --accent: 217 0% 17%;
+  --accent-foreground: 210 0% 98%;
+  --border: 217 0% 17%;
+  --input: 217 0% 17%;
+  --glass-bg: rgba(20, 20, 20, 0.8);
+}
+
+.theme-light {
+  --background: 0 0% 100%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 47% 11%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 47% 11%;
+  --primary: 210 100% 50%;
+  --primary-foreground: 210 100% 98%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222 47% 11%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215 16% 47%;
+  --accent: 210 40% 96%;
+  --accent-foreground: 222 47% 11%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214 32% 91%;
+  --input: 214 32% 91%;
+  --ring: 222 47% 11%;
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.1);
+}
+
+/* Accent Overrides */
+.accent-blue { --primary: 210 100% 50%; }
+.accent-indigo { --primary: 239 84% 67%; }
+.accent-emerald { --primary: 142 70% 45%; }
+.accent-rose { --primary: 346 84% 61%; }
+.accent-amber { --primary: 38 92% 50%; }
+.accent-violet { --primary: 262 83% 58%; }
+.accent-cyan { --primary: 188 91% 46%; }
+.accent-orange { --primary: 24 95% 53%; }
+.accent-purple { --primary: 271 91% 65%; }
+.accent-pink { --primary: 330 81% 60%; }
+.accent-fuchsia { --primary: 292 91% 65%; }
+.accent-teal { --primary: 172 66% 50%; }
+.accent-lime { --primary: 84 81% 44%; }
+.accent-red { --primary: 0 84% 60%; }
+.accent-yellow { --primary: 48 96% 53%; }
+.accent-slate { --primary: 215 16% 47%; }
+.accent-gray { --primary: 215 14% 34%; }
+.accent-zinc { --primary: 240 5% 48%; }
+
+* {
+  border-color: hsl(var(--border));
+  font-family: 'Outfit', sans-serif;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+}
+
+/* Animated gradient background */
+.animated-bg {
+  background: linear-gradient(-45deg, hsl(var(--muted)), hsl(var(--background)), hsl(var(--primary)), hsl(var(--background)));
+  background-size: 400% 400%;
+  animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
+
+/* Hide scrollbar but keep functionality */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

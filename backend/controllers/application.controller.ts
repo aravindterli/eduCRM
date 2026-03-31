@@ -12,7 +12,7 @@ export const createApplication = async (req: Request, res: Response) => {
 
 export const updateStatus = async (req: Request, res: Response) => {
   try {
-    const app = await ApplicationService.updateStatus(req.params.id, req.body.status);
+    const app = await ApplicationService.updateStatus(req.params.id, req.body.status, req.body.reason);
     res.json(app);
   } catch (error: any) {
     res.status(400).json({ message: error.message });

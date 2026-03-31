@@ -6,7 +6,7 @@ interface ApplicationState {
   applications: any[];
   loading: boolean;
   fetchApplications: () => Promise<void>;
-  updateApplicationStatus: (id: string, status: string) => Promise<boolean>;
+  updateApplicationStatus: (id: string, status: string, reason?: string) => Promise<boolean>;
   confirmAdmission: (id: string) => Promise<boolean>;
   createApplication: (data: { leadId: string; programId: string }) => Promise<boolean>;
   uploadDocument: (applicationId: string, data: { type: string; url: string }) => Promise<boolean>;
@@ -27,9 +27,9 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     }
   },
 
-  updateApplicationStatus: async (id: string, status: string) => {
+  updateApplicationStatus: async (id: string, status: string, reason?: string) => {
     try {
-      await applicationService.updateStatus(id, status);
+      await applicationService.updateStatus(id, status, reason);
       // Refresh list
       get().fetchApplications();
       return true;

@@ -1,6 +1,6 @@
 import prisma from '../config/prisma';
 import Razorpay from 'razorpay';
-import { decrypt } from '../utils/encryption';
+
 
 export class FeeService {
   private razorpay: Razorpay | null;
@@ -157,16 +157,8 @@ export class FeeService {
         }
 
         const lead = fee.admission?.application?.lead;
-        let email = lead?.email;
-        let phone = lead?.phone;
-
-        // Decrypt if necessary
-        try {
-          if (email && email.includes(':')) email = decrypt(email);
-          if (phone && phone.includes(':')) phone = decrypt(phone);
-        } catch (e) {
-          console.error('[Finance] Decryption failed for lead data:', e);
-        }
+        const email = lead?.email || undefined;
+        const phone = lead?.phone || undefined;
 
         const amount = Math.round(amountDue * 100);
         if (amount < 100) {

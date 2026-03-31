@@ -1,5 +1,6 @@
 import prisma from '../config/prisma';
 import DocumentGeneratorService from './documentGenerator.service';
+import CommunicationService from './communication.service';
 
 export class ApplicationService {
   async createApplication(data: any) {
@@ -29,7 +30,7 @@ export class ApplicationService {
     });
   }
 
-  async updateStatus(id: string, status: any) {
+  async updateStatus(id: string, status: any, reason?: string) {
     const application = await prisma.application.update({
       where: { id },
       data: { 
@@ -43,6 +44,36 @@ export class ApplicationService {
         where: { id: application.leadId },
         data: { stage: 'APPLICATION_SUBMITTED' },
       });
+    }
+
+    if (status === 'REJECTED') {
+      const lead = await prisma.lead.update({
+        where: { id: application.leadId },
+        data: { stage: 'RE_ENGAGEMENT' },
+      });
+
+      // Auto-schedule Re-engagement Follow-up (30 days from now)
+      if (lead.counselorId) {
+        await prisma.followUp.create({
+          data: {
+            leadId: lead.id,
+            counselorId: lead.counselorId,
+            notes: `Automated re-engagement after application rejection. Reason: ${reason || 'N/A'}`,
+            scheduledAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 days
+          }
+        });
+      }
+
+      // Audit Log
+      await prisma.auditLog.create({
+        data: {
+          action: 'APPLICATION_REJECTED',
+          details: { applicationId: id, leadId: application.leadId, reason: reason || 'No reason provided', timestamp: new Date() }
+        }
+      });
+
+      // Notify student
+      await CommunicationService.sendRejectionNotification(lead, reason || 'Incomplete documentation');
     }
 
     return application;
@@ -116,6 +147,9 @@ export class ApplicationService {
       where: { id: application.leadId },
       data: { stage: 'ADMISSION_CONFIRMED' },
     });
+
+    // Notify Student
+    await CommunicationService.sendAdmissionConfirmation(application.lead, admission);
 
     return admission;
   }

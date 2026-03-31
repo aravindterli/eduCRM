@@ -16,12 +16,12 @@ export const leadService = {
     const response = await api.get('/leads');
     return response.data;
   },
-  
+
   create: async (data: Partial<Lead>) => {
     const response = await api.post('/leads', data);
     return response.data;
   },
-  
+
   getStats: async () => {
     const response = await api.get('/leads/stats');
     return response.data;
@@ -40,5 +40,20 @@ export const leadService = {
   updateStage: async (leadId: string, stage: string) => {
     const response = await api.patch(`/leads/${leadId}/stage`, { stage });
     return response.data;
-  }
+  },
+
+  update: async (leadId: string, data: Partial<Lead>) => {
+    const response = await api.patch(`/leads/${leadId}`, data);
+    return response.data;
+  },
+
+  delete: async (leadId: string) => {
+    const response = await api.delete(`/leads/${leadId}`);
+    return response.data;
+  },
+
+  reactivateLead: async (id: string) => {
+    const response = await api.post(`/leads/${id}/reactivate`);
+    return response.data;
+  },
 };

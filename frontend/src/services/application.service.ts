@@ -7,8 +7,8 @@ export const applicationService = {
     return response.data;
   },
 
-  updateStatus: async (id: string, status: string) => {
-    const response = await API.patch(`/applications/${id}/status`, { status });
+  updateStatus: async (id: string, status: string, reason?: string) => {
+    const response = await API.patch(`/applications/${id}/status`, { status, reason });
     return response.data;
   },
 

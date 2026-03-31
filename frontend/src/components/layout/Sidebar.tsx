@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, FileText, CreditCard, Calendar, BarChart3, Settings, LogOut, Megaphone, Book, Video, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, CreditCard, Calendar, BarChart3, Settings, LogOut, Megaphone, Book, Video, MessageSquare, CalendarClock } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -7,6 +7,7 @@ import { useRouter, usePathname } from 'next/navigation';
 const sidebarItems = [
   { icon: LayoutDashboard, label: 'Dashboard', href: '/', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR', 'FINANCE'] },
   { icon: Users, label: 'Leads', href: '/leads', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR'] },
+  { icon: CalendarClock, label: 'Follow-ups', href: '/follow-ups', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR'] },
   { icon: Calendar, label: 'Counseling', href: '/counseling', roles: ['ADMIN', 'TELECALLER', 'COUNSELOR'] },
   { icon: FileText, label: 'Applications', href: '/applications', roles: ['ADMIN', 'COUNSELOR'] },
   { icon: CreditCard, label: 'Finances', href: '/finances', roles: ['ADMIN', 'FINANCE'] },

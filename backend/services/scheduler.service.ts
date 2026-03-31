@@ -9,6 +9,7 @@ export class SchedulerService {
     console.log('[Scheduler] Starting automated cron jobs...');
     this.scheduleDailyReminders();
     this.scheduleDripCampaigns();
+    this.scheduleReEngagementDrip();
     this.scheduleAutomatedBackups();
   }
 
@@ -75,6 +76,37 @@ export class SchedulerService {
     cron.schedule('0 3 * * *', async () => {
       console.log('[Scheduler] Running Automated Database Backup');
       await BackupService.performBackup();
+    });
+  }
+
+  private scheduleReEngagementDrip() {
+    // Runs every day at 11:00 AM
+    cron.schedule('39 16 * * *', async () => {
+      console.log('[Scheduler] Running Automated Re-engagement Reach-out');
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      // Find leads in RE_ENGAGEMENT stage that have a follow-up scheduled for today
+      const reEngagementLeads = await prisma.lead.findMany({
+        where: {
+          stage: LeadStage.RE_ENGAGEMENT,
+          followUps: {
+            some: {
+              scheduledAt: { gte: today, lt: tomorrow },
+              completedAt: null,
+              notes: { contains: 'Automated re-engagement' }
+            }
+          }
+        },
+        include: { program: true }
+      });
+
+      for (const lead of reEngagementLeads) {
+        await CommunicationService.sendReEngagementMessage(lead);
+      }
     });
   }
 }

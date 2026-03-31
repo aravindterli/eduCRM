@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { Book, Edit3, DollarSign, Plus, X, Save } from 'lucide-react';
+import { Book, Edit3, IndianRupee, Plus, X, Save } from 'lucide-react';
 import API from '@/services/api';
 
 export default function ProgramsPage() {
@@ -79,7 +79,7 @@ export default function ProgramsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Base Tuition Fee ($)</label>
+                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Base Tuition Fee (₹)</label>
                 <input 
                   type="number"
                   value={editData.baseFee}
@@ -163,7 +163,7 @@ export default function ProgramsPage() {
                   <p className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-1">Base Tuition Fee</p>
                   {editingId === p.id ? (
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+                      <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
                       <input 
                         type="number"
                         value={editData.baseFee}
@@ -172,7 +172,7 @@ export default function ProgramsPage() {
                       />
                     </div>
                   ) : (
-                    <p className="text-xl font-black text-emerald-400">${p.baseFee?.toLocaleString() || '0'}</p>
+                    <p className="text-xl font-black text-emerald-400">₹{p.baseFee?.toLocaleString() || '0'}</p>
                   )}
                 </div>
 

@@ -4,7 +4,7 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { MetricCard } from '@/components/dashboard/MetricCard';
-import { DollarSign, CreditCard, TrendingUp, Download, Search, FileText } from 'lucide-react';
+import { IndianRupee, CreditCard, TrendingUp, Download, Search, FileText } from 'lucide-react';
 import { PaymentModal } from '@/components/finances/PaymentModal';
 import { useFinanceStore } from '@/store/useFinanceStore';
 
@@ -53,9 +53,9 @@ export default function FinancesPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <MetricCard 
           label="Total Revenue" 
-          value={`$${stats?.total?.toLocaleString() || '0'}`} 
+          value={`₹${stats?.total?.toLocaleString() || '0'}`} 
           trend="+8% this week" 
-          icon={DollarSign} 
+          icon={IndianRupee} 
           color="emerald"
         />
         <MetricCard 
@@ -120,8 +120,8 @@ export default function FinancesPage() {
                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{fee.admission?.enrollmentId}</div>
                       </td>
                       <td className="px-6 py-4 text-slate-400 text-xs">{fee.admission?.application?.program?.name}</td>
-                      <td className="px-6 py-4 font-bold text-slate-200">${fee.amount.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-emerald-400 font-semibold">${paid.toLocaleString()}</td>
+                      <td className="px-6 py-4 font-bold text-slate-200">₹{fee.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-emerald-400 font-semibold">₹{paid.toLocaleString()}</td>
                       <td className="py-4 px-6">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase ${
                           fee.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400' : 
@@ -137,12 +137,19 @@ export default function FinancesPage() {
                             onClick={() => setSelectedFee(fee)}
                             className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ml-auto"
                           >
-                            <DollarSign size={14} />
+                            <IndianRupee size={14} />
                             Pay Now
                           </button>
                         )}
                         {fee.status === 'COMPLETED' && (
-                          <button className="p-2 hover:bg-white/5 rounded-lg text-slate-500 hover:text-blue-400 transition-all ml-auto" title="View Invoices">
+                          <button 
+                            onClick={() => {
+                              const token = localStorage.getItem('educrm_token');
+                              window.open(`${process.env.NEXT_PUBLIC_API_URL}/reports/payments/${fee.id}/receipt?token=${token}`, '_blank');
+                            }}
+                            className="p-2 hover:bg-white/5 rounded-lg text-slate-500 hover:text-blue-400 transition-all ml-auto" 
+                            title="Download Receipt"
+                          >
                              <FileText size={18} />
                           </button>
                         )}

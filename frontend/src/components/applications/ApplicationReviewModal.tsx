@@ -24,8 +24,15 @@ export const ApplicationReviewModal = ({ isOpen, onClose, application }: Applica
   if (!isOpen || !application) return null;
 
   const handleStatusUpdate = async (status: string) => {
-    if (confirm(`Are you sure you want to mark this application as ${status}?`)) {
-      await updateApplicationStatus(application.id, status);
+    let reason = '';
+    if (status === 'REJECTED') {
+      const input = prompt('Please enter the reason for rejection:');
+      if (input === null) return; // Cancelled
+      reason = input;
+    }
+
+    if (confirm(`Are you sure you want to mark this application as ${status}${reason ? ' (Reason: ' + reason + ')' : ''}?`)) {
+      await updateApplicationStatus(application.id, status, reason);
       onClose();
     }
   };

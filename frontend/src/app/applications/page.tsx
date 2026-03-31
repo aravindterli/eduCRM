@@ -1,7 +1,7 @@
 'use client';
 
 import { MainLayout } from '@/components/layout/MainLayout';
-import { MoreVertical, CheckCircle, Clock, AlertCircle, Upload, FileText, ChevronRight, DollarSign } from 'lucide-react';
+import { MoreVertical, CheckCircle, Clock, AlertCircle, Upload, FileText, ChevronRight, IndianRupee } from 'lucide-react';
 import { DocumentUpload } from '@/components/applications/DocumentUpload';
 
 import { useApplicationStore } from '@/store/useApplicationStore';
@@ -118,7 +118,11 @@ export default function ApplicationsPage() {
                   >
                     Details
                   </button>
-                  {app.admission || app.status === 'ADMISSION_CONFIRMED' ? (
+                  {app.status === 'REJECTED' ? (
+                    <div className="px-4 py-2 rounded-xl text-xs font-bold text-red-500 bg-red-500/10">
+                      Rejected
+                    </div>
+                  ) : app.admission || app.status === 'ADMISSION_CONFIRMED' ? (
                     <div className="flex gap-2">
                        <div className="px-4 py-2 rounded-xl text-xs font-bold text-slate-500 bg-white/5">
                         Enrolled
@@ -128,7 +132,7 @@ export default function ApplicationsPage() {
                         onClick={(e) => e.stopPropagation()}
                         className="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-4 py-2 rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5"
                       >
-                        <DollarSign size={14} />
+                        <IndianRupee size={14} />
                         Go to Finance
                       </a>
                     </div>

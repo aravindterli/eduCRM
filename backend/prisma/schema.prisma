@@ -30,6 +30,7 @@ model User {
   followUps          FollowUp[]      @relation("CounselorFollowUps")
   leads              Lead[]          @relation("CounselorLeads")
   leadNotes          LeadNote[]      @relation("CounselorNotes")
+  communicationLogs  CommunicationLog[] @relation("CounselorComms")
   role               Role            @relation(fields: [roleId], references: [id])
 }
 
@@ -95,9 +96,10 @@ model FollowUp {
   notes       String?
   scheduledAt DateTime
   completedAt DateTime?
+  meetingUrl  String?
   createdAt   DateTime  @default(now())
   counselor   User      @relation("CounselorFollowUps", fields: [counselorId], references: [id])
-  lead        Lead      @relation(fields: [leadId], references: [id])
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
 model Webinar {
@@ -117,7 +119,7 @@ model WebinarRegistration {
   leadId    String
   attended  Boolean  @default(false)
   createdAt DateTime @default(now())
-  lead      Lead     @relation(fields: [leadId], references: [id])
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   webinar   Webinar  @relation(fields: [webinarId], references: [id])
 }
 
@@ -129,7 +131,7 @@ model CounselingLog {
   recommendation String?
   createdAt      DateTime @default(now())
   counselor      User     @relation("CounselorSessions", fields: [counselorId], references: [id])
-  lead           Lead     @relation(fields: [leadId], references: [id])
+  lead           Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
 model Application {
@@ -140,7 +142,7 @@ model Application {
   submittedAt DateTime?
   createdAt   DateTime          @default(now())
   admission   Admission?
-  lead        Lead              @relation(fields: [leadId], references: [id])
+  lead        Lead              @relation(fields: [leadId], references: [id], onDelete: Cascade)
   program     Program           @relation(fields: [programId], references: [id])
   documents   Document[]
 }
@@ -155,7 +157,7 @@ model Document {
   remarks       String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-  application   Application @relation(fields: [applicationId], references: [id])
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
 }
 
 model Admission {
@@ -164,7 +166,7 @@ model Admission {
   enrollmentId  String      @unique
   programId     String
   admittedAt    DateTime    @default(now())
-  application   Application @relation(fields: [applicationId], references: [id])
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   program       Program     @relation(fields: [programId], references: [id])
   fees          Fee[]
 }
@@ -176,7 +178,7 @@ model Fee {
   dueDate     DateTime?
   status      String
   createdAt   DateTime  @default(now())
-  admission   Admission @relation(fields: [admissionId], references: [id])
+  admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
   payments    Payment[]
 }
 
@@ -188,7 +190,7 @@ model Payment {
   transactionId String?
   status        PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
-  fee           Fee           @relation(fields: [feeId], references: [id])
+  fee           Fee           @relation(fields: [feeId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
@@ -200,24 +202,37 @@ model AuditLog {
 }
 
 model CommunicationLog {
-  id        String   @id @default(uuid())
-  leadId    String
-  type      String
-  direction String
-  message   String
-  status    String
-  timestamp DateTime @default(now())
-  lead      Lead     @relation(fields: [leadId], references: [id])
+  id          String   @id @default(uuid())
+  leadId      String
+  counselorId String?
+  type        String   // EMAIL, SMS, WHATSAPP, CALL
+  direction   String   // INBOUND, OUTBOUND
+  message     String
+  status      String
+  duration    Int?     // For calls, in seconds or minutes
+  result      String?  // Outcome of interaction
+  timestamp   DateTime @default(now())
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  counselor   User?    @relation("CounselorComms", fields: [counselorId], references: [id])
 }
 
+
 model LeadNote {
-  id          String   @id @default(uuid())
+  id          String       @id @default(uuid())
   leadId      String
   counselorId String
   content     String
-  createdAt   DateTime @default(now())
-  counselor   User     @relation("CounselorNotes", fields: [counselorId], references: [id])
-  lead        Lead     @relation(fields: [leadId], references: [id])
+  type        LeadNoteType @default(GENERAL)
+  createdAt   DateTime     @default(now())
+  counselor   User         @relation("CounselorNotes", fields: [counselorId], references: [id])
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+enum LeadNoteType {
+  GENERAL
+  REMARK
+  STUDENT_FEEDBACK
+  DISCUSSION_SUMMARY
 }
 
 model MessageTemplate {

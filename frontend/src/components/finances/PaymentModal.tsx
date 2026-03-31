@@ -2,7 +2,7 @@
 'use client';
 
 import React from 'react';
-import { X, CreditCard, DollarSign, Calendar, Hash, Save, Link as LinkIcon, Copy, RefreshCw } from 'lucide-react';
+import { X, CreditCard, IndianRupee, Calendar, Hash, Save, Link as LinkIcon, Copy, RefreshCw } from 'lucide-react';
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { Toast } from '../ui/Toast';
 
@@ -98,7 +98,7 @@ export const PaymentModal = ({ isOpen, onClose, fee }: PaymentModalProps) => {
         <div className="p-6 border-b border-white/5 flex justify-between items-center bg-emerald-500/5">
           <div className="flex items-center gap-3">
              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-               <DollarSign size={20} />
+               <IndianRupee size={20} />
              </div>
              <div>
                <h2 className="text-xl font-bold">Record Payment</h2>
@@ -112,9 +112,9 @@ export const PaymentModal = ({ isOpen, onClose, fee }: PaymentModalProps) => {
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Payment Amount ($)</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Payment Amount (₹)</label>
             <div className="relative">
-              <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
               <input 
                 type="number"
                 required
@@ -123,7 +123,7 @@ export const PaymentModal = ({ isOpen, onClose, fee }: PaymentModalProps) => {
                 className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:border-emerald-500/50 transition-all text-slate-200 font-semibold"
               />
             </div>
-            <p className="text-[10px] text-slate-500 italic px-1">Total Fee: ${fee.amount} | Remaining: ${fee.amount - (fee.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0)}</p>
+            <p className="text-[10px] text-slate-500 italic px-1">Total Fee: ₹{fee.amount} | Remaining: ₹{fee.amount - (fee.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0)}</p>
           </div>
 
           <div className="space-y-2">

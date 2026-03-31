@@ -12,6 +12,15 @@ export const createLead = async (req: Request, res: Response) => {
   }
 };
 
+export const createPublicLead = async (req: Request, res: Response) => {
+  try {
+    const lead = await LeadService.handlePublicApplication(req.body);
+    res.status(201).json(lead);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export const getLeads = async (req: Request, res: Response) => {
   try {
     const leads = await LeadService.getAllLeads(req.query);
@@ -33,10 +42,28 @@ export const getLeadDetail = async (req: Request, res: Response) => {
 
 export const addLeadNote = async (req: any, res: Response) => {
   try {
-    const { content } = req.body;
+    const { content, type } = req.body;
     if (!content) return res.status(400).json({ message: 'Content is required' });
-    const note = await LeadService.addNote(req.params.id, req.user.id, content);
+    const note = await LeadService.addNote(req.params.id, content, type, req.user.id);
     res.status(201).json(note);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const logLeadInteraction = async (req: any, res: Response) => {
+  try {
+    const { type, message, direction, duration, result } = req.body;
+    if (!type || !message) return res.status(400).json({ message: 'Type and message are required' });
+    const interaction = await LeadService.logInteraction(req.params.id, {
+      type,
+      message,
+      direction: direction || 'OUTBOUND',
+      duration: duration ? Number(duration) : undefined,
+      result,
+      counselorId: req.user.id
+    });
+    res.status(201).json(interaction);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -46,6 +73,15 @@ export const updateLead = async (req: Request, res: Response) => {
   try {
     const lead = await LeadService.updateLead(req.params.id, req.body);
     res.json(lead);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const deleteLead = async (req: Request, res: Response) => {
+  try {
+    await LeadService.deleteLead(req.params.id);
+    res.json({ success: true, message: 'Lead deleted successfully' });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }
@@ -97,5 +133,13 @@ export const sendLeadTemplate = async (req: Request, res: Response) => {
     res.json({ success: true, message: 'Message queued for dispatch' });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
+  }
+};
+export const reactivateLead = async (req: any, res: Response) => {
+  try {
+    const lead = await LeadService.reactivateLead(req.params.id, req.user.id);
+    res.json(lead);
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
   }
 };

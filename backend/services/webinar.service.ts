@@ -1,5 +1,4 @@
 import prisma from '../config/prisma';
-import { encrypt, decrypt } from '../utils/encryption';
 import { autoAssignLead } from '../utils/assignment';
 import CommunicationService from './communication.service';
 import LeadService from './lead.service';
@@ -97,16 +96,26 @@ export class WebinarService {
     });
   }
 
-  async registerLeadPublic(webinarId: string, data: { name: string, email: string, phone: string, eduBackground?: string }) {
-    // 1. Encrypt and Find or create lead
-    const encryptedEmail = data.email ? encrypt(data.email) : undefined;
-    const encryptedPhone = data.phone ? encrypt(data.phone) : undefined;
+  async getUpcomingWebinars() {
+    return await prisma.webinar.findMany({
+      where: {
+        date: { gte: new Date() }
+      },
+      include: {
+        _count: { select: { registrations: true } }
+      },
+      orderBy: { date: 'asc' },
+      take: 5
+    });
+  }
 
+  async registerLeadPublic(webinarId: string, data: { name: string, email: string, phone: string, eduBackground?: string }) {
+    // 1. find or create lead by email/phone
     let lead = await prisma.lead.findFirst({
       where: {
         OR: [
-          encryptedEmail ? { email: encryptedEmail } : {},
-          encryptedPhone ? { phone: encryptedPhone } : {}
+          data.email ? { email: data.email } : {},
+          data.phone ? { phone: data.phone } : {},
         ].filter(cond => Object.keys(cond).length > 0)
       }
     });
@@ -117,35 +126,23 @@ export class WebinarService {
       lead = await prisma.lead.create({
         data: {
           name: data.name,
-          email: encryptedEmail || '',
-          phone: encryptedPhone || '',
+          email: data.email || '',
+          phone: data.phone || '',
           eduBackground: data.eduBackground,
           leadSource: 'WEBINAR',
           stage: 'WEBINAR_REGISTERED',
         }
       });
     } else {
-      // Update existing lead stage
       lead = await prisma.lead.update({
         where: { id: lead.id },
         data: { stage: 'WEBINAR_REGISTERED' }
       });
     }
 
-    // --- START LEAD FLOW ---
     if (isNewLead) {
-      // Automatic Assignment
       await autoAssignLead(lead.id);
-      
-      // Automated Communication (Requires Decryption)
-      const decryptedLead = { ...lead };
-      try {
-        if (decryptedLead.phone) decryptedLead.phone = decrypt(decryptedLead.phone);
-        if (decryptedLead.email) decryptedLead.email = decrypt(decryptedLead.email);
-      } catch (e) {
-        console.error('Failed to decrypt lead for auto-response', e);
-      }
-      await CommunicationService.sendAutoResponse(decryptedLead);
+      await CommunicationService.sendAutoResponse(lead);
     }
 
     // Lead Scoring (for both new and existing leads as it's a new interaction)

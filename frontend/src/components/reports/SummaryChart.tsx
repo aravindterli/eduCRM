@@ -48,7 +48,7 @@ export const SummaryChart = ({ data, type = 'bar', dataKey, nameKey = 'name', co
               fontSize={10} 
               tickLine={false} 
               axisLine={false} 
-              tickFormatter={(val) => `$${val}`}
+              tickFormatter={(val) => `₹${val}`}
             />
             <Tooltip 
               contentStyle={{ backgroundColor: '#0f172a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}

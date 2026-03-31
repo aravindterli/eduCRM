@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Filter, Plus, MoreVertical, ExternalLink, Upload, Phone, MessageSquare } from 'lucide-react';
+import { Search, Filter, Plus, MoreVertical, ExternalLink, Upload, Phone, MessageSquare, Pencil, Trash2 } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { LeadForm } from '@/components/leads/LeadForm';
 import { LeadDetails } from '@/components/leads/LeadDetails';
@@ -22,6 +22,11 @@ export default function LeadsPage() {
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isImportOpen, setIsImportOpen] = React.useState(false);
   const [selectedLead, setSelectedLead] = React.useState<any>(null);
+  const [leadToEdit, setLeadToEdit] = React.useState<any>(null);
+  const [leadToDelete, setLeadToDelete] = React.useState<any>(null);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+
+  const { deleteLead } = useLeadStore();
 
   React.useEffect(() => {
     fetchLeads();
@@ -34,7 +39,14 @@ export default function LeadsPage() {
 
   return (
     <MainLayout>
-      <LeadForm isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} />
+      <LeadForm 
+        isOpen={isAddOpen || !!leadToEdit} 
+        onClose={() => {
+          setIsAddOpen(false);
+          setLeadToEdit(null);
+        }} 
+        initialData={leadToEdit}
+      />
       <LeadImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
       <LeadDetails 
         lead={selectedLead} 
@@ -172,11 +184,35 @@ export default function LeadsPage() {
                     <td className="px-6 py-4 text-sm text-slate-400 hidden sm:table-cell">{new Date(lead.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button className="p-2 hover:bg-white/10 rounded-lg text-slate-400">
-                          <ExternalLink size={16} />
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLeadToEdit(lead);
+                          }}
+                          className="p-2 hover:bg-blue-500/10 rounded-lg text-blue-400 transition-colors"
+                          title="Edit Lead"
+                        >
+                          <Pencil size={16} />
                         </button>
-                        <button className="p-2 hover:bg-white/10 rounded-lg text-slate-400">
-                          <MoreVertical size={16} />
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLeadToDelete(lead);
+                          }}
+                          className="p-2 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"
+                          title="Delete Lead"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedLead(lead);
+                          }}
+                          className="p-2 hover:bg-white/10 rounded-lg text-slate-400"
+                          title="View Details"
+                        >
+                          <ExternalLink size={16} />
                         </button>
                       </div>
                     </td>
@@ -187,6 +223,42 @@ export default function LeadsPage() {
           </table>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {leadToDelete && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setLeadToDelete(null)} />
+          <div className="relative w-full max-w-sm glass rounded-3xl border-white/10 p-6 shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-red-500/20 text-red-400 flex items-center justify-center mb-4">
+              <Trash2 size={24} />
+            </div>
+            <h3 className="text-lg font-bold mb-2 text-foreground">Delete Lead?</h3>
+            <p className="text-sm text-muted-foreground mb-6">
+              Are you sure you want to delete <span className="font-semibold text-foreground">{leadToDelete.name}</span>? This action cannot be undone and will remove all associated data.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setLeadToDelete(null)}
+                className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={async () => {
+                  setIsDeleting(true);
+                  const success = await deleteLead(leadToDelete.id);
+                  setIsDeleting(false);
+                  if (success) setLeadToDelete(null);
+                }}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 rounded-xl text-sm font-bold bg-red-600 hover:bg-red-500 text-white shadow-lg shadow-red-600/20 transition-all disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </MainLayout>
   );
 }

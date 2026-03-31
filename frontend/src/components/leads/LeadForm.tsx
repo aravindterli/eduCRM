@@ -9,10 +9,11 @@ import { useLeadStore } from '@/store/useLeadStore';
 interface LeadFormProps {
   isOpen: boolean;
   onClose: () => void;
+  initialData?: any;
 }
 
-export const LeadForm = ({ isOpen, onClose }: LeadFormProps) => {
-  const { addLead } = useLeadStore();
+export const LeadForm = ({ isOpen, onClose, initialData }: LeadFormProps) => {
+  const { addLead, updateLead } = useLeadStore();
   const { campaigns, fetchCampaigns } = useMarketingStore();
   const [loading, setLoading] = React.useState(false);
   const [formData, setFormData] = React.useState({
@@ -29,8 +30,31 @@ export const LeadForm = ({ isOpen, onClose }: LeadFormProps) => {
   React.useEffect(() => {
     if (isOpen) {
       fetchCampaigns();
+      if (initialData) {
+        setFormData({
+          name: initialData.name || '',
+          phone: initialData.phone || '',
+          email: initialData.email || '',
+          location: initialData.location || '',
+          eduBackground: initialData.eduBackground || 'High School',
+          interestedProgram: initialData.qualification || 'CS Engineering',
+          leadSource: initialData.leadSource || 'Direct',
+          campaignId: initialData.campaignId || ''
+        });
+      } else {
+        setFormData({
+          name: '',
+          phone: '',
+          email: '',
+          location: '',
+          eduBackground: 'High School',
+          interestedProgram: 'CS Engineering',
+          leadSource: 'Direct',
+          campaignId: ''
+        });
+      }
     }
-  }, [isOpen, fetchCampaigns]);
+  }, [isOpen, initialData, fetchCampaigns]);
 
   if (!isOpen) return null;
 
@@ -45,26 +69,34 @@ export const LeadForm = ({ isOpen, onClose }: LeadFormProps) => {
       email: formData.email,
       location: formData.location,
       eduBackground: formData.eduBackground,
-      qualification: formData.interestedProgram, // Storing program name in qualification for now
+      qualification: formData.interestedProgram,
       leadSource: formData.leadSource,
       campaignId: formData.campaignId || undefined,
     };
 
-    const success = await addLead(submissionData);
-    setLoading(false);
+    let success = false;
+    if (initialData) {
+      success = await updateLead(initialData.id, submissionData);
+    } else {
+      success = await addLead(submissionData);
+    }
+
     if (success) {
       onClose();
-      setFormData({
-        name: '',
-        phone: '',
-        email: '',
-        location: '',
-        eduBackground: 'High School',
-        interestedProgram: 'CS Engineering',
-        leadSource: 'Direct',
-        campaignId: ''
-      });
+      if (!initialData) {
+        setFormData({
+          name: '',
+          phone: '',
+          email: '',
+          location: '',
+          eduBackground: 'High School',
+          interestedProgram: 'CS Engineering',
+          leadSource: 'Direct',
+          campaignId: ''
+        });
+      }
     }
+    setLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -78,8 +110,10 @@ export const LeadForm = ({ isOpen, onClose }: LeadFormProps) => {
       <form onSubmit={handleSubmit} className="relative w-full max-w-2xl glass rounded-3xl border-white/10 shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
         <div className="p-6 border-b border-border flex justify-between items-center">
           <div>
-            <h2 className="text-xl font-bold">Add New Lead</h2>
-            <p className="text-xs text-muted-foreground text-foreground/60">Capture lead details for education admission</p>
+            <h2 className="text-xl font-bold">{initialData ? 'Edit Lead' : 'Add New Lead'}</h2>
+            <p className="text-xs text-muted-foreground text-foreground/60">
+              {initialData ? `Updating details for ${initialData.name}` : 'Capture lead details for education admission'}
+            </p>
           </div>
           <button type="button" onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl text-muted-foreground transition-colors">
             <X size={20} />
@@ -236,7 +270,7 @@ export const LeadForm = ({ isOpen, onClose }: LeadFormProps) => {
             {loading ? 'Submitting...' : (
               <>
                 <Send size={16} />
-                Submit Lead
+                {initialData ? 'Update Lead' : 'Submit Lead'}
               </>
             )}
           </button>

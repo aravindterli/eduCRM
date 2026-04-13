@@ -1,6 +1,7 @@
-import { Router } from 'express';
-import { createLead, createPublicLead, getLeads, getLeadDetail, updateLead, deleteLead, getLeadStats, importLeads, addLeadNote, logLeadInteraction, sendLeadTemplate, reactivateLead } from '../controllers/lead.controller';
+import express, { Router } from 'express';
+import { createLead, createPublicLead, getLeads, getLeadDetail, updateLead, deleteLead, getLeadStats, importLeads, addLeadNote, logLeadInteraction, sendLeadTemplate, reactivateLead, bulkSendWhatsApp, whatsappMediaUpload, uploadWhatsAppMedia } from '../controllers/lead.controller';
 import { authenticate, authorize } from '../middleware/auth';
+import path from 'path';
 
 const router = Router();
 
@@ -8,11 +9,14 @@ const router = Router();
 router.post('/public', createPublicLead);
 
 router.use(authenticate);
+router.use('/uploads/whatsapp', express.static(path.join(__dirname, '../../uploads/whatsapp')));
 router.use(authorize(['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR']));
 
 router.post('/', createLead);
 router.get('/stats', getLeadStats);
 router.post('/import', importLeads);
+router.post('/bulk-whatsapp', bulkSendWhatsApp);
+router.post('/upload-media', whatsappMediaUpload.single('file'), uploadWhatsAppMedia);
 router.get('/', getLeads);
 
 // ── global follow-up routes (must be before /:id wildcard) ──────────────────

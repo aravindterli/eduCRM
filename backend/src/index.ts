@@ -15,6 +15,7 @@ import programRoutes from '../routes/program.routes';
 import lmsRoutes from '../routes/lms.routes';
 import documentRoutes from '../routes/document.routes';
 import templateRoutes from '../routes/template.routes';
+import whatsappRoutes from '../routes/whatsapp.routes';
 
 import { auditMiddleware } from '../middleware/audit';
 import SchedulerService from '../services/scheduler.service';
@@ -43,6 +44,7 @@ app.use('/api/v1/programs', programRoutes);
 app.use('/api/v1/lms', lmsRoutes); // Added LMS routes
 app.use('/api/v1/documents', documentRoutes);
 app.use('/api/v1/templates', templateRoutes);
+app.use('/api/v1/whatsapp', whatsappRoutes);
 
 app.get('/api/v1/ping', (req, res) => res.send('pong')); // Added ping endpoint
 

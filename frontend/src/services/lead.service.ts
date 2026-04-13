@@ -56,4 +56,18 @@ export const leadService = {
     const response = await api.post(`/leads/${id}/reactivate`);
     return response.data;
   },
+
+  bulkSendWhatsApp: async (leadIds: string[], message: string, imageUrl?: string, templateName?: string) => {
+    const response = await api.post('/leads/bulk-whatsapp', { leadIds, message, imageUrl, templateName });
+    return response.data;
+  },
+
+  uploadMedia: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post('/leads/upload-media', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
 };

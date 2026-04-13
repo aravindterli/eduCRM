@@ -15,6 +15,8 @@ interface LeadState {
   updateLead: (leadId: string, data: Partial<Lead>) => Promise<boolean>;
   deleteLead: (leadId: string) => Promise<boolean>;
   reactivateLead: (leadId: string) => Promise<boolean>;
+  bulkSendWhatsApp: (leadIds: string[], message: string, imageUrl?: string, templateName?: string) => Promise<any>;
+  uploadMedia: (file: File) => Promise<string | null>;
 }
 
 export const useLeadStore = create<LeadState>((set, get) => ({
@@ -138,6 +140,30 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     } catch (err: any) {
       set({ error: err.message, loading: false });
       return false;
+    }
+  },
+
+  bulkSendWhatsApp: async (leadIds, message, imageUrl, templateName) => {
+    set({ loading: true });
+    try {
+      const results = await leadService.bulkSendWhatsApp(leadIds, message, imageUrl, templateName);
+      set({ loading: false });
+      return results;
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      return null;
+    }
+  },
+
+  uploadMedia: async (file) => {
+    set({ loading: true });
+    try {
+      const result = await leadService.uploadMedia(file);
+      set({ loading: false });
+      return result.url;
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      return null;
     }
   }
 }));

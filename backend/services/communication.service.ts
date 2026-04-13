@@ -211,18 +211,49 @@ export class CommunicationService {
     }
   }
 
-  async sendWhatsApp(phone: string, message: string, leadId?: string) {
-    console.log(`[WhatsApp] Dispatching to ${phone}...`);
+  async sendWhatsApp(phone: string, message: string, leadId?: string, imageUrl?: string, templateName?: string) {
+    // WhatsApp requires country codes. If it's a 10-digit number, assume India (91).
+    const formattedPhone = phone.length === 10 ? `91${phone}` : phone.replace('+', '');
+    
+    console.log(`[WhatsApp] Dispatching to ${formattedPhone}... ${templateName ? `(Template: ${templateName})` : ''} ${imageUrl ? '(with image)' : ''}`);
     try {
       if (process.env.META_WHATSAPP_TOKEN && process.env.META_PHONE_NUMBER_ID) {
+        let payload: any = {};
+
+        if (templateName) {
+          payload = {
+            messaging_product: 'whatsapp',
+            to: formattedPhone,
+            type: 'template',
+            template: {
+              name: templateName,
+              language: {
+                code: 'en_US'
+              }
+            }
+          };
+        } else {
+          payload = imageUrl 
+            ? {
+                messaging_product: 'whatsapp',
+                to: formattedPhone,
+                type: 'image',
+                image: {
+                  link: imageUrl,
+                  caption: message
+                }
+              }
+            : {
+                messaging_product: 'whatsapp',
+                to: formattedPhone,
+                type: 'text',
+                text: { body: message }
+              };
+        }
+
         await axios.post(
           `https://graph.facebook.com/v17.0/${process.env.META_PHONE_NUMBER_ID}/messages`,
-          {
-            messaging_product: 'whatsapp',
-            to: phone,
-            type: 'text',
-            text: { body: message }
-          },
+          payload,
           {
             headers: {
               'Authorization': `Bearer ${process.env.META_WHATSAPP_TOKEN}`,
@@ -231,7 +262,7 @@ export class CommunicationService {
           }
         );
       } else {
-        console.log(`[WhatsApp][Simulation] Meta API not configured. Simulated msg sent to ${phone}: ${message}`);
+        console.log(`[WhatsApp][Simulation] Meta API not configured. Simulated msg sent to ${phone}: ${message}${imageUrl ? ` [Image: ${imageUrl}]` : ''}`);
       }
 
       if (leadId) {
@@ -241,13 +272,14 @@ export class CommunicationService {
       }
       return { success: true, provider: 'Meta' };
     } catch (error: any) {
-      console.error(`[WhatsApp] Failed to send to ${phone}:`, error.message);
+      const metaErrorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
+      console.error(`[WhatsApp] Failed to send to ${phone}:`, metaErrorDetails);
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, type: 'WHATSAPP', direction: 'OUTBOUND', message: `FAILED: ${message}`, status: 'FAILED' }
+          data: { leadId, type: 'WHATSAPP', direction: 'OUTBOUND', message: `FAILED: ${metaErrorDetails}`, status: 'FAILED' }
         });
       }
-      return { success: false, error: error.message };
+      return { success: false, error: metaErrorDetails };
     }
   }
 

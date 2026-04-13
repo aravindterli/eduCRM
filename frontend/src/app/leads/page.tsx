@@ -5,6 +5,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { LeadForm } from '@/components/leads/LeadForm';
 import { LeadDetails } from '@/components/leads/LeadDetails';
 import { LeadImportModal } from '@/components/leads/LeadImportModal';
+import { BulkWhatsAppDrawer } from '@/components/leads/BulkWhatsAppDrawer';
 import { useLeadStore } from '@/store/useLeadStore';
 import React from 'react';
 
@@ -27,6 +28,8 @@ export default function LeadsPage() {
   const [isDeleting, setIsDeleting] = React.useState(false);
 
   const { deleteLead } = useLeadStore();
+  const [selectedLeadIds, setSelectedLeadIds] = React.useState<string[]>([]);
+  const [isBulkWhatsAppOpen, setIsBulkWhatsAppOpen] = React.useState(false);
 
   React.useEffect(() => {
     fetchLeads();
@@ -36,6 +39,21 @@ export default function LeadsPage() {
     if (!campaignFilter) return leads;
     return leads.filter(l => l.campaignId === campaignFilter);
   }, [leads, campaignFilter]);
+
+  const toggleSelectAll = () => {
+    if (selectedLeadIds.length === filteredLeads.length) {
+      setSelectedLeadIds([]);
+    } else {
+      setSelectedLeadIds(filteredLeads.map(l => l.id));
+    }
+  };
+
+  const toggleSelectLead = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setSelectedLeadIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
 
   return (
     <MainLayout>
@@ -52,6 +70,15 @@ export default function LeadsPage() {
         lead={selectedLead} 
         isOpen={!!selectedLead} 
         onClose={() => setSelectedLead(null)} 
+      />
+      <BulkWhatsAppDrawer
+        isOpen={isBulkWhatsAppOpen}
+        onClose={() => setIsBulkWhatsAppOpen(false)}
+        selectedLeadIds={selectedLeadIds}
+        onSuccess={() => {
+          setSelectedLeadIds([]);
+          fetchLeads();
+        }}
       />
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
@@ -109,6 +136,15 @@ export default function LeadsPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-500 text-xs uppercase tracking-wider">
+                <th className="px-6 py-4 font-medium w-10">
+                  <div 
+                    className={`w-5 h-5 rounded border ${selectedLeadIds.length === filteredLeads.length && filteredLeads.length > 0 ? 'bg-primary border-primary text-white' : 'border-white/10 hover:border-white/20'} flex items-center justify-center cursor-pointer transition-all`}
+                    onClick={toggleSelectAll}
+                  >
+                    {selectedLeadIds.length === filteredLeads.length && filteredLeads.length > 0 && <div className="w-2.5 h-1 bg-white rounded-full" />}
+                    {selectedLeadIds.length > 0 && selectedLeadIds.length < filteredLeads.length && <div className="w-2.5 h-0.5 bg-white/50 rounded-full" />}
+                  </div>
+                </th>
                 <th className="px-6 py-4 font-medium">Lead Info</th>
                 <th className="px-6 py-4 font-medium hidden sm:table-cell">Stage</th>
                 <th className="px-6 py-4 font-medium hidden md:table-cell">Source</th>
@@ -133,9 +169,17 @@ export default function LeadsPage() {
                 filteredLeads.map((lead) => (
                   <tr 
                     key={lead.id} 
-                    className="border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group"
+                    className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group ${selectedLeadIds.includes(lead.id) ? 'bg-white/[0.03]' : ''}`}
                     onClick={() => setSelectedLead(lead)}
                   >
+                    <td className="py-4 px-6">
+                      <div 
+                        className={`w-5 h-5 rounded border ${selectedLeadIds.includes(lead.id) ? 'bg-primary border-primary text-white' : 'border-white/10 group-hover:border-white/20'} flex items-center justify-center transition-all`}
+                        onClick={(e) => toggleSelectLead(e, lead.id)}
+                      >
+                        {selectedLeadIds.includes(lead.id) && <div className="w-2 h-2 bg-white rounded-sm" />}
+                      </div>
+                    </td>
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 flex items-center justify-center font-bold text-xs ring-1 ring-white/5 shrink-0">
@@ -256,6 +300,33 @@ export default function LeadsPage() {
                 {isDeleting ? 'Deleting...' : 'Delete'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Action Bar */}
+      {selectedLeadIds.length > 0 && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[110] flex items-center gap-6 px-6 py-4 bg-slate-900/90 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="flex items-center gap-3 pr-6 border-r border-white/10">
+            <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+              {selectedLeadIds.length}
+            </span>
+            <span className="text-sm font-medium text-white">Leads selected</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setIsBulkWhatsAppOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-sm font-bold transition-all border border-emerald-500/20"
+            >
+              <MessageSquare size={16} />
+              Send WhatsApp
+            </button>
+            <button 
+              onClick={() => setSelectedLeadIds([])}
+              className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

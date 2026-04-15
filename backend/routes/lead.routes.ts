@@ -1,12 +1,15 @@
 import express, { Router } from 'express';
-import { createLead, createPublicLead, getLeads, getLeadDetail, updateLead, deleteLead, getLeadStats, importLeads, addLeadNote, logLeadInteraction, sendLeadTemplate, reactivateLead, bulkSendWhatsApp, whatsappMediaUpload, uploadWhatsAppMedia } from '../controllers/lead.controller';
+import { createLead, createPublicLead, getLeads, getLeadDetail, updateLead, deleteLead, getLeadStats, importLeads, addLeadNote, logLeadInteraction, sendLeadTemplate, reactivateLead, bulkSendWhatsApp, whatsappMediaUpload, uploadWhatsAppMedia, googleAdsWebhook, metaWebhook } from '../controllers/lead.controller';
 import { authenticate, authorize } from '../middleware/auth';
 import path from 'path';
 
 const router = Router();
 
-// Public routes for student enquiry/application
+// Public routes for lead ingestion
 router.post('/public', createPublicLead);
+router.post('/webhook/google-ads', googleAdsWebhook);
+router.get('/webhook/meta', metaWebhook);
+router.post('/webhook/meta', metaWebhook);
 
 router.use(authenticate);
 router.use('/uploads/whatsapp', express.static(path.join(__dirname, '../../uploads/whatsapp')));

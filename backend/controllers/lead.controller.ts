@@ -5,6 +5,7 @@ import prisma from '../config/prisma';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import axios from 'axios';
 
 export const createLead = async (req: Request, res: Response) => {
   try {
@@ -159,7 +160,7 @@ export const bulkSendWhatsApp = async (req: Request, res: Response) => {
 
       // Personalize message if ${name} is present
       const personalizedMessage = message ? message.replace(/\${name}/g, lead.name) : '';
-      
+
       try {
         await CommunicationService.sendWhatsApp(lead.phone, personalizedMessage, lead.id, imageUrl, templateName);
         results.push({ leadId: lead.id, name: lead.name, success: true });
@@ -214,10 +215,10 @@ export const uploadWhatsAppMedia = async (req: Request, res: Response) => {
     const baseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
     const imageUrl = `${baseUrl}/uploads/whatsapp/${req.file.filename}`;
 
-    res.status(201).json({ 
-      success: true, 
+    res.status(201).json({
+      success: true,
       url: imageUrl,
-      filename: req.file.filename 
+      filename: req.file.filename
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -229,5 +230,124 @@ export const reactivateLead = async (req: any, res: Response) => {
     res.json(lead);
   } catch (error: any) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const googleAdsWebhook = async (req: Request, res: Response) => {
+  try {
+    const { user_column_data, google_key } = req.body;
+
+    // 1. Security check
+    if (google_key !== process.env.GOOGLE_ADS_WEBHOOK_KEY) {
+      return res.status(401).json({ message: 'Invalid Google Key' });
+    }
+
+    // 2. Parse data
+    const leadData: any = {
+      leadSource: 'Google Ads'
+    };
+
+    user_column_data.forEach((field: any) => {
+      if (field.column_id === 'FULL_NAME') leadData.name = field.string_value;
+      if (field.column_id === 'PHONE_NUMBER') leadData.phone = field.string_value;
+      if (field.column_id === 'EMAIL') leadData.email = field.string_value;
+      if (field.column_id === 'CITY' || field.column_id === 'POSTAL_CODE') leadData.location = field.string_value;
+      if (field.column_id === 'QUALIFICATION') leadData.qualification = field.string_value;
+    });
+
+    if (!leadData.phone || !leadData.name) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    // 3. Auto-link to the latest active Google Ads campaign
+    const campaign = await prisma.campaign.findFirst({
+      where: {
+        source: { contains: 'Google', mode: 'insensitive' },
+        OR: [
+          { endDate: null },
+          { endDate: { gte: new Date() } }
+        ]
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    if (campaign) leadData.campaignId = campaign.id;
+
+    // 4. Process lead
+    const lead = await LeadService.handlePublicApplication(leadData);
+    
+    res.status(201).json({ success: true, lead_id: lead.id, campaign: campaign?.name || null });
+  } catch (error: any) {
+    console.error('Google Ads Webhook Error:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export const metaWebhook = async (req: Request, res: Response) => {
+  // Handle GET verification (handshake)
+  if (req.method === 'GET') {
+    const mode = req.query['hub.mode'];
+    const token = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    if (mode === 'subscribe' && token === process.env.META_VERIFY_TOKEN) {
+      return res.status(200).send(challenge);
+    } else {
+      return res.sendStatus(403);
+    }
+  }
+
+  // Handle POST notification
+  try {
+    const entries = req.body.entry;
+    if (!entries) return res.sendStatus(400);
+
+    for (const entry of entries) {
+      for (const change of entry.changes) {
+        if (change.field === 'leadgen') {
+          const leadgenId = change.value.leadgen_id;
+          const accessToken = process.env.META_ACCESS_TOKEN;
+
+          // Fetch full lead data from Meta Graph API
+          const response = await axios.get(`https://graph.facebook.com/v19.0/${leadgenId}`, {
+            params: { access_token: accessToken }
+          });
+
+          const fbData = response.data;
+          const leadData: any = {
+            leadSource: 'Meta (FB/Insta)'
+          };
+
+          // Map Meta field_data to Lead fields
+          fbData.field_data.forEach((field: any) => {
+            if (field.name === 'full_name') leadData.name = field.values[0];
+            if (field.name === 'phone_number') leadData.phone = field.values[0];
+            if (field.name === 'email') leadData.email = field.values[0];
+            if (field.name === 'city') leadData.location = field.values[0];
+          });
+
+          // Auto-link to the latest active Meta campaign
+          const campaign = await prisma.campaign.findFirst({
+            where: {
+              source: { in: ['Facebook', 'Instagram', 'Meta'], mode: 'insensitive' },
+              OR: [
+                { endDate: null },
+                { endDate: { gte: new Date() } }
+              ]
+            },
+            orderBy: { createdAt: 'desc' }
+          });
+          if (campaign) leadData.campaignId = campaign.id;
+
+          if (leadData.phone && leadData.name) {
+            await LeadService.handlePublicApplication(leadData);
+          }
+        }
+      }
+    }
+
+    res.status(200).json({ success: true });
+  } catch (error: any) {
+    console.error('Meta Webhook Error:', error.response?.data || error.message);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 };

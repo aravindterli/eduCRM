@@ -126,8 +126,8 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
                   <FileText size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
                 {selectedTemplateName && (
-                  <p className="text-xs text-amber-500 ml-1">
-                    Custom messages and images are disabled when a template is selected.
+                  <p className="text-xs text-amber-500 ml-1 mt-2">
+                    Custom text is disabled for templates, but you can still attach an Image if your template requires a Media Header!
                   </p>
                 )}
               </div>
@@ -144,8 +144,8 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
               </div>
             </div>
 
-            <div className={`space-y-2 transition-opacity duration-300 ${selectedTemplateName ? 'opacity-50 pointer-events-none' : ''}`}>
-              <label className="text-sm font-medium text-slate-400 ml-1">Attach Photo (Optional)</label>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-400 ml-1">Attach Photo/Media (For Custom or Template Headers)</label>
               {!imageUrl ? (
                 <div 
                   onClick={() => fileInputRef.current?.click()}

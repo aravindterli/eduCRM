@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, FileText, CreditCard, Calendar, BarChart3, Settings, LogOut, Megaphone, Book, Video, MessageSquare, CalendarClock } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, CreditCard, Calendar, BarChart3, Settings, LogOut, Megaphone, Book, Video, MessageSquare, CalendarClock, Send } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -16,6 +16,7 @@ const sidebarItems = [
   { icon: Megaphone, label: 'Marketing', href: '/marketing', roles: ['ADMIN', 'MARKETING_TEAM'] },
   { icon: Video, label: 'Webinars', href: '/webinars', roles: ['ADMIN', 'MARKETING_TEAM'] },
   { icon: MessageSquare, label: 'Templates', href: '/settings/templates', roles: ['ADMIN', 'MARKETING_TEAM', 'COUNSELOR'] },
+  { icon: Send, label: 'Bulk Broadcast', href: '/broadcast', roles: ['ADMIN', 'MARKETING_TEAM', 'COUNSELOR'] },
 ];
 
 export const Sidebar = () => {

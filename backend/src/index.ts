@@ -52,6 +52,34 @@ app.get('/health', (req, res) => {
   res.json({ status: 'UP', message: 'EduCRM API v1 is running', timestamp: new Date() });
 });
 
+// Meta requires a Privacy Policy URL
+app.get('/privacy-policy', (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>Privacy Policy</title>
+        <style>
+          body { font-family: sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; color: #333; }
+          h1 { color: #1a73e8; }
+        </style>
+      </head>
+      <body>
+        <h1>Privacy Policy</h1>
+        <p>Last updated: April 2026</p>
+        <p>This privacy policy applies to our WhatsApp Business API integration and CRM applications.</p>
+        <h2>1. Information we collect</h2>
+        <p>We only collect the phone numbers and names necessary to provide educational consulting services.</p>
+        <h2>2. How we use information</h2>
+        <p>We use this information strictly to send requested updates, application statuses, and relevant promotional materials regarding our programs.</p>
+        <h2>3. Third-party disclosure</h2>
+        <p>We do not share your private data with third parties outside of Meta's communication infrastructure.</p>
+        <h2>4. Contact</h2>
+        <p>If you have questions about this policy, please contact our administrative team.</p>
+      </body>
+    </html>
+  `);
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
   console.log(`📡 API Base Path: http://localhost:${PORT}/api/v1`);

@@ -3,12 +3,13 @@
 import React from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useTemplateStore } from '@/store/useTemplateStore';
-import { MessageSquare, Mail, Smartphone, Plus, Trash2, Edit } from 'lucide-react';
+import { MessageSquare, Mail, Smartphone, Plus, Trash2, Edit, RefreshCw } from 'lucide-react';
 
 export default function TemplatesPage() {
-  const { templates, fetchTemplates, createTemplate, updateTemplate, deleteTemplate, loading } = useTemplateStore();
+  const { templates, fetchTemplates, createTemplate, updateTemplate, deleteTemplate, syncWhatsAppTemplates, loading } = useTemplateStore();
   const [isFormOpen, setIsFormOpen] = React.useState(false);
   const [formData, setFormData] = React.useState({ id: '', name: '', content: '', channel: 'WHATSAPP' });
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   React.useEffect(() => {
     fetchTemplates();
@@ -16,13 +17,19 @@ export default function TemplatesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.id) {
-      await updateTemplate(formData.id, formData);
-    } else {
-      await createTemplate(formData);
+    try {
+      if (formData.id) {
+        const success = await updateTemplate(formData.id, formData);
+        if (!success) throw new Error("Failed to update template.");
+      } else {
+        const success = await createTemplate(formData);
+        if (!success) throw new Error("Failed to create template. The template name might already exist or the Meta format is invalid.");
+      }
+      setIsFormOpen(false);
+      setFormData({ id: '', name: '', content: '', channel: 'WHATSAPP' });
+    } catch (err: any) {
+      alert(err.message);
     }
-    setIsFormOpen(false);
-    setFormData({ id: '', name: '', content: '', channel: 'WHATSAPP' });
   };
 
   const handleEdit = (t: any) => {
@@ -36,6 +43,17 @@ export default function TemplatesPage() {
     return <Mail size={18} className="text-orange-400" />;
   };
 
+  const handleSyncMeta = async () => {
+    setIsSyncing(true);
+    const result = await syncWhatsAppTemplates();
+    setIsSyncing(false);
+    if (!result.success) {
+      alert(result.message || 'Failed to sync templates. Ensure META_WABA_ID is configured in the backend.');
+    } else {
+      alert(result.message);
+    }
+  };
+
   return (
     <MainLayout>
       <div className="flex justify-between items-center mb-8">
@@ -43,12 +61,22 @@ export default function TemplatesPage() {
           <h1 className="text-2xl font-bold">Message Templates</h1>
           <p className="text-slate-400 text-sm">Manage automated outbound communication formats</p>
         </div>
-        <button 
-          onClick={() => { setFormData({ id: '', name: '', content: '', channel: 'WHATSAPP' }); setIsFormOpen(true); }}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2"
-        >
-          <Plus size={16} /> New Template
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={handleSyncMeta}
+            disabled={isSyncing}
+            className="bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2 border border-emerald-500/20 disabled:opacity-50"
+          >
+            <RefreshCw size={16} className={isSyncing ? "animate-spin" : ""} /> 
+            {isSyncing ? 'Syncing...' : 'Sync Meta Tpls'}
+          </button>
+          <button 
+            onClick={() => { setFormData({ id: '', name: '', content: '', channel: 'WHATSAPP' }); setIsFormOpen(true); }}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2"
+          >
+            <Plus size={16} /> New Template
+          </button>
+        </div>
       </div>
 
       {isFormOpen && (
@@ -120,7 +148,18 @@ export default function TemplatesPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-200">{t.name}</h3>
-                  <p className="text-[10px] text-slate-500 font-black tracking-widest uppercase">{t.channel}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-[10px] text-slate-500 font-black tracking-widest uppercase">{t.channel}</p>
+                    {t.channel === 'WHATSAPP' && t.status && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded font-black tracking-wider uppercase ${
+                        t.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400' : 
+                        t.status === 'PENDING' ? 'bg-yellow-500/20 text-yellow-400' : 
+                        'bg-red-500/20 text-red-400'
+                      }`}>
+                        {t.status}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

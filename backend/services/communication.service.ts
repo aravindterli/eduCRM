@@ -4,7 +4,7 @@ import twilio from 'twilio';
 import axios from 'axios';
 
 export class CommunicationService {
-  private transporter: nodemailer.Transporter;
+  public transporter: nodemailer.Transporter;
   private twilioClient: twilio.Twilio | null;
 
   constructor() {
@@ -29,12 +29,12 @@ export class CommunicationService {
   }
   async sendEmail(to: string, templateKey: string, data: any, leadId?: string) {
     console.log(`[Email] Dispatching ${templateKey} to ${to}...`);
-    
+
     try {
       if (!to) return { success: false, error: 'No email provided' };
 
       const dbTemplate = await prisma.messageTemplate.findFirst({
-        where: { 
+        where: {
           OR: [{ name: templateKey }, { id: templateKey }],
           channel: 'EMAIL'
         }
@@ -50,19 +50,20 @@ export class CommunicationService {
 
       const formattedSubject = this.formatTemplate(subject, data);
       const formattedContent = this.formatTemplate(bodyText, data);
-      
+
       const html = this.getBaseTemplate(formattedSubject, formattedContent);
 
       const info = await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',
+
+        from: process.env.EMAIL_FROM || '"The Foundrys" <no-reply@educrm.com>',
         to,
         subject: formattedSubject,
         text: formattedContent.replace(/<[^>]*>?/gm, ''),
         html
       });
-      
+
       console.log(`[Email] Dispatched successfully: ${info.messageId}`);
-      
+
       if (leadId) {
         await prisma.communicationLog.create({
           data: {
@@ -81,7 +82,7 @@ export class CommunicationService {
     }
   }
 
-  private getBaseTemplate(title: string, content: string, cta?: { label: string, url: string }) {
+  public getBaseTemplate(title: string, content: string, cta?: { label: string, url: string }) {
     const ctaHtml = cta ? `
       <table cellpadding="0" cellspacing="0" style="margin-top: 32px;">
         <tr><td style="background: linear-gradient(135deg, #3b82f6, #6366f1); border-radius: 12px;">
@@ -214,7 +215,7 @@ export class CommunicationService {
   async sendWhatsApp(phone: string, message: string, leadId?: string, imageUrl?: string, templateName?: string) {
     // WhatsApp requires country codes. If it's a 10-digit number, assume India (91).
     const formattedPhone = phone.length === 10 ? `91${phone}` : phone.replace('+', '');
-    
+
     console.log(`[WhatsApp] Dispatching to ${formattedPhone}... ${templateName ? `(Template: ${templateName})` : ''} ${imageUrl ? '(with image)' : ''}`);
     try {
       if (process.env.META_WHATSAPP_TOKEN && process.env.META_PHONE_NUMBER_ID) {
@@ -227,28 +228,39 @@ export class CommunicationService {
             type: 'template',
             template: {
               name: templateName,
-              language: {
-                code: 'en_US'
-              }
+              language: { code: 'en' },
+              ...(imageUrl && {
+                components: [
+                  {
+                    type: 'header',
+                    parameters: [
+                      {
+                        type: 'image',
+                        image: { link: imageUrl }
+                      }
+                    ]
+                  }
+                ]
+              })
             }
           };
         } else {
-          payload = imageUrl 
+          payload = imageUrl
             ? {
-                messaging_product: 'whatsapp',
-                to: formattedPhone,
-                type: 'image',
-                image: {
-                  link: imageUrl,
-                  caption: message
-                }
+              messaging_product: 'whatsapp',
+              to: formattedPhone,
+              type: 'image',
+              image: {
+                link: imageUrl,
+                caption: message
               }
+            }
             : {
-                messaging_product: 'whatsapp',
-                to: formattedPhone,
-                type: 'text',
-                text: { body: message }
-              };
+              messaging_product: 'whatsapp',
+              to: formattedPhone,
+              type: 'text',
+              text: { body: message }
+            };
         }
 
         await axios.post(
@@ -294,7 +306,18 @@ export class CommunicationService {
 
     const html = this.getBaseTemplate(subject, content);
 
-    await this.sendWhatsApp(lead.phone, `Hi ${lead.name}, thanks for inquiring about ${programName}. A counselor will contact you soon!`, lead.id);
+    // Use a Meta Template with an image header to prevent 24-hour window blocks,
+    // and to include the course image right at lead creation!
+    const welcomeTemplateName = process.env.WELCOME_WHATSAPP_TEMPLATE_NAME || 'testmsg';
+    const welcomeImageUrl = process.env.WELCOME_COURSE_IMAGE_URL || 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1000&auto=format&fit=crop';
+
+    await this.sendWhatsApp(
+      lead.phone,
+      `Hi ${lead.name}, thanks for inquiring about ${programName}. A counselor will contact you soon!`,
+      lead.id,
+      welcomeImageUrl,
+      welcomeTemplateName
+    );
 
     if (lead.email) {
       await this.transporter.sendMail({
@@ -318,11 +341,11 @@ export class CommunicationService {
 
     const cta = { label: 'Re-apply Now', url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/apply` };
     const html = this.getBaseTemplate(subject, content, cta);
-    
+
     console.log(`[Re-engagement] Sending automated reach-out to ${lead.name}`);
-    
+
     await this.sendWhatsApp(lead.phone, `Hi ${lead.name}, we have a new intake for ${programName}! Would you like to re-apply? Reply YES to know more.`, lead.id);
-    
+
     if (lead.email) {
       await this.transporter.sendMail({
         from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',

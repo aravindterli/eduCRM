@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Calendar, Clock, MapPin, Users, CheckCircle2, ChevronRight, Loader2, Sparkles, User, Mail, Phone, GraduationCap } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, CheckCircle2, ChevronRight, Loader2, Sparkles, User, Mail, Phone, GraduationCap, QrCode } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import axios from 'axios';
 import { useParams } from 'next/navigation';
 
@@ -90,11 +91,23 @@ export default function WebinarRegistrationPage() {
               {new Date(webinar.date).toLocaleTimeString(undefined, { timeStyle: 'short' })}
             </div>
           </div>
-          <p className="text-xs text-slate-500 italic">See you there!</p>
-        </div>
-      </div>
-    );
-  }
+          <div className="flex flex-col items-center gap-4 mb-8">
+            <div className="p-3 bg-white rounded-2xl shadow-inner">
+               <QRCodeCanvas
+                 id="webinar-qr-success"
+                 value={`${typeof window !== 'undefined' ? window.location.origin : ''}/webinars/${id}/register`}
+                 size={140}
+                 level={"H"}
+               />
+            </div>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">scan to share with others</p>
+          </div>
+          <button
+            onClick={() => window.location.href = '/'}
+            className="w-full bg-white/5 hover:bg-white/10 py-4 rounded-2xl text-blue-400 font-bold transition-all flex items-center justify-center gap-2"
+          >
+            Back to Homepage
+          </button>
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-blue-500/30 overflow-x-hidden">
@@ -144,6 +157,22 @@ export default function WebinarRegistrationPage() {
               <p className="text-sm text-slate-400 pr-6">
                 Joined by <span className="text-white font-bold">{webinar._count?.registrations + 120}+</span> others
               </p>
+            </div>
+
+            <div className="pt-10 space-y-4">
+               <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                 <QrCode size={14} className="text-purple-500" /> scan to join from mobile
+               </div>
+               <div className="p-6 bg-white/[0.03] border border-white/5 rounded-[2.5rem] w-fit group hover:border-purple-500/30 transition-all">
+                  <div className="p-3 bg-white rounded-2xl">
+                    <QRCodeCanvas
+                      id="webinar-qr-sidebar"
+                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/webinars/${id}/register`}
+                      size={140}
+                      level={"H"}
+                    />
+                  </div>
+               </div>
             </div>
           </div>
 

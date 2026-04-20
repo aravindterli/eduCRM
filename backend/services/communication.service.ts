@@ -135,10 +135,10 @@ export class CommunicationService {
     leadId?: string;
   }) {
     const dateStr = data.scheduledAt.toLocaleDateString('en-IN', {
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Kolkata'
     });
     const timeStr = data.scheduledAt.toLocaleTimeString('en-IN', {
-      hour: '2-digit', minute: '2-digit', hour12: true
+      hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'
     });
 
     const subject = `📅 Meeting Invite: ${dateStr} at ${timeStr}`;
@@ -179,6 +179,58 @@ export class CommunicationService {
       return { success: true };
     } catch (error: any) {
       console.error(`[Email] Failed to send follow-up invite to ${to}:`, error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async sendWebinarRegistrationEmail(lead: any, webinar: any) {
+    const to = lead.email;
+    if (!to) return { success: false, error: 'No email provided for lead' };
+
+    const dateStr = new Date(webinar.date).toLocaleDateString('en-IN', {
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Kolkata'
+    });
+    const timeStr = new Date(webinar.date).toLocaleTimeString('en-IN', {
+      hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata'
+    });
+
+    const subject = `🎟️ Seat Reserved: ${webinar.title}`;
+    const content = `
+      <p>Hi <strong>${lead.name}</strong>,</p>
+      <p>Your spot for the upcoming live webinar <strong>"${webinar.title}"</strong> has been successfully reserved!</p>
+      <div style="background:#0f172a; border-radius:16px; padding:24px; border:1px solid #3b82f6; margin:32px 0;">
+        <p style="margin:0; color:#60a5fa; font-size:12px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">Webinar Details</p>
+        <p style="margin:8px 0 0; color:#ffffff; font-size:20px; font-weight:800;">${dateStr}</p>
+        <p style="margin:4px 0 0; color:#94a3b8; font-size:16px;">${timeStr}</p>
+        <p style="margin:24px 0 0; color:#94a3b8; font-size:14px; border-top:1px solid #1e293b; padding-top:16px;"><strong>Description:</strong> ${webinar.description || 'Join us for this exclusive session.'}</p>
+      </div>
+      <p>We've included the joining link below. We recommend joining 5 minutes early to test your audio and video.</p>
+    `;
+
+    const html = this.getBaseTemplate(subject, content, { label: '🎥 Join Webinar Now', url: webinar.meetingUrl });
+
+    try {
+      const info = await this.transporter.sendMail({
+        from: process.env.EMAIL_FROM || '"EduCRM Webinars" <no-reply@educrm.com>',
+        to,
+        subject,
+        text: `You're registered for ${webinar.title} on ${dateStr} at ${timeStr}. Join here: ${webinar.meetingUrl}`,
+        html,
+      });
+      console.log(`[Email] Webinar registration confirmation sent to ${to}: ${info.messageId}`);
+
+      await prisma.communicationLog.create({
+        data: {
+          leadId: lead.id,
+          type: 'EMAIL',
+          direction: 'OUTBOUND',
+          message: `Webinar Registration: ${webinar.title} — ${dateStr} at ${timeStr}`,
+          status: 'SENT',
+        },
+      });
+      return { success: true };
+    } catch (error: any) {
+      console.error(`[Email] Failed to send webinar confirmation to ${to}:`, error.message);
       return { success: false, error: error.message };
     }
   }
@@ -402,6 +454,41 @@ export class CommunicationService {
         subject,
         html
       });
+    }
+  }
+
+  async sendCounselorNotification(counselor: any, lead: any) {
+    if (!counselor || !counselor.email) return;
+
+    const subject = `🚀 New Lead Assigned: ${lead.name}`;
+    const content = `
+      <p>Hi <strong>${counselor.name}</strong>,</p>
+      <p>A new lead has been assigned to you from <strong>${lead.leadSource || 'Direct'}</strong>.</p>
+      <div style="background:#0f172a; border-radius:16px; padding:24px; border:1px solid #3b82f6; margin:32px 0;">
+        <p style="margin:0; color:#60a5fa; font-size:12px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">Student Details</p>
+        <p style="margin:8px 0 0; color:#ffffff; font-size:20px; font-weight:800;">${lead.name}</p>
+        <p style="margin:4px 0 0; color:#94a3b8; font-size:16px;">${lead.phone}</p>
+        ${lead.email ? `<p style="margin:4px 0 0; color:#94a3b8; font-size:16px;">${lead.email}</p>` : ''}
+      </div>
+      <p>Please take action and reach out to the lead as soon as possible to improve conversion chances.</p>
+    `;
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const html = this.getBaseTemplate(subject, content, { 
+      label: 'Open Lead Details', 
+      url: `${frontendUrl}/leads` 
+    });
+
+    try {
+      await this.transporter.sendMail({
+        from: process.env.EMAIL_FROM || '"EduCRM Alerts" <no-reply@educrm.com>',
+        to: counselor.email,
+        subject,
+        html,
+      });
+      console.log(`[Email] Counselor notification sent to ${counselor.email} for lead: ${lead.name}`);
+    } catch (error: any) {
+      console.error(`[Email] Failed to send counselor notification:`, error.message);
     }
   }
 }

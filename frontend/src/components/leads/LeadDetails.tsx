@@ -68,6 +68,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
     }
   };
   const [updatingStage, setUpdatingStage] = React.useState(false);
+  const [updatingTag, setUpdatingTag] = React.useState(false);
   const [verifyingDocId, setVerifyingDocId] = React.useState<string | null>(null);
   const [downloadingLetter, setDownloadingLetter] = React.useState(false);
   const [reactivating, setReactivating] = React.useState(false);
@@ -92,6 +93,21 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
       }
     } finally {
       setUpdatingStage(false);
+    }
+  };
+
+  const { updateLead } = useLeadStore();
+  const handleTagChange = async (newTag: string) => {
+    setUpdatingTag(true);
+    try {
+      const success = await updateLead(lead.id, { tag: newTag });
+      if (success) {
+        setSuccessMsg(`Lead temperature updated to ${newTag}`);
+        fetchLeads();
+        setTimeout(() => setSuccessMsg(''), 2000);
+      }
+    } finally {
+      setUpdatingTag(false);
     }
   };
 
@@ -336,6 +352,20 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                     {STAGES.filter(s => s !== lead.stage).map(s => (
                       <option key={s} value={s} className="bg-background text-foreground">{s.replace('_', ' ')}</option>
                     ))}
+                  </select>
+                  <select
+                    value={lead.tag || 'COLD'}
+                    onChange={(e) => handleTagChange(e.target.value)}
+                    disabled={updatingTag}
+                    className={`text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded border-none outline-none cursor-pointer hover:opacity-80 transition-all disabled:opacity-50 ${
+                      lead.tag === 'HOT' ? 'bg-red-500/10 text-red-400' :
+                      lead.tag === 'WARM' ? 'bg-amber-500/10 text-amber-400' :
+                      'bg-blue-500/10 text-blue-400'
+                    }`}
+                  >
+                    <option value="COLD" className="bg-background text-foreground">Cold</option>
+                    <option value="WARM" className="bg-background text-foreground">Warm</option>
+                    <option value="HOT" className="bg-background text-foreground">Hot</option>
                   </select>
                 </div>
               </div>

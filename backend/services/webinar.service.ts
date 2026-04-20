@@ -47,6 +47,19 @@ export class WebinarService {
       data: { stage: 'WEBINAR_REGISTERED' },
     });
 
+    // Send confirmation email
+    try {
+      const [lead, webinar] = await Promise.all([
+        prisma.lead.findUnique({ where: { id: leadId } }),
+        prisma.webinar.findUnique({ where: { id: webinarId } })
+      ]);
+      if (lead && webinar && lead.email) {
+        await CommunicationService.sendWebinarRegistrationEmail(lead, webinar);
+      }
+    } catch (err) {
+      console.error('[WebinarService] Failed to send registration email:', err);
+    }
+
     return registration;
   }
 
@@ -151,8 +164,8 @@ export class WebinarService {
     // Activity Logging
     const AuditService = (await import('./audit.service')).default;
     await AuditService.log(
-      isNewLead ? `New lead created via Webinar: ${lead.name}` : `Existing lead registered for Webinar: ${lead.name}`, 
-      undefined, 
+      isNewLead ? `New lead created via Webinar: ${lead.name}` : `Existing lead registered for Webinar: ${lead.name}`,
+      undefined,
       { leadId: lead.id, webinarId, source: 'WEBINAR' }
     );
     // --- END LEAD FLOW ---
@@ -176,6 +189,16 @@ export class WebinarService {
         leadId: lead.id
       }
     });
+
+    // 4. Send confirmation email
+    try {
+      const webinar = await prisma.webinar.findUnique({ where: { id: webinarId } });
+      if (lead && webinar && lead.email) {
+        await CommunicationService.sendWebinarRegistrationEmail(lead, webinar);
+      }
+    } catch (err) {
+      console.error('[WebinarService] Failed to send registration email:', err);
+    }
 
     return { message: 'Registration successful', lead, registration };
   }

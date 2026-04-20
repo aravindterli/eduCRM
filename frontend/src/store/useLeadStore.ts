@@ -6,7 +6,11 @@ interface LeadState {
   stats: any;
   loading: boolean;
   error: string | null;
-  fetchLeads: () => Promise<void>;
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  fetchLeads: (page?: number, limit?: number, filters?: any) => Promise<void>;
   fetchStats: () => Promise<void>;
   addLead: (data: Partial<Lead>) => Promise<boolean>;
   importLeads: (leads: any[]) => Promise<any>;
@@ -24,12 +28,25 @@ export const useLeadStore = create<LeadState>((set, get) => ({
   stats: null,
   loading: false,
   error: null,
+  total: 0,
+  page: 1,
+  limit: 10,
+  totalPages: 0,
 
-  fetchLeads: async () => {
+  fetchLeads: async (page, limit, filters) => {
     set({ loading: true });
     try {
-      const data = await leadService.getAll();
-      set({ leads: data, loading: false });
+      const currentPage = page || get().page;
+      const currentLimit = limit || get().limit;
+      const response = await leadService.getAll(currentPage, currentLimit, filters);
+      set({ 
+        leads: response.leads, 
+        total: response.total,
+        page: response.page,
+        limit: response.limit,
+        totalPages: response.totalPages,
+        loading: false 
+      });
     } catch (err: any) {
       set({ error: err.message, loading: false });
     }
@@ -49,10 +66,16 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     set({ loading: true });
     try {
       await leadService.create(data);
-      // Fetch leads again to refresh the list
-      const leads = await leadService.getAll();
+      const { page, limit } = get();
+      const response = await leadService.getAll(page, limit);
       const stats = await leadService.getStats();
-      set({ leads, stats, loading: false });
+      set({ 
+        leads: response.leads,
+        total: response.total,
+        totalPages: response.totalPages,
+        stats, 
+        loading: false 
+      });
       return true;
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -64,10 +87,16 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     set({ loading: true });
     try {
       const results = await leadService.bulkImport(leads);
-      // Refresh leads and stats
-      const updatedLeads = await leadService.getAll();
-      const updatedStats = await leadService.getStats();
-      set({ leads: updatedLeads, stats: updatedStats, loading: false });
+      const { page, limit } = get();
+      const response = await leadService.getAll(page, limit);
+      const stats = await leadService.getStats();
+      set({ 
+        leads: response.leads,
+        total: response.total,
+        totalPages: response.totalPages,
+        stats, 
+        loading: false 
+      });
       return results;
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -79,8 +108,14 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     set({ loading: true });
     try {
       await leadService.scheduleCall(leadId, data);
-      const leads = await leadService.getAll();
-      set({ leads, loading: false });
+      const { page, limit } = get();
+      const response = await leadService.getAll(page, limit);
+      set({ 
+        leads: response.leads,
+        total: response.total,
+        totalPages: response.totalPages,
+        loading: false 
+      });
       return true;
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -92,9 +127,16 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     set({ loading: true });
     try {
       await leadService.updateStage(leadId, stage);
-      const leads = await leadService.getAll();
+      const { page, limit } = get();
+      const response = await leadService.getAll(page, limit);
       const stats = await leadService.getStats();
-      set({ leads, stats, loading: false });
+      set({ 
+        leads: response.leads,
+        total: response.total,
+        totalPages: response.totalPages,
+        stats, 
+        loading: false 
+      });
       return true;
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -106,8 +148,14 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     set({ loading: true });
     try {
       await leadService.update(leadId, data);
-      const leads = await leadService.getAll();
-      set({ leads, loading: false });
+      const { page, limit } = get();
+      const response = await leadService.getAll(page, limit);
+      set({ 
+        leads: response.leads,
+        total: response.total,
+        totalPages: response.totalPages,
+        loading: false 
+      });
       return true;
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -119,9 +167,16 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     set({ loading: true });
     try {
       await leadService.delete(leadId);
-      const leads = await leadService.getAll();
+      const { page, limit } = get();
+      const response = await leadService.getAll(page, limit);
       const stats = await leadService.getStats();
-      set({ leads, stats, loading: false });
+      set({ 
+        leads: response.leads,
+        total: response.total,
+        totalPages: response.totalPages,
+        stats, 
+        loading: false 
+      });
       return true;
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -133,9 +188,16 @@ export const useLeadStore = create<LeadState>((set, get) => ({
     set({ loading: true });
     try {
       await leadService.reactivateLead(leadId);
-      const leads = await leadService.getAll();
+      const { page, limit } = get();
+      const response = await leadService.getAll(page, limit);
       const stats = await leadService.getStats();
-      set({ leads, stats, loading: false });
+      set({ 
+        leads: response.leads,
+        total: response.total,
+        totalPages: response.totalPages,
+        stats, 
+        loading: false 
+      });
       return true;
     } catch (err: any) {
       set({ error: err.message, loading: false });

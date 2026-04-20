@@ -84,21 +84,21 @@ export default function WebinarRegistrationPage() {
           <div className="p-6 bg-white/5 rounded-3xl border border-white/5 text-left space-y-3 mb-8">
             <div className="flex items-center gap-3 text-sm text-slate-300">
               <Calendar size={16} className="text-blue-400" />
-              {new Date(webinar.date).toLocaleDateString(undefined, { dateStyle: 'long' })}
+              {new Date(webinar.date).toLocaleDateString('en-IN', { dateStyle: 'long', timeZone: 'Asia/Kolkata' })}
             </div>
             <div className="flex items-center gap-3 text-sm text-slate-300">
               <Clock size={16} className="text-blue-400" />
-              {new Date(webinar.date).toLocaleTimeString(undefined, { timeStyle: 'short' })}
+              {new Date(webinar.date).toLocaleTimeString('en-IN', { timeStyle: 'short', timeZone: 'Asia/Kolkata' })}
             </div>
           </div>
           <div className="flex flex-col items-center gap-4 mb-8">
             <div className="p-3 bg-white rounded-2xl shadow-inner">
-               <QRCodeCanvas
-                 id="webinar-qr-success"
-                 value={`${typeof window !== 'undefined' ? window.location.origin : ''}/webinars/${id}/register`}
-                 size={140}
-                 level={"H"}
-               />
+              <QRCodeCanvas
+                id="webinar-qr-success"
+                value={`${typeof window !== 'undefined' ? window.location.origin : ''}/webinars/${id}/register`}
+                size={140}
+                level={"H"}
+              />
             </div>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">scan to share with others</p>
           </div>
@@ -108,6 +108,10 @@ export default function WebinarRegistrationPage() {
           >
             Back to Homepage
           </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#050505] text-white selection:bg-blue-500/30 overflow-x-hidden">
@@ -137,12 +141,12 @@ export default function WebinarRegistrationPage() {
               <div className="p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-white/10 transition-colors group">
                 <Calendar className="text-blue-500 mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-1">Date</h3>
-                <p className="text-lg font-bold">{new Date(webinar.date).toLocaleDateString(undefined, { dateStyle: 'long' })}</p>
+                <p className="text-lg font-bold">{new Date(webinar.date).toLocaleDateString('en-IN', { dateStyle: 'long', timeZone: 'Asia/Kolkata' })}</p>
               </div>
               <div className="p-6 bg-white/5 rounded-3xl border border-white/5 hover:border-white/10 transition-colors group">
                 <Clock className="text-purple-500 mb-4 group-hover:scale-110 transition-transform" />
                 <h3 className="text-sm font-black uppercase tracking-widest text-slate-500 mb-1">Time</h3>
-                <p className="text-lg font-bold">{new Date(webinar.date).toLocaleTimeString(undefined, { timeStyle: 'short' })}</p>
+                <p className="text-lg font-bold">{new Date(webinar.date).toLocaleTimeString('en-IN', { timeStyle: 'short', timeZone: 'Asia/Kolkata' })}</p>
               </div>
             </div>
 
@@ -160,19 +164,19 @@ export default function WebinarRegistrationPage() {
             </div>
 
             <div className="pt-10 space-y-4">
-               <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
-                 <QrCode size={14} className="text-purple-500" /> scan to join from mobile
-               </div>
-               <div className="p-6 bg-white/[0.03] border border-white/5 rounded-[2.5rem] w-fit group hover:border-purple-500/30 transition-all">
-                  <div className="p-3 bg-white rounded-2xl">
-                    <QRCodeCanvas
-                      id="webinar-qr-sidebar"
-                      value={`${typeof window !== 'undefined' ? window.location.origin : ''}/webinars/${id}/register`}
-                      size={140}
-                      level={"H"}
-                    />
-                  </div>
-               </div>
+              <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">
+                <QrCode size={14} className="text-purple-500" /> scan to join from mobile
+              </div>
+              <div className="p-6 bg-white/[0.03] border border-white/5 rounded-[2.5rem] w-fit group hover:border-purple-500/30 transition-all">
+                <div className="p-3 bg-white rounded-2xl">
+                  <QRCodeCanvas
+                    id="webinar-qr-sidebar"
+                    value={`${typeof window !== 'undefined' ? window.location.origin : ''}/webinars/${id}/register`}
+                    size={140}
+                    level={"H"}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
@@ -277,7 +281,7 @@ export default function WebinarRegistrationPage() {
 
       {/* Footer Branding */}
       <footer className="max-w-7xl mx-auto px-6 py-12 border-t border-white/5 flex items-center justify-between text-slate-600 text-[10px] font-black uppercase tracking-[0.2em]">
-        <div>Powered by EduCRM</div>
+        <div>Powered by Foundrys</div>
       </footer>
     </div>
   );

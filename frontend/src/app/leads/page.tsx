@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Filter, Plus, MoreVertical, ExternalLink, Upload, Phone, MessageSquare, Pencil, Trash2 } from 'lucide-react';
+import { Search, Filter, Plus, ExternalLink, Upload, Pencil, Trash2, MessageSquare } from 'lucide-react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { LeadForm } from '@/components/leads/LeadForm';
 import { LeadDetails } from '@/components/leads/LeadDetails';
@@ -16,23 +16,32 @@ const stageColors: Record<string, string> = {
 };
 
 export default function LeadsPage() {
-  const { leads, fetchLeads, loading } = useLeadStore();
+  // Destructure reactive state from the store
+  const { 
+    leads, 
+    fetchLeads, 
+    loading, 
+    total, 
+    page, 
+    limit, 
+    totalPages,
+    deleteLead 
+  } = useLeadStore();
+
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const campaignFilter = searchParams?.get('campaignId');
-  
+
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isImportOpen, setIsImportOpen] = React.useState(false);
   const [selectedLead, setSelectedLead] = React.useState<any>(null);
   const [leadToEdit, setLeadToEdit] = React.useState<any>(null);
   const [leadToDelete, setLeadToDelete] = React.useState<any>(null);
   const [isDeleting, setIsDeleting] = React.useState(false);
-
-  const { deleteLead } = useLeadStore();
   const [selectedLeadIds, setSelectedLeadIds] = React.useState<string[]>([]);
   const [isBulkWhatsAppOpen, setIsBulkWhatsAppOpen] = React.useState(false);
 
   React.useEffect(() => {
-    fetchLeads();
+    fetchLeads(page, limit);
   }, [fetchLeads]);
 
   const filteredLeads = React.useMemo(() => {
@@ -50,26 +59,26 @@ export default function LeadsPage() {
 
   const toggleSelectLead = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setSelectedLeadIds(prev => 
+    setSelectedLeadIds(prev =>
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
 
   return (
     <MainLayout>
-      <LeadForm 
-        isOpen={isAddOpen || !!leadToEdit} 
+      <LeadForm
+        isOpen={isAddOpen || !!leadToEdit}
         onClose={() => {
           setIsAddOpen(false);
           setLeadToEdit(null);
-        }} 
+        }}
         initialData={leadToEdit}
       />
       <LeadImportModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
-      <LeadDetails 
-        lead={selectedLead} 
-        isOpen={!!selectedLead} 
-        onClose={() => setSelectedLead(null)} 
+      <LeadDetails
+        lead={selectedLead}
+        isOpen={!!selectedLead}
+        onClose={() => setSelectedLead(null)}
       />
       <BulkWhatsAppDrawer
         isOpen={isBulkWhatsAppOpen}
@@ -77,9 +86,10 @@ export default function LeadsPage() {
         selectedLeadIds={selectedLeadIds}
         onSuccess={() => {
           setSelectedLeadIds([]);
-          fetchLeads();
+          fetchLeads(page, limit);
         }}
       />
+      
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold">
@@ -88,24 +98,16 @@ export default function LeadsPage() {
           <p className="text-slate-400 text-sm">
             {campaignFilter ? `Showing leads for the selected campaign` : 'Track and manage your admission leads'}
           </p>
-          {campaignFilter && (
-            <button 
-              onClick={() => window.history.pushState({}, '', '/leads')}
-              className="text-[10px] text-primary hover:underline mt-1"
-            >
-              Clear filter
-            </button>
-          )}
         </div>
         <div className="flex gap-3 w-full sm:w-auto">
-          <button 
+          <button
             onClick={() => setIsImportOpen(true)}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-muted-foreground px-4 py-2 rounded-xl transition-all border border-border"
           >
             <Upload size={18} />
             <span className="text-sm">Import</span>
           </button>
-          <button 
+          <button
             onClick={() => setIsAddOpen(true)}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded-xl transition-all shadow-lg shadow-primary/20"
           >
@@ -119,8 +121,8 @@ export default function LeadsPage() {
         <div className="p-4 border-b border-white/5 flex flex-wrap gap-4 items-center justify-between">
           <div className="relative flex-1 min-w-[300px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-            <input 
-              placeholder="Search leads..." 
+            <input
+              placeholder="Search leads..."
               className="w-full bg-white/5 border-none rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-1 ring-white/10"
             />
           </div>
@@ -137,7 +139,7 @@ export default function LeadsPage() {
             <thead>
               <tr className="text-slate-500 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-medium w-10">
-                  <div 
+                  <div
                     className={`w-5 h-5 rounded border ${selectedLeadIds.length === filteredLeads.length && filteredLeads.length > 0 ? 'bg-primary border-primary text-white' : 'border-white/10 hover:border-white/20'} flex items-center justify-center cursor-pointer transition-all`}
                     onClick={toggleSelectAll}
                   >
@@ -155,25 +157,25 @@ export default function LeadsPage() {
             <tbody className="divide-y divide-white/5">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-20 text-center text-slate-500 italic">
+                  <td colSpan={6} className="py-20 text-center text-slate-500 italic">
                     Loading leads from server...
                   </td>
                 </tr>
               ) : filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-20 text-center text-slate-500 italic">
-                    {campaignFilter ? 'No leads found for this campaign.' : 'No leads found. Start by adding one!'}
+                  <td colSpan={6} className="py-20 text-center text-slate-500 italic">
+                    No leads found.
                   </td>
                 </tr>
               ) : (
                 filteredLeads.map((lead) => (
-                  <tr 
-                    key={lead.id} 
+                  <tr
+                    key={lead.id}
                     className={`border-b border-white/5 hover:bg-white/[0.02] transition-colors cursor-pointer group ${selectedLeadIds.includes(lead.id) ? 'bg-white/[0.03]' : ''}`}
                     onClick={() => setSelectedLead(lead)}
                   >
                     <td className="py-4 px-6">
-                      <div 
+                      <div
                         className={`w-5 h-5 rounded border ${selectedLeadIds.includes(lead.id) ? 'bg-primary border-primary text-white' : 'border-white/10 group-hover:border-white/20'} flex items-center justify-center transition-all`}
                         onClick={(e) => toggleSelectLead(e, lead.id)}
                       >
@@ -186,28 +188,19 @@ export default function LeadsPage() {
                           {lead.name[0]}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-sm group-hover:text-blue-400 transition-colors truncate">{lead.name}</p>
                           <div className="flex items-center gap-2">
-                             <p className="text-[10px] text-slate-500 truncate">{lead.email}</p>
-                             <div className="flex lg:hidden items-center gap-2 ml-auto">
-                                <a 
-                                  href={`tel:${lead.phone}`} 
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="p-1 px-2 bg-blue-500/10 text-blue-400 rounded-md"
-                                >
-                                  <Phone size={12} />
-                                </a>
-                                <a 
-                                  href={`https://wa.me/${lead.phone.replace(/[^0-9]/g, '')}`} 
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="p-1 px-2 bg-emerald-500/10 text-emerald-400 rounded-md"
-                                >
-                                  <MessageSquare size={12} />
-                                </a>
-                             </div>
+                            <p className="font-semibold text-sm group-hover:text-blue-400 transition-colors truncate">{lead.name}</p>
+                            {lead.tag && (
+                              <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-tighter ${
+                                lead.tag === 'HOT' ? 'bg-red-500/20 text-red-400 border border-red-500/20' :
+                                lead.tag === 'WARM' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/20' :
+                                'bg-blue-500/20 text-blue-400 border border-blue-500/20'
+                              }`}>
+                                {lead.tag}
+                              </span>
+                            )}
                           </div>
+                          <p className="text-[10px] text-slate-500 truncate">{lead.email}</p>
                         </div>
                       </div>
                     </td>
@@ -217,44 +210,35 @@ export default function LeadsPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm hidden md:table-cell">
-                      {lead.leadSource === 'External LMS' ? (
-                        <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase bg-purple-500/10 text-purple-400 ring-1 ring-purple-500/20">
-                          EXTERNAL LMS
-                        </span>
-                      ) : (
-                        <span className="text-slate-400">{lead.leadSource}</span>
-                      )}
+                      <span className="text-slate-400">{lead.leadSource}</span>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-400 hidden sm:table-cell">{new Date(lead.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setLeadToEdit(lead);
                           }}
-                          className="p-2 hover:bg-blue-500/10 rounded-lg text-blue-400 transition-colors"
-                          title="Edit Lead"
+                          className="p-2 hover:bg-blue-500/10 rounded-lg text-blue-400"
                         >
                           <Pencil size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setLeadToDelete(lead);
                           }}
-                          className="p-2 hover:bg-red-500/10 rounded-lg text-red-400 transition-colors"
-                          title="Delete Lead"
+                          className="p-2 hover:bg-red-500/10 rounded-lg text-red-400"
                         >
                           <Trash2 size={16} />
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation();
                             setSelectedLead(lead);
                           }}
                           className="p-2 hover:bg-white/10 rounded-lg text-slate-400"
-                          title="View Details"
                         >
                           <ExternalLink size={16} />
                         </button>
@@ -265,6 +249,44 @@ export default function LeadsPage() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Footer */}
+        <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <p className="text-xs text-slate-500">
+              Showing <span className="text-white font-medium">{(page - 1) * limit + 1}</span> to{' '}
+              <span className="text-white font-medium">
+                {Math.min(page * limit, total)}
+              </span> of{' '}
+              <span className="text-white font-medium">{total}</span> leads
+            </p>
+            <select
+              value={limit}
+              onChange={(e) => fetchLeads(1, Number(e.target.value))}
+              className="bg-white/5 border-none rounded-lg text-[10px] text-slate-400 outline-none focus:ring-1 ring-white/10 px-2 py-1 cursor-pointer"
+            >
+              <option value="10">10 per page</option>
+              <option value="20">20 per page</option>
+              <option value="50">50 per page</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => fetchLeads(page - 1)}
+              disabled={page === 1}
+              className="px-4 py-2 rounded-xl bg-white/5 text-xs font-semibold hover:bg-white/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-white/5"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => fetchLeads(page + 1)}
+              disabled={page >= totalPages}
+              className="px-4 py-2 rounded-xl bg-primary text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-primary/20"
+            >
+              Next
+            </button>
+          </div>
         </div>
       </div>
 
@@ -278,16 +300,16 @@ export default function LeadsPage() {
             </div>
             <h3 className="text-lg font-bold mb-2 text-foreground">Delete Lead?</h3>
             <p className="text-sm text-muted-foreground mb-6">
-              Are you sure you want to delete <span className="font-semibold text-foreground">{leadToDelete.name}</span>? This action cannot be undone and will remove all associated data.
+              Are you sure you want to delete <span className="font-semibold text-foreground">{leadToDelete.name}</span>?
             </p>
             <div className="flex gap-3">
-              <button 
+              <button
                 onClick={() => setLeadToDelete(null)}
                 className="flex-1 px-4 py-2 rounded-xl text-sm font-semibold bg-white/5 hover:bg-white/10 transition-colors"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 onClick={async () => {
                   setIsDeleting(true);
                   const success = await deleteLead(leadToDelete.id);
@@ -314,14 +336,14 @@ export default function LeadsPage() {
             <span className="text-sm font-medium text-white">Leads selected</span>
           </div>
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => setIsBulkWhatsAppOpen(true)}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 text-sm font-bold transition-all border border-emerald-500/20"
             >
               <MessageSquare size={16} />
               Send WhatsApp
             </button>
-            <button 
+            <button
               onClick={() => setSelectedLeadIds([])}
               className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-white transition-colors"
             >

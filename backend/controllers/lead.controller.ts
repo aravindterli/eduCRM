@@ -27,8 +27,15 @@ export const createPublicLead = async (req: Request, res: Response) => {
 
 export const getLeads = async (req: Request, res: Response) => {
   try {
-    const leads = await LeadService.getAllLeads(req.query);
-    res.json(leads);
+    const { page, limit, stage, counselorId, tag } = req.query;
+    const result = await LeadService.getAllLeads({
+      page,
+      limit,
+      stage,
+      counselorId,
+      tag
+    });
+    res.json(result);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
@@ -101,6 +108,7 @@ export const getLeadStats = async (req: Request, res: Response) => {
 };
 
 import ImportService from '../services/import.service';
+import MetaService from '../services/meta.service';
 
 export const importLeads = async (req: Request, res: Response) => {
   try {
@@ -274,7 +282,7 @@ export const googleAdsWebhook = async (req: Request, res: Response) => {
 
     // 4. Process lead
     const lead = await LeadService.handlePublicApplication(leadData);
-    
+
     res.status(201).json({ success: true, lead_id: lead.id, campaign: campaign?.name || null });
   } catch (error: any) {
     console.error('Google Ads Webhook Error:', error);
@@ -283,6 +291,13 @@ export const googleAdsWebhook = async (req: Request, res: Response) => {
 };
 
 export const metaWebhook = async (req: Request, res: Response) => {
+  console.log('[MetaWebhook] Incoming Request:', {
+    method: req.method,
+    query: req.query,
+    body: JSON.stringify(req.body, null, 2),
+    headers: req.headers['x-hub-signature-256'] ? 'Present' : 'Missing'
+  });
+
   // Handle GET verification (handshake)
   if (req.method === 'GET') {
     const mode = req.query['hub.mode'];
@@ -305,42 +320,12 @@ export const metaWebhook = async (req: Request, res: Response) => {
       for (const change of entry.changes) {
         if (change.field === 'leadgen') {
           const leadgenId = change.value.leadgen_id;
-          const accessToken = process.env.META_ACCESS_TOKEN;
 
           // Fetch full lead data from Meta Graph API
-          const response = await axios.get(`https://graph.facebook.com/v19.0/${leadgenId}`, {
-            params: { access_token: accessToken }
-          });
+          const fbData = await MetaService.fetchLeadData(leadgenId);
 
-          const fbData = response.data;
-          const leadData: any = {
-            leadSource: 'Meta (FB/Insta)'
-          };
-
-          // Map Meta field_data to Lead fields
-          fbData.field_data.forEach((field: any) => {
-            if (field.name === 'full_name') leadData.name = field.values[0];
-            if (field.name === 'phone_number') leadData.phone = field.values[0];
-            if (field.name === 'email') leadData.email = field.values[0];
-            if (field.name === 'city') leadData.location = field.values[0];
-          });
-
-          // Auto-link to the latest active Meta campaign
-          const campaign = await prisma.campaign.findFirst({
-            where: {
-              source: { in: ['Facebook', 'Instagram', 'Meta'], mode: 'insensitive' },
-              OR: [
-                { endDate: null },
-                { endDate: { gte: new Date() } }
-              ]
-            },
-            orderBy: { createdAt: 'desc' }
-          });
-          if (campaign) leadData.campaignId = campaign.id;
-
-          if (leadData.phone && leadData.name) {
-            await LeadService.handlePublicApplication(leadData);
-          }
+          // Process and save lead
+          await MetaService.processLead(fbData);
         }
       }
     }
@@ -349,5 +334,78 @@ export const metaWebhook = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Meta Webhook Error:', error.response?.data || error.message);
     res.status(500).json({ message: 'Internal Server Error' });
+  }
+};
+
+export const subscribeToMetaPage = async (req: Request, res: Response) => {
+  try {
+    const { pageId } = req.body;
+    if (!pageId) return res.status(400).json({ message: 'pageId is required' });
+
+    console.log(`[MetaWebhook] Subscribing app to Page ID: ${pageId}`);
+    const result = await MetaService.subscribePage(pageId);
+
+    res.status(200).json({
+      success: true,
+      message: 'Successfully subscribed to Page leadgen field',
+      meta_response: result
+    });
+  } catch (error: any) {
+    console.error('Meta Subscription Error:', error.response?.data || error.message);
+    res.status(500).json({ message: error.message || 'Internal Server Error' });
+  }
+};
+
+export const syncMetaLeads = async (req: Request, res: Response) => {
+  try {
+    const { formId } = req.body;
+    if (!formId) return res.status(400).json({ message: 'formId is required' });
+
+    console.log(`[MetaSync] Starting manual sync for Form ID: ${formId}`);
+
+    const response = await MetaService.fetchHistoricalLeads(formId);
+    const leads = response.data;
+
+    if (!leads || !Array.isArray(leads)) {
+      return res.status(200).json({ success: true, count: 0, message: 'No leads found' });
+    }
+
+    let successCount = 0;
+    for (const lead of leads) {
+      try {
+        const processed = await MetaService.processLead(lead);
+        if (processed) successCount++;
+      } catch (err) {
+        console.error(`[MetaSync] Failed to process lead ${lead.id}:`, err);
+      }
+    }
+
+    res.json({
+      success: true,
+      count: successCount,
+      totalFound: leads.length,
+      message: `Successfully synced ${successCount} out of ${leads.length} leads.`
+    });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getMetaPages = async (req: Request, res: Response) => {
+  try {
+    const data = await MetaService.fetchUserPages();
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getMetaForms = async (req: Request, res: Response) => {
+  try {
+    const { pageId } = req.params;
+    const data = await MetaService.fetchLeadForms(pageId);
+    res.json(data);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
   }
 };

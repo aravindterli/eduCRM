@@ -11,6 +11,7 @@ export class SchedulerService {
     this.scheduleDripCampaigns();
     this.scheduleReEngagementDrip();
     this.scheduleAutomatedBackups();
+    this.scheduleMetaLeadRetrieval();
   }
 
   private scheduleDailyReminders() {
@@ -107,6 +108,14 @@ export class SchedulerService {
       for (const lead of reEngagementLeads) {
         await CommunicationService.sendReEngagementMessage(lead);
       }
+    });
+  }
+  private scheduleMetaLeadRetrieval() {
+    // Runs every 3 hours
+    cron.schedule('0 */3 * * *', async () => {
+      console.log('[Scheduler] Running Periodical Meta Lead Sync');
+      const { default: MetaService } = await import('./meta.service');
+      await MetaService.syncRecentLeads();
     });
   }
 }

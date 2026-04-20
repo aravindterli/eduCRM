@@ -150,7 +150,7 @@ export default function WebinarRegistrationPage() {
               <div>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[2px]">Date</p>
                 <p className="text-xl font-bold text-white">
-                  {new Date(webinar.date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                  {new Date(webinar.date).toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Kolkata' })}
                 </p>
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function WebinarRegistrationPage() {
               <div>
                 <p className="text-[10px] font-black text-slate-500 uppercase tracking-[2px]">Time</p>
                 <p className="text-xl font-bold text-white">
-                  {new Date(webinar.date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(webinar.date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' })}
                 </p>
               </div>
             </div>

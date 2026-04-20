@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { createLead, createPublicLead, getLeads, getLeadDetail, updateLead, deleteLead, getLeadStats, importLeads, addLeadNote, logLeadInteraction, sendLeadTemplate, reactivateLead, bulkSendWhatsApp, whatsappMediaUpload, uploadWhatsAppMedia, googleAdsWebhook, metaWebhook } from '../controllers/lead.controller';
+import { createLead, createPublicLead, getLeads, getLeadDetail, updateLead, deleteLead, getLeadStats, importLeads, addLeadNote, logLeadInteraction, sendLeadTemplate, reactivateLead, bulkSendWhatsApp, whatsappMediaUpload, uploadWhatsAppMedia, googleAdsWebhook, metaWebhook, syncMetaLeads, getMetaPages, getMetaForms, subscribeToMetaPage } from '../controllers/lead.controller';
 import { authenticate, authorize } from '../middleware/auth';
 import path from 'path';
 
@@ -10,6 +10,10 @@ router.post('/public', createPublicLead);
 router.post('/webhook/google-ads', googleAdsWebhook);
 router.get('/webhook/meta', metaWebhook);
 router.post('/webhook/meta', metaWebhook);
+router.post('/webhook/meta/sync', syncMetaLeads);
+router.post('/webhook/meta/subscribe', subscribeToMetaPage);
+router.get('/meta/pages', getMetaPages);
+router.get('/meta/forms/:pageId', getMetaForms);
 
 router.use(authenticate);
 router.use('/uploads/whatsapp', express.static(path.join(__dirname, '../../uploads/whatsapp')));

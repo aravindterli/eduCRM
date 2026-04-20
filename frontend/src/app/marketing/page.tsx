@@ -60,11 +60,10 @@ export default function MarketingPage() {
           webinarTitle={selectedWebinar.title}
         />
       )}
-
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold">Marketing Hub</h1>
-          <p className="text-slate-400 text-sm">Manage campaigns and track ROI performance</p>
+          <p className="text-slate-400 text-sm">Manage campaigns and automate lead syncing</p>
         </div>
         <div className="flex gap-3">
           <button
@@ -240,6 +239,7 @@ export default function MarketingPage() {
           </button>
         </div>
       </div>
+
     </MainLayout>
   );
 }

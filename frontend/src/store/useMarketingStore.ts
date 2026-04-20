@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { marketingService } from '@/services/marketing.service';
+import { leadService } from '@/services/lead.service';
 
 interface MarketingState {
   campaigns: any[];
@@ -16,6 +17,12 @@ interface MarketingState {
   updateWebinar: (id: string, data: any) => Promise<void>;
   deleteWebinar: (id: string) => Promise<void>;
   registerLeadForWebinar: (webinarId: string, leadId: string) => Promise<boolean>;
+
+  // Meta Integration
+  metaPages: any[];
+  isMetaLoading: boolean;
+  fetchMetaPages: () => Promise<void>;
+  subscribeToPage: (pageId: string) => Promise<boolean>;
 }
 
 export const useMarketingStore = create<MarketingState>((set) => ({
@@ -23,6 +30,8 @@ export const useMarketingStore = create<MarketingState>((set) => ({
   webinars: [],
   isLoading: false,
   error: null,
+  metaPages: [],
+  isMetaLoading: false,
 
   fetchCampaigns: async () => {
     set({ isLoading: true });
@@ -119,6 +128,28 @@ export const useMarketingStore = create<MarketingState>((set) => ({
       return true;
     } catch (error: any) {
       set({ error: error.message, isLoading: false });
+      return false;
+    }
+  },
+
+  fetchMetaPages: async () => {
+    set({ isMetaLoading: true });
+    try {
+      const data = await leadService.getMetaPages();
+      set({ metaPages: data.data || [], isMetaLoading: false });
+    } catch (error: any) {
+      set({ error: error.message, isMetaLoading: false });
+    }
+  },
+
+  subscribeToPage: async (pageId) => {
+    set({ isMetaLoading: true });
+    try {
+      await leadService.subscribeToMetaPage(pageId);
+      set({ isMetaLoading: false });
+      return true;
+    } catch (error: any) {
+      set({ error: error.message, isMetaLoading: false });
       return false;
     }
   },

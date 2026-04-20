@@ -7,13 +7,16 @@ export interface Lead {
   phone: string;
   stage: string;
   leadSource: string;
+  tag?: string;
   campaignId?: string;
   createdAt: string;
 }
 
 export const leadService = {
-  getAll: async () => {
-    const response = await api.get('/leads');
+  getAll: async (page = 1, limit = 10, filters: any = {}) => {
+    const response = await api.get('/leads', {
+      params: { page, limit, ...filters }
+    });
     return response.data;
   },
 
@@ -68,6 +71,16 @@ export const leadService = {
     const response = await api.post('/leads/upload-media', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
+    return response.data;
+  },
+
+  getMetaPages: async () => {
+    const response = await api.get('/leads/meta/pages');
+    return response.data;
+  },
+
+  subscribeToMetaPage: async (pageId: string) => {
+    const response = await api.post('/leads/webhook/meta/subscribe', { pageId });
     return response.data;
   },
 };

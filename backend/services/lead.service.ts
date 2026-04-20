@@ -16,10 +16,23 @@ export class LeadService {
       throw new Error('Lead with this phone number already exists');
     }
 
-    const lead = await LeadRepository.create(data);
+    const lead = await LeadRepository.create({
+      ...data,
+      tag: data.tag || 'COLD'
+    });
 
     // Automatic Assignment
-    await autoAssignLead(lead.id);
+    const assignedLead = await autoAssignLead(lead.id);
+
+    // Notify assigned counselor/telecaller
+    if (assignedLead && assignedLead.counselorId) {
+      const counselor = await prisma.user.findUnique({
+        where: { id: assignedLead.counselorId }
+      });
+      if (counselor) {
+        await CommunicationService.sendCounselorNotification(counselor, assignedLead);
+      }
+    }
 
     // Automated Communication
     await CommunicationService.sendAutoResponse(lead);
@@ -60,20 +73,20 @@ export class LeadService {
         }
       });
 
-      // 2. Add a system note
-      await this.addNote(existingLead.id, 'Student re-applied via public portal.', 'REMARK', existingLead.counselorId || 'system');
+      // // 2. Add a system note
+      // await this.addNote(existingLead.id, 'Student re-applied via public portal.', 'REMARK', existingLead.counselorId || 'system');
 
-      // 3. Schedule a priority follow-up for the counselor
-      if (existingLead.counselorId) {
-        await prisma.followUp.create({
-          data: {
-            leadId: existingLead.id,
-            counselorId: existingLead.counselorId,
-            notes: 'Priority: Student re-applied via public portal. Please contact ASAP.',
-            scheduledAt: new Date(Date.now() + 1 * 60 * 60 * 1000) // +1 hour
-          }
-        });
-      }
+      // // 3. Schedule a priority follow-up for the counselor
+      // if (existingLead.counselorId) {
+      //   await prisma.followUp.create({
+      //     data: {
+      //       leadId: existingLead.id,
+      //       counselorId: existingLead.counselorId,
+      //       notes: 'Priority: Student re-applied via public portal. Please contact ASAP.',
+      //       scheduledAt: new Date(Date.now() + 1 * 60 * 60 * 1000) // +1 hour
+      //     }
+      //   });
+      // }
 
       // 4. Audit Log
       const AuditService = (await import('./audit.service')).default;
@@ -103,21 +116,32 @@ export class LeadService {
   }
 
   async getAllLeads(filter: any) {
-    const { skip = 0, take = 10, stage, counselorId, tag } = filter;
-    const where: any = {};
+    const { page = 1, limit = 10, stage, counselorId, tag } = filter;
+    const skip = (Number(page) - 1) * Number(limit);
+    const take = Number(limit);
 
+    const where: any = {};
     if (stage) where.stage = stage;
     if (counselorId) where.counselorId = counselorId;
     if (tag) where.tag = tag;
 
+    // Get total count for pagination
+    const total = await LeadRepository.count(where);
+
     const leads = await LeadRepository.findMany({
-      skip: Number(skip),
-      take: Number(take),
+      skip,
+      take,
       where,
       orderBy: { createdAt: 'desc' },
     });
 
-    return leads;
+    return {
+      leads,
+      total,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(total / take)
+    };
   }
 
   async getLeadById(id: string) {

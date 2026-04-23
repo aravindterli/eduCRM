@@ -128,7 +128,7 @@ export class CommunicationService {
 
   async sendFollowUpInvite(to: string, data: {
     leadName: string;
-    counselorName: string;
+    assignedToName: string;
     scheduledAt: Date;
     meetingUrl: string;
     notes?: string;
@@ -144,7 +144,7 @@ export class CommunicationService {
     const subject = `📅 Meeting Invite: ${dateStr} at ${timeStr}`;
     const content = `
       <p>Hi <strong>${data.leadName}</strong>,</p>
-      <p><strong>${data.counselorName}</strong> has scheduled a counseling session with you. Please join us at the scheduled time below:</p>
+      <p><strong>${data.assignedToName}</strong> has scheduled a counseling session with you. Please join us at the scheduled time below:</p>
       <div style="background:#0f172a; border-radius:16px; padding:24px; border:1px solid #3b82f6; margin:32px 0;">
         <p style="margin:0; color:#60a5fa; font-size:12px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">Scheduled For</p>
         <p style="margin:8px 0 0; color:#ffffff; font-size:20px; font-weight:800;">${dateStr}</p>
@@ -160,7 +160,7 @@ export class CommunicationService {
         from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',
         to,
         subject,
-        text: `Counseling session with ${data.counselorName} on ${dateStr} at ${timeStr}. Join: ${data.meetingUrl}`,
+        text: `Counseling session with ${data.assignedToName} on ${dateStr} at ${timeStr}. Join: ${data.meetingUrl}`,
         html,
       });
       console.log(`[Email] Follow-up invite sent to ${to}: ${info.messageId}`);
@@ -353,7 +353,7 @@ export class CommunicationService {
     const content = `
       <p>Hi <strong>${lead.name}</strong>,</p>
       <p>Thank you for inquiring about ${programName}. We are excited about your interest in taking the next step with us.</p>
-      <p>A counselor has been assigned to your profile and will be reaching out to you shortly to guide you through the process.</p>
+      <p>A assignedTo has been assigned to your profile and will be reaching out to you shortly to guide you through the process.</p>
     `;
 
     const html = this.getBaseTemplate(subject, content);
@@ -365,7 +365,7 @@ export class CommunicationService {
 
     await this.sendWhatsApp(
       lead.phone,
-      `Hi ${lead.name}, thanks for inquiring about ${programName}. A counselor will contact you soon!`,
+      `Hi ${lead.name}, thanks for inquiring about ${programName}. A assignedTo will contact you soon!`,
       lead.id,
       welcomeImageUrl,
       welcomeTemplateName
@@ -388,7 +388,7 @@ export class CommunicationService {
       <p>Hi <strong>${lead.name}</strong>,</p>
       <p>We noticed you were interested in <strong>${programName}</strong> last month.</p>
       <p>We've just opened a new enrollment intake with updated curriculum and scholarship options! We would love to have you back to discuss how we can help you reach your goals.</p>
-      <p>Would you like to speak with a counselor today?</p>
+      <p>Would you like to speak with a assignedTo today?</p>
     `;
 
     const cta = { label: 'Re-apply Now', url: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/apply` };
@@ -457,12 +457,12 @@ export class CommunicationService {
     }
   }
 
-  async sendCounselorNotification(counselor: any, lead: any) {
-    if (!counselor || !counselor.email) return;
+  async sendassignedToNotification(assignedTo: any, lead: any) {
+    if (!assignedTo || !assignedTo.email) return;
 
     const subject = `🚀 New Lead Assigned: ${lead.name}`;
     const content = `
-      <p>Hi <strong>${counselor.name}</strong>,</p>
+      <p>Hi <strong>${assignedTo.name}</strong>,</p>
       <p>A new lead has been assigned to you from <strong>${lead.leadSource || 'Direct'}</strong>.</p>
       <div style="background:#0f172a; border-radius:16px; padding:24px; border:1px solid #3b82f6; margin:32px 0;">
         <p style="margin:0; color:#60a5fa; font-size:12px; font-weight:800; letter-spacing:2px; text-transform:uppercase;">Student Details</p>
@@ -482,13 +482,13 @@ export class CommunicationService {
     try {
       await this.transporter.sendMail({
         from: process.env.EMAIL_FROM || '"EduCRM Alerts" <no-reply@educrm.com>',
-        to: counselor.email,
+        to: assignedTo.email,
         subject,
         html,
       });
-      console.log(`[Email] Counselor notification sent to ${counselor.email} for lead: ${lead.name}`);
+      console.log(`[Email] assignedTo notification sent to ${assignedTo.email} for lead: ${lead.name}`);
     } catch (error: any) {
-      console.error(`[Email] Failed to send counselor notification:`, error.message);
+      console.error(`[Email] Failed to send assignedTo notification:`, error.message);
     }
   }
 }

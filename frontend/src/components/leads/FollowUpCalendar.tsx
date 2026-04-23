@@ -1,262 +1,243 @@
 'use client';
 
-import React from 'react';
-import { Phone, CheckCircle2, Pencil, X, Clock, AlertTriangle, CalendarClock, Video, MessageSquare } from 'lucide-react';
-import { useFollowUpStore } from '@/store/useFollowUpStore';
-import { FollowUp } from '@/services/followUp.service';
+import React, { useState, useMemo } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  Clock,
+  Video,
+  X,
+  Phone,
+  CheckCircle
+} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 
-const STAGE_COLORS: Record<string, string> = {
-  NEW_LEAD: 'bg-primary/10 text-primary',
-  INTERESTED: 'bg-emerald-500/10 text-emerald-400',
-  CONTACT_ATTEMPTED: 'bg-amber-500/10 text-amber-400',
-  COUNSELING_SCHEDULED: 'bg-blue-500/10 text-blue-400',
-  APPLICATION_STARTED: 'bg-purple-500/10 text-purple-400',
-  ADMISSION_CONFIRMED: 'bg-emerald-600/10 text-emerald-300',
-};
-
-function groupByDate(items: FollowUp[]): Record<string, FollowUp[]> {
-  return items.reduce<Record<string, FollowUp[]>>((acc, f) => {
-    const key = new Date(f.scheduledAt).toDateString();
-    if (!acc[key]) acc[key] = [];
-    acc[key].push(f);
-    return acc;
-  }, {});
+interface FollowUpCalendarProps {
+  tasks: any[];
+  onSelectTask: (lead: any) => void;
+  onCompleteTask: (id: string) => void;
 }
 
-function dateLabel(dateStr: string): string {
-  const d = new Date(dateStr);
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  if (d.toDateString() === today.toDateString()) return 'today';
-  if (d.toDateString() === tomorrow.toDateString()) return 'tomorrow';
-  return d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-}
+export const FollowUpCalendar = ({ tasks = [], onSelectTask, onCompleteTask }: FollowUpCalendarProps) => {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
-function isOverdue(scheduledAt: string) {
-  return new Date(scheduledAt) < new Date();
-}
+  const daysInMonth = useMemo(() => {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDate = new Date(year, month + 1, 0).getDate();
 
-interface EditState { id: string; notes: string; scheduledAt: string }
+    const days = [];
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 1; i <= lastDate; i++) days.push(new Date(year, month, i));
+    return days;
+  }, [currentDate]);
 
-export const FollowUpCalendar = ({ onViewLead }: { onViewLead?: (lead: any) => void }) => {
-  const { upcoming, loading, fetchUpcoming, complete, edit } = useFollowUpStore();
-  const [editTarget, setEditTarget] = React.useState<EditState | null>(null);
-  const [msg, setMsg] = React.useState('');
+  const monthName = currentDate.toLocaleString('default', { month: 'long' });
 
-  React.useEffect(() => { fetchUpcoming(); }, [fetchUpcoming]);
+  const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
 
-  const flash = (text: string) => { setMsg(text); setTimeout(() => setMsg(''), 2500); };
-
-  const handleComplete = async (id: string) => {
-    const ok = await complete(id);
-    if (ok) flash('follow-up marked complete!');
-  };
-
-  const handleEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editTarget) return;
-    const ok = await edit(editTarget.id, { notes: editTarget.notes, scheduledAt: editTarget.scheduledAt });
-    if (ok) { flash('follow-up updated!'); setEditTarget(null); }
-  };
-
-  const openEdit = (f: FollowUp) =>
-    setEditTarget({
-      id: f.id,
-      notes: f.notes || '',
-      scheduledAt: new Date(f.scheduledAt).toISOString().slice(0, 16),
+  const getTasksForDay = (date: Date) => {
+    return tasks.filter(t => {
+      const taskDate = new Date(t.scheduledAt);
+      return taskDate.getDate() === date.getDate() &&
+        taskDate.getMonth() === date.getMonth() &&
+        taskDate.getFullYear() === date.getFullYear();
     });
+  };
 
-  // today+later
-  const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
-  const overdueItems = upcoming.filter(f => new Date(f.scheduledAt) < todayStart);
-  const upcomingItems = upcoming.filter(f => new Date(f.scheduledAt) >= todayStart);
-  const grouped = groupByDate(upcomingItems);
-
-  if (loading && upcoming.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <CalendarClock size={32} className="text-muted-foreground animate-pulse" />
-        <p className="text-sm text-muted-foreground">loading follow-ups...</p>
-      </div>
-    );
-  }
+  const dayTasks = selectedDay ? getTasksForDay(selectedDay) : [];
+  const pendingTasks = dayTasks.filter(t => !t.completedAt);
+  const completedTasks = dayTasks.filter(t => t.completedAt);
 
   return (
-    <>
-      {msg && (
-        <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-sm font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-1">
-          <CheckCircle2 size={15} />
-          {msg}
-        </div>
-      )}
-
-      {upcoming.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-4">
-          <CalendarClock size={48} className="text-muted-foreground/30" />
-          <p className="text-muted-foreground text-sm font-medium">no pending follow-ups</p>
-          <p className="text-muted-foreground/50 text-xs">schedule a follow-up from any lead's detail panel</p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {/* overdue block */}
-          {overdueItems.length > 0 && (
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <AlertTriangle size={15} className="text-red-400" />
-                <h3 className="text-xs font-bold text-red-400 uppercase tracking-widest">overdue ({overdueItems.length})</h3>
-              </div>
-              <div className="space-y-2">
-                {overdueItems.map(f => <FollowUpCard key={f.id} f={f} onComplete={handleComplete} onEdit={openEdit} onViewLead={onViewLead} overdue />)}
-              </div>
-            </div>
-          )}
-
-          {/* grouped upcoming */}
-          {Object.entries(grouped).map(([dateStr, items]) => (
-            <div key={dateStr} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <Clock size={14} className="text-blue-400" />
-                <h3 className="text-xs font-bold text-blue-400 uppercase tracking-widest">{dateLabel(dateStr)}</h3>
-                <span className="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded-full font-bold">{items.length}</span>
-              </div>
-              <div className="space-y-2">
-                {items.map(f => <FollowUpCard key={f.id} f={f} onComplete={handleComplete} onEdit={openEdit} onViewLead={onViewLead} />)}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* edit modal */}
-      {editTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={() => setEditTarget(null)} />
-          <div className="relative w-full max-w-md glass border border-white/10 rounded-3xl shadow-2xl animate-in zoom-in-95 overflow-hidden">
-            <form onSubmit={handleEdit}>
-              <div className="p-5 border-b border-white/5 flex justify-between items-center">
-                <h3 className="font-bold text-sm">edit follow-up</h3>
-                <button type="button" onClick={() => setEditTarget(null)} className="p-2 hover:bg-white/5 rounded-xl text-muted-foreground">
-                  <X size={18} />
+    <div className="glass rounded-3xl border border-white/10 overflow-hidden bg-white/[0.02] h-full flex flex-col relative">
+      {/* Daily Agenda Modal */}
+      <AnimatePresence>
+        {selectedDay && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-md"
+            onClick={() => setSelectedDay(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="w-full max-w-lg glass-premium border border-white/20 rounded-[32px] overflow-hidden shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+                <div>
+                  <h3 className="text-xl font-bold">{selectedDay.toLocaleDateString('default', { day: 'numeric', month: 'long', weekday: 'long' })}</h3>
+                  <p className="text-xs text-primary font-bold uppercase tracking-widest">{dayTasks.length} Total Tasks</p>
+                </div>
+                <button onClick={() => setSelectedDay(null)} className="p-2 hover:bg-white/10 rounded-xl transition-colors">
+                  <X size={20} className="text-slate-400" />
                 </button>
               </div>
-              <div className="p-5 space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase ml-1">reschedule</label>
-                  <input
-                    type="datetime-local"
-                    value={editTarget.scheduledAt}
-                    onChange={e => setEditTarget(p => p ? { ...p, scheduledAt: e.target.value } : null)}
-                    className="w-full bg-white/5 border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500/30 transition-all text-foreground"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-muted-foreground uppercase ml-1">notes</label>
-                  <textarea
-                    value={editTarget.notes}
-                    onChange={e => setEditTarget(p => p ? { ...p, notes: e.target.value } : null)}
-                    rows={3}
-                    className="w-full bg-white/5 border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500/30 transition-all text-foreground resize-none"
-                  />
-                </div>
+
+              <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar space-y-6">
+                {dayTasks.length === 0 ? (
+                  <div className="py-12 text-center">
+                    <CalendarIcon size={40} className="mx-auto text-slate-700 mb-4" />
+                    <p className="text-slate-500 italic">No tasks scheduled for this day.</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Upcoming Section */}
+                    {pendingTasks.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="text-[10px] font-bold text-primary uppercase tracking-widest ml-1">Upcoming Tasks</h4>
+                        {pendingTasks.map(task => (
+                          <div key={task.id} className="p-4 rounded-2xl bg-white/5 border border-white/10 hover:border-primary/30 transition-all group">
+                            <div className="flex justify-between items-start">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${task.meetingUrl ? 'bg-blue-500/20 text-blue-400 border-blue-500/20' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/20'}`}>
+                                  {task.meetingUrl ? <Video size={20} /> : <Phone size={20} />}
+                                </div>
+                                <div>
+                                  <p className="text-[10px] font-bold uppercase text-slate-400">{new Date(task.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                  <h4 className="font-bold text-slate-100">{task.lead?.name || 'Unknown Lead'}</h4>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => onCompleteTask(task.id)}
+                                  title="Mark as Done"
+                                  className="p-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg transition-all border border-emerald-500/20"
+                                >
+                                  <CheckCircle size={16} />
+                                </button>
+                                <button
+                                  onClick={() => onSelectTask(task.lead)}
+                                  className="px-3 py-2 bg-primary/20 hover:bg-primary text-white text-[10px] font-bold rounded-lg transition-all border border-primary/20"
+                                >
+                                  DETAILS
+                                </button>
+                              </div>
+                            </div>
+                            {task.notes && (
+                              <p className="mt-3 text-xs text-slate-400 leading-relaxed italic border-l-2 border-primary/30 pl-3">"{task.notes}"</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Completed Section */}
+                    {completedTasks.length > 0 && (
+                      <div className="space-y-3 pt-2">
+                        <h4 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Completed</h4>
+                        {completedTasks.map(task => (
+                          <div key={task.id} className="p-3 rounded-xl bg-black/20 border border-white/5 opacity-60">
+                            <div className="flex justify-between items-center">
+                              <div className="flex items-center gap-3">
+                                <CheckCircle size={14} className="text-emerald-500" />
+                                <div>
+                                  <p className="text-[10px] font-bold text-slate-500 line-through">{task.lead?.name}</p>
+                                  <p className="text-[9px] text-slate-600 italic">done at {new Date(task.completedAt).toLocaleTimeString()}</p>
+                                </div>
+                              </div>
+                              {task.meetingUrl && <Video size={12} className="text-slate-600" />}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
-              <div className="p-5 border-t border-border bg-white/[0.02] flex gap-3">
-                <button type="button" onClick={() => setEditTarget(null)} className="flex-1 py-2.5 text-sm font-semibold hover:bg-white/5 rounded-xl transition-colors">cancel</button>
-                <button type="submit" disabled={loading} className="flex-1 bg-blue-600 hover:bg-blue-500 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50">
-                  {loading ? 'saving...' : 'save changes'}
-                </button>
+              <div className="p-4 bg-black/20 text-center">
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Click outside to return to Calendar</p>
               </div>
-            </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header */}
+      <div className="p-4 border-b border-white/5 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-primary/20 text-primary">
+            <CalendarIcon size={18} />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold leading-tight">{monthName} {currentDate.getFullYear()}</h2>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{tasks.length} Task{tasks.length !== 1 ? 's' : ''}</p>
           </div>
         </div>
-      )}
-    </>
-  );
-};
-
-// ── card sub-component ──────────────────────────────────────────────────────
-interface CardProps {
-  f: FollowUp;
-  overdue?: boolean;
-  onComplete: (id: string) => void;
-  onEdit: (f: FollowUp) => void;
-  onViewLead?: (lead: any) => void;
-}
-
-const FollowUpCard = ({ f, overdue, onComplete, onEdit, onViewLead }: CardProps) => {
-  const stage = f.lead?.stage || '';
-  const stageClass = STAGE_COLORS[stage] || 'bg-slate-500/10 text-slate-400';
-  const time = new Date(f.scheduledAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-
-  return (
-    <div className={`group p-4 rounded-2xl border flex gap-4 items-start transition-colors ${overdue ? 'bg-red-500/5 border-red-500/15 hover:bg-red-500/10' : 'glass border-white/5 hover:bg-white/[0.04]'
-      }`}>
-      {/* time */}
-      <div className="text-center shrink-0 w-12">
-        <p className={`text-[11px] font-bold ${overdue ? 'text-red-400' : 'text-blue-400'}`}>{time}</p>
-        {overdue && <p className="text-[9px] text-red-500 uppercase font-bold">late</p>}
-      </div>
-
-      {/* content */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <p className="font-semibold text-sm text-foreground">{f.lead?.name || 'unknown lead'}</p>
-          {stage && (
-            <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded ${stageClass}`}>
-              {stage.replace(/_/g, ' ')}
-            </span>
-          )}
-        </div>
-        {f.notes && <p className="text-xs text-foreground/60 mt-0.5 line-clamp-2">{f.notes}</p>}
-        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-          {f.lead?.phone && (
-            <a
-              href={`tel:${f.lead.phone}`}
-              onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 font-medium transition-colors"
-            >
-              <Phone size={10} />
-              {f.lead.phone}
-            </a>
-          )}
-          {f.meetingUrl && (
-            <a
-              href={f.meetingUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={e => e.stopPropagation()}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-md transition-colors shadow shadow-blue-500/20"
-            >
-              <Video size={10} />
-              join
-            </a>
-          )}
+        <div className="flex gap-2">
+          <button onClick={prevMonth} className="p-2 hover:bg-white/5 rounded-xl border border-white/5 transition-all text-slate-400">
+            <ChevronLeft size={20} />
+          </button>
+          <button onClick={nextMonth} className="p-2 hover:bg-white/5 rounded-xl border border-white/5 transition-all text-slate-400">
+            <ChevronRight size={20} />
+          </button>
         </div>
       </div>
 
-      {/* actions */}
-      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={() => onEdit(f)}
-          title="edit"
-          className="p-1.5 hover:bg-white/10 rounded-lg text-muted-foreground hover:text-blue-400 transition-colors"
-        >
-          <Pencil size={13} />
-        </button>
-        <button
-          onClick={() => onViewLead?.(f.lead)}
-          title="view engagement history"
-          className="p-1.5 hover:bg-white/10 rounded-lg text-muted-foreground hover:text-primary transition-colors"
-        >
-          <MessageSquare size={13} />
-        </button>
-        <button
-          onClick={() => onComplete(f.id)}
-          title="mark complete"
-          className="p-1.5 hover:bg-emerald-500/10 rounded-lg text-muted-foreground hover:text-emerald-400 transition-colors"
-        >
-          <CheckCircle2 size={13} />
-        </button>
+      {/* Grid Headers */}
+      <div className="grid grid-cols-7 border-b border-white/5 bg-white/[0.01] shrink-0">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          <div key={day} className="py-3 text-center text-[10px] font-bold uppercase tracking-widest text-slate-500">
+            {day}
+          </div>
+        ))}
+      </div>
+
+      {/* Days Grid */}
+      <div className="grid grid-cols-7 flex-1 overflow-y-auto custom-scrollbar">
+        {daysInMonth.map((date, index) => {
+          const dayTasks = date ? getTasksForDay(date) : [];
+          const isToday = date && date.toDateString() === new Date().toDateString();
+
+          return (
+            <div 
+              key={index} 
+              onClick={() => date && setSelectedDay(date)}
+              className={`min-h-[65px] p-1 border-b border-r border-white/5 transition-colors hover:bg-white/[0.03] cursor-pointer group ${!date ? 'bg-black/10' : ''}`}
+            >
+              {date && (
+                <>
+                  <div className="flex justify-between items-center mb-1 px-0.5">
+                    <span className={`text-[10px] font-bold group-hover:scale-110 transition-transform ${isToday ? 'bg-primary text-white w-4 h-4 flex items-center justify-center rounded-md shadow-lg' : 'text-slate-500'}`}>
+                      {date.getDate()}
+                    </span>
+                    {dayTasks.length > 0 && (
+                      <div className={`w-1 h-1 rounded-full animate-pulse ${dayTasks.some(t => t.meetingUrl) ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                    )}
+                  </div>
+                  <div className="space-y-1">
+                    {dayTasks.slice(0, 3).map(task => (
+                      <div
+                        key={task.id}
+                        className={`p-1 rounded-lg text-[9px] truncate border flex items-center gap-1 ${new Date(task.scheduledAt) < new Date() && !task.completedAt
+                            ? 'bg-red-500/10 border-red-500/20 text-red-300'
+                            : task.meetingUrl
+                              ? 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                              : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                          }`}
+                      >
+                        {task.meetingUrl ? <Video size={8} /> : <Phone size={8} />}
+                        <span className="font-bold shrink-0">{new Date(task.scheduledAt).getHours() % 12 || 12}:{(new Date(task.scheduledAt).getMinutes() < 10 ? '0' : '') + (new Date(task.scheduledAt).getMinutes())}</span>
+                        <span className="truncate">{task.lead?.name}</span>
+                      </div>
+                    ))}
+                    {dayTasks.length > 3 && (
+                      <p className="text-[8px] text-slate-500 font-bold text-center mt-0.5">+ {dayTasks.length - 3} more</p>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

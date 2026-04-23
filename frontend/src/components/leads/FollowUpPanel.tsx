@@ -9,13 +9,22 @@ interface FollowUpPanelProps {
   initialFollowUps?: any[];
 }
 
+const toISTString = (dateInput: string | Date) => {
+  if (!dateInput) return '';
+  const date = new Date(dateInput);
+  // Offset for IST (+5.5 hours)
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const istDate = new Date(date.getTime() + istOffset);
+  return istDate.toISOString().slice(0, 16);
+};
+
 export const FollowUpPanel = ({ leadId, initialFollowUps = [] }: FollowUpPanelProps) => {
   const { leadFollowUps, loading, fetchByLead, create, complete, edit } = useFollowUpStore();
 
   const [isScheduleOpen, setIsScheduleOpen] = React.useState(false);
   const [editTarget, setEditTarget] = React.useState<any | null>(null);
-  const [form, setForm] = React.useState({ notes: '', scheduledAt: '' });
-  const [editForm, setEditForm] = React.useState({ notes: '', scheduledAt: '' });
+  const [form, setForm] = React.useState({ notes: '', scheduledAt: '', type: 'TASK' });
+  const [editForm, setEditForm] = React.useState({ notes: '', scheduledAt: '', type: 'TASK' });
   const [msg, setMsg] = React.useState('');
   const [completingId, setCompletingId] = React.useState<string | null>(null);
 
@@ -52,7 +61,7 @@ export const FollowUpPanel = ({ leadId, initialFollowUps = [] }: FollowUpPanelPr
     setEditTarget(f);
     setEditForm({
       notes: f.notes || '',
-      scheduledAt: f.scheduledAt ? new Date(f.scheduledAt).toISOString().slice(0, 16) : '',
+      scheduledAt: toISTString(f.scheduledAt),
     });
   };
 
@@ -112,11 +121,10 @@ export const FollowUpPanel = ({ leadId, initialFollowUps = [] }: FollowUpPanelPr
             return (
               <div
                 key={f.id}
-                className={`p-4 rounded-2xl border flex flex-col gap-3 ${
-                  isOverdue
-                    ? 'bg-red-500/5 border-red-500/15'
-                    : 'bg-blue-500/5 border-blue-500/10'
-                }`}
+                className={`p-4 rounded-2xl border flex flex-col gap-3 ${isOverdue
+                  ? 'bg-red-500/5 border-red-500/15'
+                  : 'bg-blue-500/5 border-blue-500/10'
+                  }`}
               >
                 {/* top row: time + actions */}
                 <div className="flex justify-between items-start gap-2">
@@ -215,11 +223,36 @@ export const FollowUpPanel = ({ leadId, initialFollowUps = [] }: FollowUpPanelPr
               </div>
               <div className="p-5 space-y-4">
                 <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-muted-foreground uppercase ml-1">follow-up type</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, type: 'TASK' }))}
+                      className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-xs font-bold transition-all ${form.type === 'TASK' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 shadow-lg shadow-emerald-500/10' : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'}`}
+                    >
+                      <Clock size={14} />
+                      Simple Task
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, type: 'MEETING' }))}
+                      className={`flex items-center justify-center gap-2 py-3 rounded-xl border text-xs font-bold transition-all ${form.type === 'MEETING' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 shadow-lg shadow-blue-500/10' : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'}`}
+                    >
+                      <Video size={14} />
+                      Video Meeting
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground px-1 mt-1 italic">
+                    {form.type === 'MEETING' ? 'A Jitsi link and email invite will be sent.' : 'This remains an internal reminder to call.'}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
                   <label className="text-[10px] font-bold text-muted-foreground uppercase ml-1">date & time</label>
                   <input
                     type="datetime-local"
                     required
-                    value={form.scheduledAt}
+                    value={toISTString(form.scheduledAt)}
                     onChange={(e) => setForm((p) => ({ ...p, scheduledAt: e.target.value }))}
                     className="w-full bg-white/5 border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500/30 transition-all text-foreground"
                   />
@@ -270,7 +303,7 @@ export const FollowUpPanel = ({ leadId, initialFollowUps = [] }: FollowUpPanelPr
                   <label className="text-[10px] font-bold text-muted-foreground uppercase ml-1">reschedule to</label>
                   <input
                     type="datetime-local"
-                    value={editForm.scheduledAt}
+                    value={toISTString(editForm.scheduledAt)}
                     onChange={(e) => setEditForm((p) => ({ ...p, scheduledAt: e.target.value }))}
                     className="w-full bg-white/5 border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500/30 transition-all text-foreground"
                   />

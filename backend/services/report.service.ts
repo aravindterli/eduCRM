@@ -2,34 +2,64 @@ import PDFDocument from 'pdfkit';
 import prisma from '../config/prisma';
 
 export class ReportService {
-  async getLeadAnalytics() {
+  async getLeadAnalytics(userId?: string, role?: string) {
+    const isTeamMember = role === 'TELECALLER' || role === 'COUNSELOR';
+    const filter = isTeamMember && userId ? { assignedId: userId } : {};
+
     const leadsBySource = await prisma.lead.groupBy({
       by: ['leadSource'],
+      where: filter,
       _count: { id: true },
     });
 
     const leadsByStage = await prisma.lead.groupBy({
       by: ['stage'],
+      where: filter,
       _count: { id: true },
     });
 
-    const dailyLeads: any[] = await prisma.$queryRaw`
-      SELECT CAST("createdAt" AS DATE) as date, COUNT(id)::int as count
-      FROM "Lead"
-      GROUP BY CAST("createdAt" AS DATE)
-      ORDER BY date DESC
-      LIMIT 30
-    `;
+    // Filtering raw query for daily leads
+    const dailyLeads: any[] = isTeamMember && userId 
+      ? await prisma.$queryRaw`
+          SELECT CAST("createdAt" AS DATE) as date, COUNT(id)::int as count
+          FROM "Lead"
+          WHERE "assignedId" = ${userId}
+          GROUP BY CAST("createdAt" AS DATE)
+          ORDER BY date DESC
+          LIMIT 30
+        `
+      : await prisma.$queryRaw`
+          SELECT CAST("createdAt" AS DATE) as date, COUNT(id)::int as count
+          FROM "Lead"
+          GROUP BY CAST("createdAt" AS DATE)
+          ORDER BY date DESC
+          LIMIT 30
+        `;
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const leadsToday = await prisma.lead.count({
-      where: { createdAt: { gte: today } }
+      where: { ...filter, createdAt: { gte: today } }
+    });
+
+    const interactionToday = await prisma.communicationLog.count({
+      where: { ...filter, timestamp: { gte: today } }
+    });
+
+    const pendingFollowUps = await prisma.followUp.count({
+      where: { ...filter, completedAt: null }
+    });
+
+    const counselingToday = await prisma.counselingLog.count({
+      where: { ...filter, createdAt: { gte: today } }
     });
 
     return {
       leadsToday,
+      interactionToday,
+      pendingFollowUps,
+      counselingToday,
       leadsBySource,
       leadsByStage,
       dailyLeads: this.serializeBigInt(dailyLeads),
@@ -45,13 +75,23 @@ export class ReportService {
     );
   }
 
-  async getConversionFunnel() {
-    const totalLeads = await prisma.lead.count();
-    const scheduledCounseling = await prisma.counselingLog.count();
+  async getConversionFunnel(userId?: string, role?: string) {
+    const isTeamMember = role === 'TELECALLER' || role === 'COUNSELOR';
+    const filter = isTeamMember && userId ? { assignedId: userId } : {};
+
+    const totalLeads = await prisma.lead.count({ where: filter });
+    const scheduledCounseling = await prisma.counselingLog.count({ where: filter });
     const submittedApplications = await prisma.application.count({
-      where: { status: { in: ['SUBMITTED', 'VERIFIED', 'VERIFICATION_PENDING'] } }
+      where: { 
+        ...filter,
+        status: { in: ['SUBMITTED', 'VERIFIED', 'VERIFICATION_PENDING'] } 
+      }
     });
-    const confirmedAdmissions = await prisma.admission.count();
+    const confirmedAdmissions = await prisma.admission.count({
+      where: { 
+        application: { ...filter }
+      }
+    });
 
     return [
       { stage: 'Leads', count: totalLeads },
@@ -66,7 +106,10 @@ export class ReportService {
     ];
   }
 
-  async getProgramPerformance() {
+  async getProgramPerformance(userId?: string, role?: string) {
+    const isTeamMember = role === 'TELECALLER' || role === 'COUNSELOR';
+    const filter = isTeamMember && userId ? { leads: { some: { assignedId: userId } } } : {};
+
     return await prisma.program.findMany({
       select: {
         name: true,
@@ -83,7 +126,12 @@ export class ReportService {
     });
   }
 
-  async getFinancialAnalytics() {
+  async getFinancialAnalytics(userId?: string, role?: string) {
+    // Only ADMIN and FINANCE can see financial analytics
+    if (!['ADMIN', 'FINANCE'].includes(role || '')) {
+      return { revenueByMonth: [], feesByStatus: [] };
+    }
+
     const revenueByMonth: any[] = await prisma.$queryRaw`
       SELECT 
         DATE_TRUNC('month', "createdAt") as month,
@@ -106,7 +154,12 @@ export class ReportService {
     };
   }
 
-  async getCounselorPerformance() {
+  async getassignedToPerformance(userId?: string, role?: string) {
+    // Leaderboard is typically for ADMIN/MARKETING
+    if (role === 'TELECALLER' || role === 'COUNSELOR') {
+      return []; // Or return a limited view
+    }
+
     return await prisma.user.findMany({
       where: { role: { type: 'COUNSELOR' } },
       select: {
@@ -122,7 +175,10 @@ export class ReportService {
     });
   }
 
-  async getMonthlyReport() {
+  async getMonthlyReport(userId?: string, role?: string) {
+    const isTeamMember = role === 'TELECALLER' || role === 'COUNSELOR';
+    const filter = isTeamMember && userId ? { assignedId: userId } : {};
+
     const startOfMonth = new Date();
     startOfMonth.setDate(1);
     startOfMonth.setHours(0, 0, 0, 0);
@@ -316,8 +372,14 @@ export class ReportService {
     doc.end();
   }
 
-  async getRecentActivities() {
+  async getRecentActivities(userId?: string, role?: string) {
+    const isTeamMember = role === 'TELECALLER' || role === 'COUNSELOR';
+    const filter = isTeamMember && userId ? { details: { path: ['leadId'], equals: prisma.lead.findMany({ where: { assignedId: userId }, select: { id: true } }) } } : {};
+    // Note: Complex filtering on JSON details might be slow, for now keep it simple or global for Admins
+    const where = isTeamMember && userId ? { userId } : {}; // Show therapist's own actions
+
     return await prisma.auditLog.findMany({
+      where,
       take: 10,
       orderBy: { createdAt: 'desc' },
       select: {

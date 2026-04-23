@@ -27,10 +27,16 @@ router.post('/upload-media', whatsappMediaUpload.single('file'), uploadWhatsAppM
 router.get('/', getLeads);
 
 // ── global follow-up routes (must be before /:id wildcard) ──────────────────
-router.get('/follow-ups/upcoming', async (_req, res) => {
+router.get('/follow-ups/upcoming', async (req: any, res) => {
   const FollowUpService = require('../services/followUp.service').default;
   try {
-    const data = await FollowUpService.getUpcomingFollowUps();
+    const includeCompleted = req.query.includeCompleted === 'true';
+    const userRole = req.user.role?.type || req.user.role;
+    const isTeamMember = userRole === 'TELECALLER' || userRole === 'COUNSELOR';
+    const data = await FollowUpService.getUpcomingFollowUps(
+      isTeamMember ? req.user.id : undefined, 
+      includeCompleted
+    );
     res.json(data);
   } catch (err: any) {
     res.status(500).json({ message: err.message });

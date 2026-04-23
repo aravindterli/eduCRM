@@ -16,42 +16,47 @@ export class FollowUpService {
     const followUp = await prisma.followUp.create({
       data: {
         leadId,
-        counselorId: userId,
+        assignedId: data.assignedId || userId,
+        createdById: userId,
         notes: data.notes,
         scheduledAt,
       },
       include: {
         lead: { select: { id: true, name: true, phone: true, stage: true, email: true } },
-        counselor: { select: { id: true, name: true } },
+        assignedTo: { select: { id: true, name: true } },
+        createdBy: { select: { id: true, name: true } },
       },
     });
 
-    // 2. generate jitsi room url and persist it
-    const meetingUrl = `https://${JITSI_DOMAIN}/${makeRoomSlug(followUp.id)}`;
-    const updated = await prisma.followUp.update({
-      where: { id: followUp.id },
-      data: { meetingUrl } as any, // meetingUrl column added via db push; remove cast after next prisma generate
-      include: {
-        lead: { select: { id: true, name: true, phone: true, stage: true, email: true } },
-      },
-    });
+    // 2. generate jitsi room url and persist it only if type is MEETING
+    if (data.type === 'MEETING') {
+      const meetingUrl = `https://${JITSI_DOMAIN}/${makeRoomSlug(followUp.id)}`;
+      const updated = await prisma.followUp.update({
+        where: { id: followUp.id },
+        data: { meetingUrl } as any,
+        include: {
+          lead: { select: { id: true, name: true, phone: true, stage: true, email: true } },
+        },
+      });
 
-    // 3. send email invite to lead (non-blocking)
-    const leadEmail = (followUp.lead as any)?.email;
-    if (leadEmail) {
-      CommunicationService.sendFollowUpInvite(leadEmail, {
-        leadName: followUp.lead.name,
-        counselorName: (followUp as any).counselor?.name || 'Your Counselor',
-        scheduledAt,
-        meetingUrl,
-        notes: data.notes,
-        leadId,
-      }).catch((err: any) =>
-        console.error('[FollowUp] Email invite failed:', err.message)
-      );
+      // 3. send email invite only for meetings
+      const leadEmail = (followUp.lead as any)?.email;
+      if (leadEmail) {
+        CommunicationService.sendFollowUpInvite(leadEmail, {
+          leadName: followUp.lead.name,
+          assignedToName: (followUp as any).assignedTo?.name || 'Your assignedTo',
+          scheduledAt,
+          meetingUrl,
+          notes: data.notes,
+          leadId,
+        }).catch((err: any) =>
+          console.error('[FollowUp] Email invite failed:', err.message)
+        );
+      }
+      return updated;
     }
 
-    return updated;
+    return followUp;
   }
 
   async getFollowUpsByLead(leadId: string) {
@@ -61,9 +66,9 @@ export class FollowUpService {
       include: { 
         lead: { 
           include: {
-            notes: { include: { counselor: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
+            notes: { include: { assignedTo: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
             communicationLogs: { orderBy: { timestamp: 'desc' } },
-            counselingLogs: { include: { counselor: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
+            counselingLogs: { include: { assignedTo: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
             webinarRegistrations: { include: { webinar: true } },
             application: { include: { documents: true } }
           }
@@ -72,20 +77,24 @@ export class FollowUpService {
     });
   }
 
-  async getUpcomingFollowUps() {
+  async getUpcomingFollowUps(userId?: string, includeCompleted: boolean = false) {
     return await prisma.followUp.findMany({
-      where: { completedAt: null },
+      where: { 
+        ...(includeCompleted ? {} : { completedAt: null }),
+        ...(userId && { assignedId: userId })
+      },
       orderBy: { scheduledAt: 'asc' },
       include: { 
         lead: { 
           include: {
-            notes: { include: { counselor: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
+            notes: { include: { assignedTo: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
             communicationLogs: { orderBy: { timestamp: 'desc' } },
-            counselingLogs: { include: { counselor: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
+            counselingLogs: { include: { assignedTo: { select: { name: true } } }, orderBy: { createdAt: 'desc' } },
             webinarRegistrations: { include: { webinar: true } },
             application: { include: { documents: true } }
           }
-        } 
+        },
+        createdBy: { select: { id: true, name: true } }
       },
     });
   }

@@ -313,7 +313,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
   }, [timelineItems, filterType]);
 
   const NOTE_TYPES = [
-    { value: 'REMARK', label: 'Counselor Remark', color: 'blue' },
+    { value: 'REMARK', label: 'Owner Remark', color: 'blue' },
     { value: 'STUDENT_FEEDBACK', label: 'Student Feedback', color: 'emerald' },
     { value: 'DISCUSSION_SUMMARY', label: 'Discussion Summary', color: 'purple' },
     { value: 'GENERAL', label: 'General Note', color: 'slate' }
@@ -635,7 +635,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                             <span className={`px-1.5 py-0.5 rounded text-[8px] uppercase tracking-wider ${catColor}`}>
                               {cat}
                             </span>
-                            {note.counselor?.name || 'Counselor'} • {item.date.toLocaleString()}
+                            {note.assignedTo?.name || 'Owner'} • {item.date.toLocaleString()}
                           </p>
                           <button
                             onClick={() => {
@@ -664,7 +664,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                         <div className="flex justify-between items-start">
                           <p className="text-[10px] font-bold text-slate-500 flex items-center gap-2">
                             <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[8px] uppercase tracking-wider">Counseling</span>
-                            {clog.counselor?.name || 'Counselor'} • {item.date.toLocaleString()}
+                            {clog.assignedTo?.name || 'assignedTo'} • {item.date.toLocaleString()}
                           </p>
                           <button
                             onClick={() => {
@@ -887,7 +887,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                     <Activity size={18} className="text-primary" />
                     Log {logType} Interaction
                   </h3>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Recording manual counselor follow-up</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Recording manual assignedTo follow-up</p>
                 </div>
                 <button type="button" onClick={() => setShowLogModal(false)} className="p-2 hover:bg-white/5 rounded-xl text-muted-foreground">
                   <X size={18} />

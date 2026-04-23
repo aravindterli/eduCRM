@@ -6,7 +6,7 @@ export class CounselingService {
     return await prisma.followUp.create({
       data: {
         leadId: data.leadId,
-        counselorId: data.counselorId,
+        assignedId: data.assignedId,
         notes: data.notes,
         scheduledAt: new Date(data.scheduledAt),
       },
@@ -17,7 +17,7 @@ export class CounselingService {
     const log = await prisma.counselingLog.create({
       data: {
         leadId: data.leadId,
-        counselorId: data.counselorId,
+        assignedId: data.assignedId,
         notes: data.notes,
         recommendation: data.recommendation,
       },
@@ -32,10 +32,10 @@ export class CounselingService {
     return log;
   }
 
-  async getCounselorSchedule(counselorId: string) {
+  async getassignedToSchedule(assignedId: string) {
     return await prisma.followUp.findMany({
       where: {
-        counselorId,
+        assignedId,
         completedAt: null,
       },
       include: { lead: true },

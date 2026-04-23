@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding dummy leads...');
 
-  const counselor = await prisma.user.findFirst({ where: { role: { type: RoleType.COUNSELOR } } });
+  const assignedTo = await prisma.user.findFirst({ where: { role: { type: RoleType.assignedTo } } });
   
   const leads = [
     {
@@ -25,7 +25,7 @@ async function main() {
       leadSource: 'Facebook',
       stage: LeadStage.INTERESTED,
       tag: LeadTag.WARM,
-      counselorId: counselor?.id,
+      assignedId: assignedTo?.id,
     },
     {
       name: 'Amit Kumar',
@@ -35,7 +35,7 @@ async function main() {
       leadSource: 'Organic Search',
       stage: LeadStage.APPLICATION_STARTED,
       tag: LeadTag.HOT,
-      counselorId: counselor?.id,
+      assignedId: assignedTo?.id,
     },
     {
       name: 'Sneha Gupta',
@@ -54,7 +54,7 @@ async function main() {
       leadSource: 'Website Form',
       stage: LeadStage.WEBINAR_REGISTERED,
       tag: LeadTag.WARM,
-      counselorId: counselor?.id,
+      assignedId: assignedTo?.id,
     }
   ];
 

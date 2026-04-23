@@ -1,4 +1,5 @@
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
@@ -16,13 +17,16 @@ import lmsRoutes from '../routes/lms.routes';
 import documentRoutes from '../routes/document.routes';
 import templateRoutes from '../routes/template.routes';
 import whatsappRoutes from '../routes/whatsapp.routes';
+import notificationRoutes from '../routes/notification.routes';
 
 import { auditMiddleware } from '../middleware/audit';
 import SchedulerService from '../services/scheduler.service';
+import { initSocket } from './config/socket';
 
 dotenv.config();
 
 const app = express();
+const httpServer = createServer(app);
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
@@ -65,6 +69,7 @@ app.use('/api/v1/lms', lmsRoutes); // Added LMS routes
 app.use('/api/v1/documents', documentRoutes);
 app.use('/api/v1/templates', templateRoutes);
 app.use('/api/v1/whatsapp', whatsappRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 app.get('/api/v1/ping', (req, res) => res.send('pong')); // Added ping endpoint
 
@@ -100,9 +105,12 @@ app.get('/privacy-policy', (req, res) => {
   `);
 });
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
   console.log(`📡 API Base Path: http://localhost:${PORT}/api/v1`);
+  
+  // Initialize Socket.io
+  initSocket(httpServer);
   
   // Initialize Background Jobs
   SchedulerService.startAllJobs();

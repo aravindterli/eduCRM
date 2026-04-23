@@ -24,13 +24,13 @@ export class LeadService {
     // Automatic Assignment
     const assignedLead = await autoAssignLead(lead.id);
 
-    // Notify assigned counselor/telecaller
-    if (assignedLead && assignedLead.counselorId) {
-      const counselor = await prisma.user.findUnique({
-        where: { id: assignedLead.counselorId }
+    // Notify assigned assignedTo/telecaller
+    if (assignedLead && assignedLead.assignedId) {
+      const assignedTo = await prisma.user.findUnique({
+        where: { id: assignedLead.assignedId }
       });
-      if (counselor) {
-        await CommunicationService.sendCounselorNotification(counselor, assignedLead);
+      if (assignedTo) {
+        await CommunicationService.sendassignedToNotification(assignedTo, assignedLead);
       }
     }
 
@@ -57,7 +57,7 @@ export class LeadService {
           { phone: data.phone }
         ]
       },
-      include: { counselor: true }
+      include: { assignedTo: true }
     });
 
     if (existingLead) {
@@ -74,14 +74,14 @@ export class LeadService {
       });
 
       // // 2. Add a system note
-      // await this.addNote(existingLead.id, 'Student re-applied via public portal.', 'REMARK', existingLead.counselorId || 'system');
+      // await this.addNote(existingLead.id, 'Student re-applied via public portal.', 'REMARK', existingLead.assignedId || 'system');
 
-      // // 3. Schedule a priority follow-up for the counselor
-      // if (existingLead.counselorId) {
+      // // 3. Schedule a priority follow-up for the assignedTo
+      // if (existingLead.assignedId) {
       //   await prisma.followUp.create({
       //     data: {
       //       leadId: existingLead.id,
-      //       counselorId: existingLead.counselorId,
+      //       assignedId: existingLead.assignedId,
       //       notes: 'Priority: Student re-applied via public portal. Please contact ASAP.',
       //       scheduledAt: new Date(Date.now() + 1 * 60 * 60 * 1000) // +1 hour
       //     }
@@ -115,15 +115,31 @@ export class LeadService {
     return await LeadRepository.update(id, { priority: score });
   }
 
-  async getAllLeads(filter: any) {
-    const { page = 1, limit = 10, stage, counselorId, tag } = filter;
+  async getAllLeads(filter: any, requestingUser?: any) {
+    const { page = 1, limit = 10, stage, assignedId, tag } = filter;
     const skip = (Number(page) - 1) * Number(limit);
     const take = Number(limit);
 
     const where: any = {};
     if (stage) where.stage = stage;
-    if (counselorId) where.counselorId = counselorId;
     if (tag) where.tag = tag;
+
+    // --- ENFORCE DATA PRIVACY (RBAC) ---
+    if (requestingUser) {
+      const userRole = typeof requestingUser.role === 'string' ? requestingUser.role : requestingUser.role?.type;
+      
+      const isTeamMember = userRole === 'TELECALLER' || userRole === 'COUNSELOR';
+      
+      if (isTeamMember) {
+        // Telecallers, Counselors, and assignedTos only see leads assigned to them via assignedId (owner field)
+        where.assignedId = requestingUser.id;
+      } else if (assignedId) {
+        // Admins can still filter by specific assignedId if they want
+        where.assignedId = assignedId;
+      }
+    } else if (assignedId) {
+      where.assignedId = assignedId;
+    }
 
     // Get total count for pagination
     const total = await LeadRepository.count(where);
@@ -132,7 +148,7 @@ export class LeadService {
       skip,
       take,
       where,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { updatedAt: 'desc' }, // Switched to updatedAt to keep active leads at the top
     });
 
     return {
@@ -149,19 +165,19 @@ export class LeadService {
     return lead;
   }
 
-  async addNote(id: string, content: string, type: any, counselorId: string) {
+  async addNote(id: string, content: string, type: any, assignedId: string) {
     return await prisma.leadNote.create({
       data: {
         leadId: id,
         content,
         type: type || 'REMARK',
-        counselorId
+        assignedId
       },
-      include: { counselor: { select: { name: true } } }
+      include: { assignedTo: { select: { name: true } } }
     });
   }
 
-  async logInteraction(leadId: string, data: { type: string, message: string, direction: string, counselorId: string, duration?: number, result?: string }) {
+  async logInteraction(leadId: string, data: { type: string, message: string, direction: string, assignedId: string, duration?: number, result?: string }) {
     return await prisma.communicationLog.create({
       data: {
         leadId,
@@ -171,13 +187,33 @@ export class LeadService {
         status: 'SENT',
         duration: data.duration,
         result: data.result,
-        counselorId: data.counselorId
+        assignedId: data.assignedId
       },
-      include: { counselor: { select: { name: true } } }
+      include: { assignedTo: { select: { name: true } } }
     });
   }
 
-  async updateLead(id: string, data: any) {
+  async updateLead(id: string, data: any, requestingUserId?: string) {
+    const existingLead = await LeadRepository.findUnique(id);
+    if (!existingLead) throw new Error('Lead not found');
+
+    // --- AUTOMATED HANDOVER LOGIC ---
+    // Detect if we are moving to Counseling Scheduled
+    if (data.stage === 'COUNSELING_SCHEDULED' && existingLead.stage !== 'COUNSELING_SCHEDULED') {
+      const { default: AssignmentService } = await import('./assignment.service');
+      const assignedLead = await AssignmentService.assignToassignedTo(id);
+      
+      if (assignedLead && assignedLead.assignedId) {
+        // Log a specialized handover note
+        await this.addNote(
+          id, 
+          `Handover: Lead moved to COUNSELING_SCHEDULED. Automatically assigned to assignedTo: ${assignedLead.assignedTo?.name || 'Academic Team'}.`,
+          'REMARK',
+          requestingUserId || 'system'
+        );
+      }
+    }
+
     return await LeadRepository.update(id, data);
   }
 
@@ -190,22 +226,27 @@ export class LeadService {
     return await LeadRepository.delete(id);
   }
 
-  async assignLead(id: string, counselorId: string) {
+  async assignLead(id: string, assignedId: string) {
     return await LeadRepository.update(id, {
-      counselor: { connect: { id: counselorId } }
+      assignedTo: { connect: { id: assignedId } }
     });
   }
 
-  async getLeadStats() {
-    const totalLeads = await LeadRepository.count();
+  async getLeadStats(userId?: string, role?: string) {
+    const isTeamMember = role === 'TELECALLER' || role === 'COUNSELOR';
+    const filter = isTeamMember && userId ? { assignedId: userId } : {};
+
+    const totalLeads = await LeadRepository.count(filter);
 
     const today = new Date(new Date().setHours(0, 0, 0, 0));
 
     const leadsToday = await LeadRepository.count({
+      ...filter,
       createdAt: { gte: today }
     });
 
     const newLeads = await LeadRepository.count({
+      ...filter,
       createdAt: {
         gte: new Date(new Date().setDate(new Date().getDate() - 7)), // Last 7 days
       },
@@ -213,6 +254,7 @@ export class LeadService {
 
     // Calculate admissions
     const admissions = await LeadRepository.count({
+      ...filter,
       stage: 'ADMISSION_CONFIRMED'
     });
 
@@ -252,12 +294,12 @@ export class LeadService {
     // 2. Add a system note
     await this.addNote(id, 'Lead reactivated from Re-engagement stage.', 'REMARK', userId);
 
-    // 3. Create a follow-up task for the counselor
-    if (updatedLead.counselorId) {
+    // 3. Create a follow-up task for the assignedTo
+    if (updatedLead.assignedId) {
       await prisma.followUp.create({
         data: {
           leadId: id,
-          counselorId: updatedLead.counselorId,
+          assignedId: updatedLead.assignedId,
           notes: 'Welcome back follow-up: Student accepted re-engagement offer.',
           scheduledAt: new Date(Date.now() + 2 * 60 * 60 * 1000) // +2 hours (asap)
         }

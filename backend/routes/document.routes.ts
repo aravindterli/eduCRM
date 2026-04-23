@@ -11,13 +11,13 @@ router.use('/files', authenticate, express.static(path.join(__dirname, '../../up
 
 router.use(authenticate);
 
-// Allow counselors and telecallers to upload
+// Allow assignedTos and telecallers to upload
 router.post('/upload', authorize(['ADMIN', 'COUNSELOR', 'TELECALLER']), upload.single('file'), uploadDocument);
 
 // Get documents for a specific application
 router.get('/application/:applicationId', authorize(['ADMIN', 'COUNSELOR', 'TELECALLER']), getApplicationDocuments);
 
-// Only Admins and Counselors can verify documents
+// Only Admins and assignedTos can verify documents
 router.patch('/:id/verify', authorize(['ADMIN', 'COUNSELOR']), verifyDocument);
 
 export default router;

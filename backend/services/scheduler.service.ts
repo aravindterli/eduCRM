@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import prisma from '../config/prisma';
 import CommunicationService from './communication.service';
 import BackupService from './backup.service';
+import NotificationService from './notification.service';
 import { LeadStage } from '@prisma/client';
 
 export class SchedulerService {
@@ -12,6 +13,7 @@ export class SchedulerService {
     this.scheduleReEngagementDrip();
     this.scheduleAutomatedBackups();
     this.scheduleMetaLeadRetrieval();
+    this.schedule10MinAlerts();
   }
 
   private scheduleDailyReminders() {
@@ -29,15 +31,15 @@ export class SchedulerService {
           scheduledAt: { gte: today, lt: tomorrow },
           completedAt: null
         },
-        include: { counselor: true, lead: true }
+        include: { assignedTo: true, lead: true }
       });
 
       for (const followup of pendingFollowUps) {
-        if (followup.counselor.email) {
+        if (followup.assignedTo.email) {
           await CommunicationService.sendEmail(
-            followup.counselor.email,
+            followup.assignedTo.email,
             'daily_reminder',
-            { name: followup.counselor.name, leadName: followup.lead.name }
+            { name: followup.assignedTo.name, leadName: followup.lead.name }
           );
         }
       }
@@ -116,6 +118,38 @@ export class SchedulerService {
       console.log('[Scheduler] Running Periodical Meta Lead Sync');
       const { default: MetaService } = await import('./meta.service');
       await MetaService.syncRecentLeads();
+    });
+  }
+
+  private schedule10MinAlerts() {
+    // Runs every minute
+    cron.schedule('* * * * *', async () => {
+      const now = new Date();
+      const tenMinsFromNow = new Date(now.getTime() + 10 * 60000);
+      const elevenMinsFromNow = new Date(now.getTime() + 11 * 60000);
+
+      const upcomingTasks = await prisma.followUp.findMany({
+        where: {
+          scheduledAt: {
+            gte: tenMinsFromNow,
+            lt: elevenMinsFromNow
+          },
+          completedAt: null
+        },
+        include: { lead: true }
+      });
+
+      for (const task of upcomingTasks) {
+        await NotificationService.create({
+          userId: task.assignedId,
+          title: `Upcoming Call: ${task.lead?.name || 'Lead'}`,
+          message: `Call scheduled in 10 minutes at ${task.scheduledAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
+          type: 'FOLLOW_UP',
+          taskId: task.id,
+          leadId: task.leadId,
+          scheduledAt: task.scheduledAt
+        });
+      }
     });
   }
 }

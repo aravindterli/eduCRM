@@ -53,11 +53,11 @@ export class ApplicationService {
       });
 
       // Auto-schedule Re-engagement Follow-up (30 days from now)
-      if (lead.counselorId) {
+      if (lead.assignedId) {
         await prisma.followUp.create({
           data: {
             leadId: lead.id,
-            counselorId: lead.counselorId,
+            assignedId: lead.assignedId,
             notes: `Automated re-engagement after application rejection. Reason: ${reason || 'N/A'}`,
             scheduledAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 days
           }

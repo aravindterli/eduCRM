@@ -17,21 +17,39 @@ model Role {
 }
 
 model User {
-  id                 String          @id @default(uuid())
+  id                 String             @id @default(uuid())
   name               String
-  email              String          @unique
+  email              String             @unique
   password           String
   roleId             String
-  createdAt          DateTime        @default(now())
-  updatedAt          DateTime        @updatedAt
-  theme              String          @default("ocean")
-  accent             String          @default("blue")
-  counselingSessions CounselingLog[] @relation("CounselorSessions")
-  followUps          FollowUp[]      @relation("CounselorFollowUps")
-  leads              Lead[]          @relation("CounselorLeads")
-  leadNotes          LeadNote[]      @relation("CounselorNotes")
-  communicationLogs  CommunicationLog[] @relation("CounselorComms")
-  role               Role            @relation(fields: [roleId], references: [id])
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  accent             String             @default("blue")
+  theme              String             @default("ocean")
+  communicationLogs  CommunicationLog[] @relation("AssignedComms")
+  counselingSessions CounselingLog[]    @relation("AssignedSessions")
+  followUps          FollowUp[]         @relation("AssignedFollowUps")
+  createdFollowUps   FollowUp[]         @relation("CreatedFollowUps")
+  leads              Lead[]             @relation("AssignedLeads")
+  leadNotes          LeadNote[]         @relation("AssignedNotes")
+  notifications      Notification[]
+  role               Role               @relation(fields: [roleId], references: [id])
+}
+
+model Notification {
+  id          String    @id @default(uuid())
+  userId      String
+  taskId      String?
+  leadId      String?
+  title       String
+  message     String
+  type        String    @default("FOLLOW_UP")
+  isRead      Boolean   @default(false)
+  scheduledAt DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Program {
@@ -72,7 +90,7 @@ model Lead {
   stage                LeadStage             @default(NEW_LEAD)
   priority             Int                   @default(0)
   tag                  LeadTag?
-  counselorId          String?
+  assignedId           String?               @map("counselorId")
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   application          Application?
@@ -80,7 +98,7 @@ model Lead {
   counselingLogs       CounselingLog[]
   followUps            FollowUp[]
   campaign             Campaign?             @relation(fields: [campaignId], references: [id])
-  counselor            User?                 @relation("CounselorLeads", fields: [counselorId], references: [id])
+  assignedTo           User?                 @relation("AssignedLeads", fields: [assignedId], references: [id])
   program              Program?              @relation(fields: [interestedProgramId], references: [id])
   notes                LeadNote[]
   webinarRegistrations WebinarRegistration[]
@@ -92,13 +110,15 @@ model Lead {
 model FollowUp {
   id          String    @id @default(uuid())
   leadId      String
-  counselorId String
+  assignedId  String    @map("counselorId")
   notes       String?
   scheduledAt DateTime
   completedAt DateTime?
-  meetingUrl  String?
   createdAt   DateTime  @default(now())
-  counselor   User      @relation("CounselorFollowUps", fields: [counselorId], references: [id])
+  meetingUrl  String?
+  createdById String?
+  assignedTo  User      @relation("AssignedFollowUps", fields: [assignedId], references: [id])
+  createdBy   User?     @relation("CreatedFollowUps", fields: [createdById], references: [id])
   lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
@@ -126,11 +146,11 @@ model WebinarRegistration {
 model CounselingLog {
   id             String   @id @default(uuid())
   leadId         String
-  counselorId    String
+  assignedId     String   @map("counselorId")
   notes          String?
   recommendation String?
   createdAt      DateTime @default(now())
-  counselor      User     @relation("CounselorSessions", fields: [counselorId], references: [id])
+  assignedTo     User     @relation("AssignedSessions", fields: [assignedId], references: [id])
   lead           Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
@@ -202,37 +222,29 @@ model AuditLog {
 }
 
 model CommunicationLog {
-  id          String   @id @default(uuid())
-  leadId      String
-  counselorId String?
-  type        String   // EMAIL, SMS, WHATSAPP, CALL
-  direction   String   // INBOUND, OUTBOUND
-  message     String
-  status      String
-  duration    Int?     // For calls, in seconds or minutes
-  result      String?  // Outcome of interaction
-  timestamp   DateTime @default(now())
-  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  counselor   User?    @relation("CounselorComms", fields: [counselorId], references: [id])
+  id         String   @id @default(uuid())
+  leadId     String
+  type       String
+  direction  String
+  message    String
+  status     String
+  timestamp  DateTime @default(now())
+  assignedId String?  @map("counselorId")
+  duration   Int?
+  result     String?
+  assignedTo User?    @relation("AssignedComms", fields: [assignedId], references: [id])
+  lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
-
 
 model LeadNote {
-  id          String       @id @default(uuid())
-  leadId      String
-  counselorId String
-  content     String
-  type        LeadNoteType @default(GENERAL)
-  createdAt   DateTime     @default(now())
-  counselor   User         @relation("CounselorNotes", fields: [counselorId], references: [id])
-  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
-}
-
-enum LeadNoteType {
-  GENERAL
-  REMARK
-  STUDENT_FEEDBACK
-  DISCUSSION_SUMMARY
+  id         String       @id @default(uuid())
+  leadId     String
+  assignedId String       @map("counselorId")
+  content    String
+  createdAt  DateTime     @default(now())
+  type       LeadNoteType @default(GENERAL)
+  assignedTo User         @relation("AssignedNotes", fields: [assignedId], references: [id])
+  lead       Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
 }
 
 model MessageTemplate {
@@ -243,6 +255,13 @@ model MessageTemplate {
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum LeadNoteType {
+  GENERAL
+  REMARK
+  STUDENT_FEEDBACK
+  DISCUSSION_SUMMARY
 }
 
 enum RoleType {

@@ -27,14 +27,14 @@ export const createPublicLead = async (req: Request, res: Response) => {
 
 export const getLeads = async (req: Request, res: Response) => {
   try {
-    const { page, limit, stage, counselorId, tag } = req.query;
+    const { page, limit, stage, assignedId, tag } = req.query;
     const result = await LeadService.getAllLeads({
       page,
       limit,
       stage,
-      counselorId,
+      assignedId,
       tag
-    });
+    }, (req as any).user);
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -72,7 +72,7 @@ export const logLeadInteraction = async (req: any, res: Response) => {
       direction: direction || 'OUTBOUND',
       duration: duration ? Number(duration) : undefined,
       result,
-      counselorId: req.user.id
+      assignedId: req.user.id
     });
     res.status(201).json(interaction);
   } catch (error: any) {
@@ -82,7 +82,7 @@ export const logLeadInteraction = async (req: any, res: Response) => {
 
 export const updateLead = async (req: Request, res: Response) => {
   try {
-    const lead = await LeadService.updateLead(req.params.id, req.body);
+    const lead = await LeadService.updateLead(req.params.id, req.body, (req as any).user?.id);
     res.json(lead);
   } catch (error: any) {
     res.status(400).json({ message: error.message });
@@ -98,9 +98,9 @@ export const deleteLead = async (req: Request, res: Response) => {
   }
 };
 
-export const getLeadStats = async (req: Request, res: Response) => {
+export const getLeadStats = async (req: any, res: Response) => {
   try {
-    const stats = await LeadService.getLeadStats();
+    const stats = await LeadService.getLeadStats(req.user?.id, req.user?.role);
     res.json(stats);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

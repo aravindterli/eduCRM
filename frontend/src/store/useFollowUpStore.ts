@@ -22,7 +22,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
   fetchUpcoming: async () => {
     set({ loading: true, error: null });
     try {
-      const data = await followUpService.getUpcoming();
+      const data = await followUpService.getUpcoming(true);
       set({ upcoming: data, loading: false });
     } catch (err: any) {
       set({ error: err.message, loading: false });
@@ -63,7 +63,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
       const updateList = (list: FollowUp[]) =>
         list.map((f) => (f.id === id ? updated : f));
       set((s) => ({
-        upcoming: s.upcoming.filter((f) => f.id !== id),
+        upcoming: updateList(s.upcoming),
         leadFollowUps: updateList(s.leadFollowUps),
         loading: false,
       }));

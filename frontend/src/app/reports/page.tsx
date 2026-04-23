@@ -13,12 +13,12 @@ export default function ReportsPage() {
     programData, 
     financeData, 
     leadStats, 
-    counselorData,
+    assignedToData,
     fetchFunnel, 
     fetchPrograms, 
     fetchFinance, 
     fetchLeadStats,
-    fetchCounselors,
+    fetchassignedTos,
     loading 
   } = useReportStore();
 
@@ -27,8 +27,8 @@ export default function ReportsPage() {
     fetchPrograms();
     fetchFinance();
     fetchLeadStats();
-    fetchCounselors();
-  }, [fetchFunnel, fetchPrograms, fetchFinance, fetchLeadStats, fetchCounselors]);
+    fetchassignedTos();
+  }, [fetchFunnel, fetchPrograms, fetchFinance, fetchLeadStats, fetchassignedTos]);
 
   const funnelColors = ['#3b82f6', '#8b5cf6', '#d946ef', '#ec4899'];
 
@@ -128,19 +128,19 @@ export default function ReportsPage() {
           />
         </div>
 
-        {/* Counselor Productivity */}
+        {/* assignedTo Productivity */}
         <div className="glass p-8 rounded-3xl border-white/5">
            <div className="flex items-center gap-3 mb-8">
             <div className="w-10 h-10 rounded-xl bg-orange-500/20 text-orange-400 flex items-center justify-center">
               <Users size={20} />
             </div>
             <div>
-              <h3 className="text-lg font-bold">Counselor Productivity</h3>
+              <h3 className="text-lg font-bold">assignedTo Productivity</h3>
               <p className="text-xs text-slate-500">Leads vs Sessions Hosted</p>
             </div>
           </div>
           <div className="space-y-6">
-             {counselorData?.length > 0 ? counselorData.map((c: any, i: number) => (
+             {assignedToData?.length > 0 ? assignedToData.map((c: any, i: number) => (
                 <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
                    <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-300">
@@ -162,7 +162,7 @@ export default function ReportsPage() {
                    </div>
                 </div>
              )) : (
-                <div className="py-12 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">No counselor activity recorded.</div>
+                <div className="py-12 text-center text-slate-500 text-xs font-bold uppercase tracking-widest">No assignedTo activity recorded.</div>
              )}
           </div>
         </div>

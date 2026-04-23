@@ -3,17 +3,20 @@ import api from '@/utils/api';
 export interface FollowUp {
   id: string;
   leadId: string;
-  counselorId: string;
+  assignedId: string;
   notes: string;
   scheduledAt: string;
   completedAt: string | null;
   meetingUrl: string | null;
   lead?: { id: string; name: string; phone: string; stage: string };
+  createdBy?: { id: string; name: string };
 }
 
 export const followUpService = {
-  getUpcoming: async (): Promise<FollowUp[]> => {
-    const res = await api.get('/leads/follow-ups/upcoming');
+  getUpcoming: async (includeCompleted?: boolean): Promise<FollowUp[]> => {
+    const res = await api.get('/leads/follow-ups/upcoming', {
+      params: { includeCompleted }
+    });
     return res.data;
   },
 

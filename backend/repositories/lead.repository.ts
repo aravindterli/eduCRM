@@ -17,14 +17,14 @@ export class LeadRepository {
       include: {
         program: true,
         campaign: true,
-        counselor: true,
+        assignedTo: true,
         application: {
           include: { documents: true }
         },
         followUps: true,
         counselingLogs: true,
         communicationLogs: { orderBy: { timestamp: 'desc' } },
-        notes: { orderBy: { createdAt: 'desc' }, include: { counselor: { select: { id: true, name: true } } } },
+        notes: { orderBy: { createdAt: 'desc' }, include: { assignedTo: { select: { id: true, name: true } } } },
         webinarRegistrations: {
           include: {
             webinar: true
@@ -40,11 +40,11 @@ export class LeadRepository {
       include: {
         program: true,
         campaign: true,
-        counselor: true,
+        assignedTo: true,
         followUps: true,
         counselingLogs: true,
         communicationLogs: { orderBy: { timestamp: 'desc' } },
-        notes: { orderBy: { createdAt: 'desc' }, include: { counselor: { select: { id: true, name: true } } } },
+        notes: { orderBy: { createdAt: 'desc' }, include: { assignedTo: { select: { id: true, name: true } } } },
         webinarRegistrations: {
           include: {
             webinar: true

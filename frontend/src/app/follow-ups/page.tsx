@@ -25,49 +25,60 @@ export default function FollowUpsPage() {
 
   return (
     <MainLayout>
-      {/* page header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-1">
-          <CalendarClock size={24} className="text-blue-400" />
-          <h1 className="text-2xl font-bold">follow-ups</h1>
-        </div>
-        <p className="text-slate-400 text-sm ml-9">agenda view of all pending lead follow-ups</p>
-      </div>
-
-      {/* summary banner */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <div className="glass rounded-2xl border border-white/5 p-5 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
-            <Clock size={20} className="text-blue-400" />
+      {/* page header - COMPACT */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-xl bg-blue-500/10 text-blue-400">
+            <CalendarClock size={20} />
           </div>
           <div>
-            <p className="text-2xl font-bold">{upcoming.length}</p>
-            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wide">total pending</p>
-          </div>
-        </div>
-        <div className="glass rounded-2xl border border-white/5 p-5 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-            <CheckCircle2 size={20} className="text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold">{dueToday.length}</p>
-            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wide">due today</p>
-          </div>
-        </div>
-        <div className="glass rounded-2xl border border-white/5 p-5 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center">
-            <AlertTriangle size={20} className="text-red-400" />
-          </div>
-          <div>
-            <p className="text-2xl font-bold text-red-400">{overdue.length}</p>
-            <p className="text-xs text-muted-foreground uppercase font-bold tracking-wide">overdue</p>
+            <h1 className="text-xl font-bold tracking-tight">follow-ups</h1>
+            <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">meeting agenda</p>
           </div>
         </div>
       </div>
 
-      {/* calendar / agenda */}
-      <div className="glass rounded-2xl border border-white/5 p-6">
-        <FollowUpCalendar onViewLead={setSelectedLead} />
+      {/* summary banner - SLIM */}
+      <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="glass-premium rounded-2xl border border-white/5 p-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+            <Clock size={16} className="text-blue-400" />
+          </div>
+          <div>
+            <p className="text-lg font-bold leading-none">{upcoming.length}</p>
+            <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-wide">pending</p>
+          </div>
+        </div>
+        <div className="glass-premium rounded-2xl border border-white/5 p-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+            <CheckCircle2 size={16} className="text-emerald-400" />
+          </div>
+          <div>
+            <p className="text-lg font-bold leading-none">{dueToday.length}</p>
+            <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-wide">today</p>
+          </div>
+        </div>
+        <div className="glass-premium rounded-2xl border border-white/5 p-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+            <AlertTriangle size={16} className="text-red-400" />
+          </div>
+          <div>
+            <p className="text-lg font-bold text-red-400 leading-none">{overdue.length}</p>
+            <p className="text-[9px] text-muted-foreground uppercase font-bold tracking-wide">overdue</p>
+          </div>
+        </div>
+      </div>
+
+      {/* calendar / agenda - FITTED */}
+      <div className="h-[calc(100vh-210px)]">
+        <FollowUpCalendar 
+          tasks={upcoming.filter(f => f.meetingUrl)} 
+          onSelectTask={(lead) => setSelectedLead(lead)} 
+          onCompleteTask={async (id) => {
+            const { useFollowUpStore } = await import('@/store/useFollowUpStore');
+            useFollowUpStore.getState().complete(id);
+          }}
+        />
       </div>
 
       {/* lead context drawer */}

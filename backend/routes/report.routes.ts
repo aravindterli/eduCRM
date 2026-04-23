@@ -15,10 +15,10 @@ import { authenticate, authorize } from '../middleware/auth';
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize(['ADMIN', 'MARKETING_TEAM', 'FINANCE']));
+router.use(authorize(['ADMIN', 'MARKETING_TEAM', 'FINANCE', 'TELECALLER', 'COUNSELOR']));
 
 router.get('/leads', getLeadReports);
-router.get('/counselors', getCounselerStats);
+router.get('/assignedTos', getCounselerStats);
 router.get('/funnel', getConversionFunnel);
 router.get('/programs', getProgramPerformance);
 router.get('/finance', getFinancialAnalytics);

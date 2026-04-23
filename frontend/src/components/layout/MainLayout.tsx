@@ -7,11 +7,13 @@ import { useAuthStore } from '@/store/auth.store';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useThemeStore } from '@/store/useThemeStore';
+import { NotificationBell } from '../notifications/NotificationBell';
+import { useNotificationStore } from '@/store/useNotificationStore';
 
 const routeRoles: Record<string, string[]> = {
-  '/leads': ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR'],
-  '/counseling': ['ADMIN', 'TELECALLER', 'COUNSELOR'],
-  '/applications': ['ADMIN', 'COUNSELOR'],
+  '/leads': ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'assignedTo'],
+  '/counseling': ['ADMIN', 'TELECALLER', 'assignedTo'],
+  '/applications': ['ADMIN', 'assignedTo'],
   '/finances': ['ADMIN', 'FINANCE'],
   '/programs': ['ADMIN'],
   '/reports': ['ADMIN', 'MARKETING_TEAM', 'FINANCE'],
@@ -23,6 +25,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = React.useState(false);
   const { user, token } = useAuthStore();
   const { theme, accent, syncWithUser } = useThemeStore();
+  const { init, disconnect } = useNotificationStore();
   const router = useRouter();
   const pathname = usePathname();
   const prevUserRef = React.useRef(user?.id);
@@ -43,7 +46,15 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     if (mounted && !token) {
       router.push('/auth/login');
     }
-  }, [mounted, token, router]);
+    
+    if (mounted && token && user) {
+      init(user.id, token);
+    }
+
+    return () => {
+      disconnect();
+    };
+  }, [mounted, token, user, init, disconnect, router]);
 
   const isAuthorized = !routeRoles[pathname] || (user && routeRoles[pathname].includes(user.role));
 
@@ -80,6 +91,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             </h2>
           </div>
           <div className="flex items-center gap-4">
+            <NotificationBell />
             <Link 
               href="/settings"
               className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 border border-white/20 shadow-lg shadow-primary/10 flex items-center justify-center hover:scale-110 transition-transform group cursor-pointer"

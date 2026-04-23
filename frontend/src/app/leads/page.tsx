@@ -39,10 +39,30 @@ export default function LeadsPage() {
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [selectedLeadIds, setSelectedLeadIds] = React.useState<string[]>([]);
   const [isBulkWhatsAppOpen, setIsBulkWhatsAppOpen] = React.useState(false);
+  const [staff, setStaff] = React.useState<any[]>([]);
+  const [selectedOwner, setSelectedOwner] = React.useState<string>('');
 
   React.useEffect(() => {
-    fetchLeads(page, limit);
-  }, [fetchLeads]);
+    const fetchStaff = async () => {
+      const token = localStorage.getItem('educrm_token');
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/users`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setStaff(data.filter((u: any) => u.role !== 'ADMIN'));
+        }
+      } catch (err) {
+        console.error('Failed to fetch staff:', err);
+      }
+    };
+    fetchStaff();
+  }, []);
+
+  React.useEffect(() => {
+    fetchLeads(1, limit, selectedOwner ? { assignedId: selectedOwner } : {});
+  }, [fetchLeads, selectedOwner]);
 
   const filteredLeads = React.useMemo(() => {
     if (!campaignFilter) return leads;
@@ -126,12 +146,27 @@ export default function LeadsPage() {
               className="w-full bg-white/5 border-none rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-1 ring-white/10"
             />
           </div>
-          <div className="flex gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 text-sm hover:bg-white/10 transition-colors">
-              <Filter size={16} />
-              Filter
-            </button>
-          </div>
+           <div className="flex gap-2">
+             <select
+               value={selectedOwner}
+               onChange={(e) => {
+                 setSelectedOwner(e.target.value);
+                 fetchLeads(1, limit, { assignedId: e.target.value || undefined });
+               }}
+               className="bg-white/5 border-none rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 ring-white/10 text-slate-300 cursor-pointer"
+             >
+               <option value="">All Staff</option>
+               {staff.map(u => (
+                 <option key={u.id} value={u.id} className="bg-slate-900 border-none">
+                   {u.name} ({u.role.toLowerCase()})
+                 </option>
+               ))}
+             </select>
+             <button className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 text-sm hover:bg-white/10 transition-colors">
+               <Filter size={16} />
+               Filter
+             </button>
+           </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -150,6 +185,7 @@ export default function LeadsPage() {
                 <th className="px-6 py-4 font-medium">Lead Info</th>
                 <th className="px-6 py-4 font-medium hidden sm:table-cell">Stage</th>
                 <th className="px-6 py-4 font-medium hidden md:table-cell">Source</th>
+                <th className="px-6 py-4 font-medium hidden md:table-cell">Owner</th>
                 <th className="px-6 py-4 font-medium hidden sm:table-cell">Created At</th>
                 <th className="px-6 py-4 font-medium text-right">Actions</th>
               </tr>
@@ -211,6 +247,18 @@ export default function LeadsPage() {
                     </td>
                     <td className="px-6 py-4 text-sm hidden md:table-cell">
                       <span className="text-slate-400">{lead.leadSource}</span>
+                    </td>
+                    <td className="px-6 py-4 text-sm hidden md:table-cell">
+                      {lead.assignedTo ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
+                            {lead.assignedTo.name[0]}
+                          </div>
+                          <span className="text-slate-300 font-medium">{lead.assignedTo.name}</span>
+                        </div>
+                      ) : (
+                        <span className="text-slate-600 italic">Unassigned</span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-400 hidden sm:table-cell">{new Date(lead.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4 text-right">

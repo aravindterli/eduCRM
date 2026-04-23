@@ -24,7 +24,7 @@ export const UserManagement = () => {
     name: '',
     email: '',
     password: '',
-    roleType: 'COUNSELOR',
+    roleType: 'assignedTo',
   });
 
   const fetchUsers = async () => {
@@ -50,7 +50,7 @@ export const UserManagement = () => {
     try {
       await authService.register(formData);
       setShowCreateForm(false);
-      setFormData({ name: '', email: '', password: '', roleType: 'COUNSELOR' });
+      setFormData({ name: '', email: '', password: '', roleType: 'assignedTo' });
       fetchUsers();
     } catch (err: any) {
       setFormError(err.response?.data?.message || 'Failed to create user');
@@ -133,7 +133,7 @@ export const UserManagement = () => {
                   <option value="ADMIN" className="bg-slate-900">Admin</option>
                   <option value="MARKETING_TEAM" className="bg-slate-900">Marketing Team</option>
                   <option value="TELECALLER" className="bg-slate-900">Telecaller</option>
-                  <option value="COUNSELOR" className="bg-slate-900">Counselor</option>
+                  <option value="assignedTo" className="bg-slate-900">assignedTo</option>
                   <option value="FINANCE" className="bg-slate-900">Finance</option>
                 </select>
               </div>
@@ -201,7 +201,7 @@ export const UserManagement = () => {
                 <td className="bg-white/5 py-4">
                   <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black border ${
                     u.role === 'ADMIN' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
-                    u.role === 'COUNSELOR' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
+                    u.role === 'assignedTo' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
                     u.role === 'FINANCE' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                     u.role === 'MARKETING_TEAM' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
                     'bg-slate-500/10 text-slate-400 border-slate-500/20'

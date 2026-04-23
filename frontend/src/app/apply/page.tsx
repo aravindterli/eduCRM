@@ -88,7 +88,7 @@ export default function ApplyPage() {
           <div className="space-y-4">
             <h2 className="text-4xl font-black text-white">Application Received!</h2>
             <p className="text-slate-400 font-medium leading-relaxed">
-              Thank you for choosing EduCRM. Your profile has been prioritized, and our chief counselor will reach out to you within the next 24 hours.
+              Thank you for choosing EduCRM. Your profile has been prioritized, and our chief assignedTo will reach out to you within the next 24 hours.
             </p>
           </div>
           <button

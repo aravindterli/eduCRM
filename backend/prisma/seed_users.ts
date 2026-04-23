@@ -13,7 +13,7 @@ async function main() {
     { name: 'Admin User', email: 'admin@test.com', role: RoleType.ADMIN },
     { name: 'Marketing User', email: 'marketing@test.com', role: RoleType.MARKETING_TEAM },
     { name: 'Telecaller User', email: 'telecaller@test.com', role: RoleType.TELECALLER },
-    { name: 'Counselor User', email: 'counselor@test.com', role: RoleType.COUNSELOR },
+    { name: 'assignedTo User', email: 'assignedTo@test.com', role: RoleType.assignedTo },
     { name: 'Finance User', email: 'finance@test.com', role: RoleType.FINANCE },
   ];
 

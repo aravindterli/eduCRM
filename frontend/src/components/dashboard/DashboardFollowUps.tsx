@@ -44,6 +44,11 @@ export const DashboardFollowUps = () => {
                 <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
                   <Clock size={10} />
                   {new Date(f.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {f.createdBy && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 leading-none">
+                      by {f.createdBy.name}
+                    </span>
+                  )}
                 </div>
               </div>
               <button 

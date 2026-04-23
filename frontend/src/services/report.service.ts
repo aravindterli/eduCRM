@@ -22,8 +22,8 @@ export const reportService = {
     return response.data;
   },
 
-  getCounselors: async () => {
-    const response = await API.get('/reports/counselors');
+  getassignedTos: async () => {
+    const response = await API.get('/reports/assignedTos');
     return response.data;
   },
 

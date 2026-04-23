@@ -5,29 +5,29 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding test data...');
   
-  // 1. Create Counselor Role
-  const counselorRole = await prisma.role.upsert({
-    where: { type: RoleType.COUNSELOR },
+  // 1. Create assignedTo Role
+  const assignedToRole = await prisma.role.upsert({
+    where: { type: RoleType.assignedTo },
     update: {},
     create: {
-      type: RoleType.COUNSELOR,
+      type: RoleType.assignedTo,
       permissions: { can_counsel: true }
     }
   });
-  console.log('Counselor Role created/found');
+  console.log('assignedTo Role created/found');
 
-  // 2. Create Test Counselor User
+  // 2. Create Test assignedTo User
   const testUser = await prisma.user.upsert({
-    where: { email: 'counselor@test.com' },
+    where: { email: 'assignedTo@test.com' },
     update: {},
     create: {
-      name: 'Test Counselor',
-      email: 'counselor@test.com',
+      name: 'Test assignedTo',
+      email: 'assignedTo@test.com',
       password: 'hashed_password', // Mock password
-      roleId: counselorRole.id
+      roleId: assignedToRole.id
     }
   });
-  console.log('Test Counselor User created/found:', testUser.id);
+  console.log('Test assignedTo User created/found:', testUser.id);
   
   // 3. Ensure some programs exist
   await prisma.program.upsert({

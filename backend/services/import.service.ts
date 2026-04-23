@@ -26,7 +26,7 @@ export class ImportService {
         });
 
         // 2. Auto-Assign
-        await assignmentService.assignLead(lead.id);
+        await assignmentService.autoAssignLead(lead.id);
 
         results.success++;
       } catch (error: any) {

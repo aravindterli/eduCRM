@@ -12,7 +12,7 @@ async function createTeam() {
 
   const roles = await prisma.role.findMany();
   const telecallerRole = roles.find(r => r.type === 'TELECALLER');
-  const assignedToRole = roles.find(r => r.type === 'assignedTo');
+  const assignedToRole = roles.find(r => r.type === 'COUNSELOR');
 
   if (!telecallerRole || !assignedToRole) {
     console.error('Required roles not found in DB.');

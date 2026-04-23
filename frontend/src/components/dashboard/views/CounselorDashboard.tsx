@@ -6,14 +6,14 @@ import { AnalyticsChart } from '../AnalyticsChart';
 import { DashboardFollowUps } from '../DashboardFollowUps';
 import { Users, GraduationCap, Target, Award, Activity, MousePointer2 } from 'lucide-react';
 
-interface assignedToDashboardProps {
+interface CounselorDashboardProps {
   metrics: any;
   leadStats: any;
   programData: any;
   funnelData: any;
 }
 
-export const assignedToDashboard: React.FC<assignedToDashboardProps> = ({
+export const CounselorDashboard: React.FC<CounselorDashboardProps> = ({
   metrics,
   leadStats,
   programData,

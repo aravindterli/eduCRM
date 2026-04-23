@@ -7,14 +7,14 @@ interface ReportState {
   programData: any[];
   financeData: any;
   leadStats: any;
-  assignedToData: any[];
+  counselorData: any[];
   activityLogs: any[];
   loading: boolean;
   fetchFunnel: () => Promise<void>;
   fetchPrograms: () => Promise<void>;
   fetchFinance: () => Promise<void>;
   fetchLeadStats: () => Promise<void>;
-  fetchassignedTos: () => Promise<void>;
+  fetchCounselors: () => Promise<void>;
   fetchActivities: () => Promise<void>;
 }
 
@@ -23,7 +23,7 @@ export const useReportStore = create<ReportState>((set) => ({
   programData: [],
   financeData: null,
   leadStats: null,
-  assignedToData: [],
+  counselorData: [],
   activityLogs: [],
   loading: false,
 
@@ -67,11 +67,11 @@ export const useReportStore = create<ReportState>((set) => ({
     }
   },
 
-  fetchassignedTos: async () => {
+  fetchCounselors: async () => {
     set({ loading: true });
     try {
       const data = await reportService.getassignedTos();
-      set({ assignedToData: data });
+      set({ counselorData: data });
     } finally {
       set({ loading: false });
     }

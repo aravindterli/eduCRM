@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import PDFDocument from 'pdfkit';
 import ReportService from '../services/report.service';
 
-export const getLeadReports = async (req: Request, res: Response) => {
+export const getLeadReports = async (req: any, res: Response) => {
   try {
     const reports = await ReportService.getLeadAnalytics(req.user.id, req.user.role);
     res.json(reports);
@@ -11,7 +11,7 @@ export const getLeadReports = async (req: Request, res: Response) => {
   }
 };
 
-export const getCounselerStats = async (req: Request, res: Response) => {
+export const getCounselerStats = async (req: any, res: Response) => {
   try {
     const stats = await ReportService.getassignedToPerformance(req.user.id, req.user.role);
     res.json(stats);
@@ -20,7 +20,7 @@ export const getCounselerStats = async (req: Request, res: Response) => {
   }
 };
 
-export const getConversionFunnel = async (req: Request, res: Response) => {
+export const getConversionFunnel = async (req: any, res: Response) => {
   try {
     const funnel = await ReportService.getConversionFunnel(req.user.id, req.user.role);
     res.json(funnel);
@@ -29,7 +29,7 @@ export const getConversionFunnel = async (req: Request, res: Response) => {
   }
 };
 
-export const getProgramPerformance = async (req: Request, res: Response) => {
+export const getProgramPerformance = async (req: any, res: Response) => {
   try {
     const performance = await ReportService.getProgramPerformance(req.user.id, req.user.role);
     res.json(performance);
@@ -38,7 +38,7 @@ export const getProgramPerformance = async (req: Request, res: Response) => {
   }
 };
 
-export const getFinancialAnalytics = async (req: Request, res: Response) => {
+export const getFinancialAnalytics = async (req: any, res: Response) => {
   try {
     const analytics = await ReportService.getFinancialAnalytics(req.user.id, req.user.role);
     res.json(analytics);
@@ -47,7 +47,7 @@ export const getFinancialAnalytics = async (req: Request, res: Response) => {
   }
 };
 
-export const getRecentActivities = async (req: Request, res: Response) => {
+export const getRecentActivities = async (req: any, res: Response) => {
   try {
     const activities = await ReportService.getRecentActivities(req.user.id, req.user.role);
     res.json(activities);
@@ -56,7 +56,7 @@ export const getRecentActivities = async (req: Request, res: Response) => {
   }
 };
 
-export const getMonthlyReport = async (req: Request, res: Response) => {
+export const getMonthlyReport = async (req: any, res: Response) => {
   try {
     const report = await ReportService.getMonthlyReport(req.user.id, req.user.role);
     res.json(report);

@@ -102,12 +102,12 @@ export default function WebinarRegistrationPage() {
             </div>
             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">scan to share with others</p>
           </div>
-          <button
+          {/* <button
             onClick={() => window.location.href = '/'}
             className="w-full bg-white/5 hover:bg-white/10 py-4 rounded-2xl text-blue-400 font-bold transition-all flex items-center justify-center gap-2"
           >
             Back to Homepage
-          </button>
+          </button> */}
         </div>
       </div>
     );

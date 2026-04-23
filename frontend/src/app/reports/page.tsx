@@ -13,12 +13,12 @@ export default function ReportsPage() {
     programData, 
     financeData, 
     leadStats, 
-    assignedToData,
+    counselorData,
     fetchFunnel, 
     fetchPrograms, 
     fetchFinance, 
     fetchLeadStats,
-    fetchassignedTos,
+    fetchCounselors,
     loading 
   } = useReportStore();
 
@@ -27,8 +27,8 @@ export default function ReportsPage() {
     fetchPrograms();
     fetchFinance();
     fetchLeadStats();
-    fetchassignedTos();
-  }, [fetchFunnel, fetchPrograms, fetchFinance, fetchLeadStats, fetchassignedTos]);
+    fetchCounselors();
+  }, [fetchFunnel, fetchPrograms, fetchFinance, fetchLeadStats, fetchCounselors]);
 
   const funnelColors = ['#3b82f6', '#8b5cf6', '#d946ef', '#ec4899'];
 
@@ -140,7 +140,7 @@ export default function ReportsPage() {
             </div>
           </div>
           <div className="space-y-6">
-             {assignedToData?.length > 0 ? assignedToData.map((c: any, i: number) => (
+             {counselorData?.length > 0 ? counselorData.map((c: any, i: number) => (
                 <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
                    <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-sm font-bold text-slate-300">

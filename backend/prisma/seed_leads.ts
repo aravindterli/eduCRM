@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('Seeding dummy leads...');
 
-  const assignedTo = await prisma.user.findFirst({ where: { role: { type: RoleType.assignedTo } } });
+  const assignedTo = await prisma.user.findFirst({ where: { role: { type: RoleType.COUNSELOR } } });
   
   const leads = [
     {

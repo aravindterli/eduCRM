@@ -11,9 +11,9 @@ import { NotificationBell } from '../notifications/NotificationBell';
 import { useNotificationStore } from '@/store/useNotificationStore';
 
 const routeRoles: Record<string, string[]> = {
-  '/leads': ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'assignedTo'],
-  '/counseling': ['ADMIN', 'TELECALLER', 'assignedTo'],
-  '/applications': ['ADMIN', 'assignedTo'],
+  '/leads': ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR'],
+  '/counseling': ['ADMIN', 'TELECALLER', 'COUNSELOR'],
+  '/applications': ['ADMIN', 'COUNSELOR'],
   '/finances': ['ADMIN', 'FINANCE'],
   '/programs': ['ADMIN'],
   '/reports': ['ADMIN', 'MARKETING_TEAM', 'FINANCE'],

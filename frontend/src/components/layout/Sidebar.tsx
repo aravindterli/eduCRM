@@ -5,19 +5,19 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 
 const sidebarItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', href: '/', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'assignedTo', 'FINANCE'] },
-  { icon: Users, label: 'Leads', href: '/leads', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'assignedTo'] },
-  { icon: Filter, label: 'Nurturing', href: '/leads/nurturing', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'assignedTo'] },
-  { icon: CalendarClock, label: 'Follow-ups', href: '/follow-ups', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'assignedTo'] },
-  { icon: Calendar, label: 'Counseling', href: '/counseling', roles: ['ADMIN', 'TELECALLER', 'assignedTo'] },
-  { icon: FileText, label: 'Applications', href: '/applications', roles: ['ADMIN', 'assignedTo'] },
+  { icon: LayoutDashboard, label: 'Dashboard', href: '/', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR', 'FINANCE'] },
+  { icon: Users, label: 'Leads', href: '/leads', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR'] },
+  { icon: Filter, label: 'Nurturing', href: '/leads/nurturing', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR'] },
+  { icon: CalendarClock, label: 'Follow-ups', href: '/follow-ups', roles: ['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR'] },
+  { icon: Calendar, label: 'Counseling', href: '/counseling', roles: ['ADMIN', 'TELECALLER', 'COUNSELOR'] },
+  { icon: FileText, label: 'Applications', href: '/applications', roles: ['ADMIN', 'COUNSELOR'] },
   { icon: CreditCard, label: 'Finances', href: '/finances', roles: ['ADMIN', 'FINANCE'] },
   { icon: Book, label: 'Programs', href: '/programs', roles: ['ADMIN'] },
   { icon: BarChart3, label: 'Reports', href: '/reports', roles: ['ADMIN', 'MARKETING_TEAM', 'FINANCE'] },
   { icon: Megaphone, label: 'Marketing', href: '/marketing', roles: ['ADMIN', 'MARKETING_TEAM'] },
   { icon: Video, label: 'Webinars', href: '/webinars', roles: ['ADMIN', 'MARKETING_TEAM'] },
-  { icon: MessageSquare, label: 'Templates', href: '/settings/templates', roles: ['ADMIN', 'MARKETING_TEAM', 'assignedTo'] },
-  { icon: Send, label: 'Bulk Broadcast', href: '/broadcast', roles: ['ADMIN', 'MARKETING_TEAM', 'assignedTo'] },
+  { icon: MessageSquare, label: 'Templates', href: '/settings/templates', roles: ['ADMIN', 'MARKETING_TEAM', 'COUNSELOR'] },
+  { icon: Send, label: 'Bulk Broadcast', href: '/broadcast', roles: ['ADMIN', 'MARKETING_TEAM', 'COUNSELOR'] },
 ];
 
 export const Sidebar = () => {

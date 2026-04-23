@@ -78,18 +78,19 @@ export class ReportService {
   async getConversionFunnel(userId?: string, role?: string) {
     const isTeamMember = role === 'TELECALLER' || role === 'COUNSELOR';
     const filter = isTeamMember && userId ? { assignedId: userId } : {};
+    const appFilter = isTeamMember && userId ? { lead: { assignedId: userId } } : {};
 
     const totalLeads = await prisma.lead.count({ where: filter });
     const scheduledCounseling = await prisma.counselingLog.count({ where: filter });
     const submittedApplications = await prisma.application.count({
       where: { 
-        ...filter,
+        ...appFilter,
         status: { in: ['SUBMITTED', 'VERIFIED', 'VERIFICATION_PENDING'] } 
       }
     });
     const confirmedAdmissions = await prisma.admission.count({
       where: { 
-        application: { ...filter }
+        application: { ...appFilter }
       }
     });
 

@@ -14,7 +14,7 @@ interface AdminDashboardProps {
   revenueTrend: any;
   acquisitionData: any;
   programData: any;
-  assignedToData: any;
+  counselorData: any;
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -24,7 +24,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   revenueTrend,
   acquisitionData,
   programData,
-  assignedToData
+  counselorData
 }) => {
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
@@ -147,7 +147,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <h3 className="font-bold text-sm text-slate-200">Team Leaderboard</h3>
                 </div>
                 <div className="p-5 space-y-4">
-                   {assignedToData?.length > 0 ? assignedToData.slice(0, 5).map((c: any, i: number) => (
+                   {counselorData?.length > 0 ? counselorData.slice(0, 5).map((c: any, i: number) => (
                      <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                            <div className="w-8 h-8 rounded-full bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xs font-bold">{c.name[0]}</div>

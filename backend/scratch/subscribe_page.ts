@@ -1,4 +1,4 @@
-import { MetaService } from './src/services/meta.service';
+import MetaService from '../services/meta.service';
 import dotenv from 'dotenv';
 dotenv.config();
 

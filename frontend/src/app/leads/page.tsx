@@ -51,7 +51,7 @@ export default function LeadsPage() {
         });
         if (res.ok) {
           const data = await res.json();
-          setStaff(data.filter((u: any) => u.role !== 'ADMIN'));
+          setStaff(data);
         }
       } catch (err) {
         console.error('Failed to fetch staff:', err);
@@ -99,6 +99,7 @@ export default function LeadsPage() {
         lead={selectedLead}
         isOpen={!!selectedLead}
         onClose={() => setSelectedLead(null)}
+        staff={staff}
       />
       <BulkWhatsAppDrawer
         isOpen={isBulkWhatsAppOpen}

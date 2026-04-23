@@ -11,9 +11,10 @@ interface LeadDetailsProps {
   lead: any;
   isOpen: boolean;
   onClose: () => void;
+  staff?: any[];
 }
 
-export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
+export const LeadDetails = ({ lead, isOpen, onClose, staff }: LeadDetailsProps) => {
   const { webinars, fetchWebinars, registerLeadForWebinar } = useMarketingStore();
   const { updateStage, fetchLeads, loading } = useLeadStore();
   const { templates, fetchTemplates } = useTemplateStore();
@@ -47,9 +48,9 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
-          type: logType, 
-          message: logForm.message, 
+        body: JSON.stringify({
+          type: logType,
+          message: logForm.message,
           duration: logForm.duration,
           result: logForm.result,
           direction: 'OUTBOUND'
@@ -69,6 +70,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
   };
   const [updatingStage, setUpdatingStage] = React.useState(false);
   const [updatingTag, setUpdatingTag] = React.useState(false);
+  const [updatingOwner, setUpdatingOwner] = React.useState(false);
   const [verifyingDocId, setVerifyingDocId] = React.useState<string | null>(null);
   const [downloadingLetter, setDownloadingLetter] = React.useState(false);
   const [reactivating, setReactivating] = React.useState(false);
@@ -97,6 +99,20 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
   };
 
   const { updateLead } = useLeadStore();
+
+  const handleOwnerChange = async (newOwnerId: string) => {
+    setUpdatingOwner(true);
+    try {
+      const success = await updateLead(lead.id, { assignedId: newOwnerId });
+      if (success) {
+        setSuccessMsg(`Lead manually reassigned`);
+        fetchLeads();
+        setTimeout(() => setSuccessMsg(''), 2000);
+      }
+    } finally {
+      setUpdatingOwner(false);
+    }
+  };
   const handleTagChange = async (newTag: string) => {
     setUpdatingTag(true);
     try {
@@ -339,7 +355,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
               </div>
               <div>
                 <h2 className="text-xl font-bold">{lead.name}</h2>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex flex-wrap items-center gap-2 mt-1">
                   <select
                     value={lead.stage}
                     onChange={(e) => handleStageChange(e.target.value)}
@@ -357,20 +373,37 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                     value={lead.tag || 'COLD'}
                     onChange={(e) => handleTagChange(e.target.value)}
                     disabled={updatingTag}
-                    className={`text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded border-none outline-none cursor-pointer hover:opacity-80 transition-all disabled:opacity-50 ${
-                      lead.tag === 'HOT' ? 'bg-red-500/10 text-red-400' :
+                    className={`text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded border-none outline-none cursor-pointer hover:opacity-80 transition-all disabled:opacity-50 ${lead.tag === 'HOT' ? 'bg-red-500/10 text-red-400' :
                       lead.tag === 'WARM' ? 'bg-amber-500/10 text-amber-400' :
-                      'bg-blue-500/10 text-blue-400'
-                    }`}
+                        'bg-blue-500/10 text-blue-400'
+                      }`}
                   >
                     <option value="COLD" className="bg-background text-foreground">Cold</option>
                     <option value="WARM" className="bg-background text-foreground">Warm</option>
                     <option value="HOT" className="bg-background text-foreground">Hot</option>
                   </select>
+                  {staff && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase">Assignee</span>
+                      <select
+                        value={lead.assignedId || ''}
+                        onChange={(e) => handleOwnerChange(e.target.value)}
+                        disabled={updatingOwner}
+                        className="text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded border-none outline-none cursor-pointer hover:bg-white/10 transition-all disabled:opacity-50 bg-white/5 text-slate-300"
+                      >
+                        <option value="" className="bg-background text-foreground">Unassigned</option>
+                        {staff.map(u => (
+                          <option key={u.id} value={u.id} className="bg-background text-foreground">
+                            {u.name} ({u.role})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl text-muted-foreground transition-colors">
+            <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl text-muted-foreground transition-colors shrink-0">
               <X size={20} />
             </button>
           </div>
@@ -445,7 +478,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                 <Activity size={14} /> Quick Follow-up Logging
               </h3>
               <div className="grid grid-cols-3 gap-2">
-                <button 
+                <button
                   onClick={() => openLogModal('CALL')}
                   disabled={loggingInteraction}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl bg-orange-500/10 border border-orange-500/20 text-orange-400 hover:bg-orange-500/20 transition-all"
@@ -453,7 +486,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                   <Phone size={18} />
                   <span className="text-[10px] font-bold uppercase">Log Call</span>
                 </button>
-                <button 
+                <button
                   onClick={() => openLogModal('WHATSAPP')}
                   disabled={loggingInteraction}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-all"
@@ -461,7 +494,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                   <MessageCircle size={18} />
                   <span className="text-[10px] font-bold uppercase">WhatsApp</span>
                 </button>
-                <button 
+                <button
                   onClick={() => openLogModal('SMS')}
                   disabled={loggingInteraction}
                   className="flex flex-col items-center gap-2 p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 transition-all"
@@ -541,7 +574,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                 <History size={18} className="text-purple-400" />
                 Conversation & Activity Timeline
               </h3>
-              
+
               <div className="flex gap-1 overflow-x-auto pb-2 scrollbar-none">
                 {[
                   { id: 'ALL', label: 'All', icon: Activity },
@@ -554,11 +587,10 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                   <button
                     key={tab.id}
                     onClick={() => setFilterType(tab.id)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap border ${
-                      filterType === tab.id 
-                        ? 'bg-primary/20 border-primary/30 text-primary' 
-                        : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap border ${filterType === tab.id
+                      ? 'bg-primary/20 border-primary/30 text-primary'
+                      : 'bg-white/5 border-transparent text-muted-foreground hover:bg-white/10'
+                      }`}
                   >
                     <tab.icon size={12} />
                     {tab.label}
@@ -575,7 +607,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                     const isWhatsapp = log.type === 'WHATSAPP';
                     const Icon = isCall ? PhoneCall : isWhatsapp ? MessageCircle : Mail;
                     const colorClass = isCall ? 'text-orange-400' : isWhatsapp ? 'text-emerald-400' : 'text-blue-400';
-                    
+
                     return (
                       <div key={item.id} className="relative group">
                         <div className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full bg-primary border-4 border-background" />
@@ -605,16 +637,16 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                         <p className="text-sm text-foreground/80 mt-1 whitespace-pre-wrap">{log.message}</p>
                         {(log.duration || log.result) && (
                           <div className="flex gap-3 mt-2">
-                             {log.duration && (
-                               <span className="text-[9px] font-bold text-slate-400 uppercase bg-white/5 px-1.5 py-0.5 rounded">
-                                 Duration: {log.duration}m
-                               </span>
-                             )}
-                             {log.result && (
-                               <span className="text-[9px] font-bold text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded">
-                                 {log.result}
-                               </span>
-                             )}
+                            {log.duration && (
+                              <span className="text-[9px] font-bold text-slate-400 uppercase bg-white/5 px-1.5 py-0.5 rounded">
+                                Duration: {log.duration}m
+                              </span>
+                            )}
+                            {log.result && (
+                              <span className="text-[9px] font-bold text-primary uppercase bg-primary/10 px-1.5 py-0.5 rounded">
+                                {log.result}
+                              </span>
+                            )}
                           </div>
                         )}
                       </div>
@@ -624,9 +656,9 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                     const note = item.content;
                     const cat = item.category || 'REMARK';
                     const catColor = cat === 'REMARK' ? 'bg-blue-500/10 text-blue-400' :
-                                   cat === 'FEEDBACK' ? 'bg-emerald-500/10 text-emerald-400' :
-                                   cat === 'SUMMARY' ? 'bg-purple-500/10 text-purple-400' :
-                                   'bg-slate-500/10 text-slate-400';
+                      cat === 'FEEDBACK' ? 'bg-emerald-500/10 text-emerald-400' :
+                        cat === 'SUMMARY' ? 'bg-purple-500/10 text-purple-400' :
+                          'bg-slate-500/10 text-slate-400';
                     return (
                       <div key={item.id} className="relative group">
                         <div className="absolute -left-[31px] top-1.5 w-2.5 h-2.5 rounded-full bg-primary border-4 border-background" />
@@ -664,7 +696,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                         <div className="flex justify-between items-start">
                           <p className="text-[10px] font-bold text-slate-500 flex items-center gap-2">
                             <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[8px] uppercase tracking-wider">Counseling</span>
-                            {clog.assignedTo?.name || 'assignedTo'} • {item.date.toLocaleString()}
+                            {clog.assignedTo?.name || 'COUNSELOR'} • {item.date.toLocaleString()}
                           </p>
                           <button
                             onClick={() => {
@@ -726,19 +758,18 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                 <MessageSquare size={18} className="text-primary" />
                 Add Detailed History Entry
               </h3>
-              
+
               <div className="grid grid-cols-2 gap-2 mb-3">
-                 {NOTE_TYPES.map(t => (
-                   <button 
+                {NOTE_TYPES.map(t => (
+                  <button
                     key={t.value}
                     onClick={() => setNoteType(t.value)}
-                    className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                      noteType === t.value ? 'bg-primary/20 border-primary/30 text-primary' : 'bg-white/5 border-transparent text-slate-500 hover:bg-white/10'
-                    }`}
-                   >
-                     {t.label}
-                   </button>
-                 ))}
+                    className={`px-3 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all border ${noteType === t.value ? 'bg-primary/20 border-primary/30 text-primary' : 'bg-white/5 border-transparent text-slate-500 hover:bg-white/10'
+                      }`}
+                  >
+                    {t.label}
+                  </button>
+                ))}
               </div>
 
               <div className="flex gap-2">
@@ -905,7 +936,7 @@ export const LeadDetails = ({ lead, isOpen, onClose }: LeadDetailsProps) => {
                     className="w-full bg-white/5 border border-border rounded-xl px-4 py-3 text-sm outline-none focus:border-primary/30 transition-all text-foreground resize-none"
                   />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-bold text-muted-foreground uppercase ml-1">Outcome / Result</label>

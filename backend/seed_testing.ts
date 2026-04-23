@@ -7,10 +7,10 @@ async function main() {
   
   // 1. Create assignedTo Role
   const assignedToRole = await prisma.role.upsert({
-    where: { type: RoleType.assignedTo },
+    where: { type: RoleType.COUNSELOR },
     update: {},
     create: {
-      type: RoleType.assignedTo,
+      type: RoleType.COUNSELOR,
       permissions: { can_counsel: true }
     }
   });

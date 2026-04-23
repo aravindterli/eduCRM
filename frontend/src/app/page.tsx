@@ -9,7 +9,7 @@ import React from 'react';
 // Modular Views
 import { AdminDashboard } from '@/components/dashboard/views/AdminDashboard';
 import { TelecallerDashboard } from '@/components/dashboard/views/TelecallerDashboard';
-import { assignedToDashboard } from '@/components/dashboard/views/assignedToDashboard';
+import { CounselorDashboard } from '@/components/dashboard/views/CounselorDashboard';
 import { FinanceDashboard } from '@/components/dashboard/views/FinanceDashboard';
 
 export default function Dashboard() {
@@ -19,12 +19,12 @@ export default function Dashboard() {
     financeData, 
     leadStats, 
     programData,
-    assignedToData,
+    counselorData,
     fetchFunnel, 
     fetchFinance, 
     fetchLeadStats,
     fetchPrograms,
-    fetchassignedTos,
+    fetchCounselors,
     fetchActivities,
     loading 
   } = useReportStore();
@@ -42,12 +42,12 @@ export default function Dashboard() {
       fetchLeadStats();
       fetchActivities();
       fetchPrograms();
-      fetchassignedTos();
+      fetchCounselors();
       fetchFinance();
     } else if (role === 'TELECALLER') {
       fetchFunnel();
       fetchLeadStats();
-    } else if (role === 'assignedTo') {
+    } else if (role === 'COUNSELOR') {
       fetchFunnel();
       fetchLeadStats();
       fetchPrograms();
@@ -60,7 +60,7 @@ export default function Dashboard() {
       fetchStats();
     }
 
-  }, [user, fetchStats, fetchFunnel, fetchFinance, fetchLeadStats, fetchPrograms, fetchassignedTos, fetchActivities]);
+  }, [user, fetchStats, fetchFunnel, fetchFinance, fetchLeadStats, fetchPrograms, fetchCounselors, fetchActivities]);
 
   if (!user || loading) {
     return (
@@ -114,7 +114,7 @@ export default function Dashboard() {
           revenueTrend={revenueTrend}
           acquisitionData={acquisitionData}
           programData={programData}
-          assignedToData={assignedToData}
+          counselorData={counselorData}
         />
       ) : user.role === 'TELECALLER' ? (
         <TelecallerDashboard 
@@ -123,8 +123,8 @@ export default function Dashboard() {
           acquisitionData={acquisitionData}
           funnelData={funnelData}
         />
-      ) : user.role === 'assignedTo' ? (
-        <assignedToDashboard 
+      ) : user.role === 'COUNSELOR' ? (
+        <CounselorDashboard 
           metrics={metrics}
           leadStats={leadStats}
           programData={programData}

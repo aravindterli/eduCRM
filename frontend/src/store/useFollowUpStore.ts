@@ -25,6 +25,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
       const data = await followUpService.getUpcoming(true);
       set({ upcoming: data, loading: false });
     } catch (err: any) {
+      if (err.response?.status === 401) return;
       set({ error: err.message, loading: false });
     }
   },
@@ -35,6 +36,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
       const data = await followUpService.getByLead(leadId);
       set({ leadFollowUps: data, loading: false });
     } catch (err: any) {
+      if (err.response?.status === 401) return;
       set({ error: err.message, loading: false });
     }
   },
@@ -51,6 +53,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
       set({ upcoming, leadFollowUps, loading: false });
       return followUp;
     } catch (err: any) {
+      if (err.response?.status === 401) return null;
       set({ error: err.message, loading: false });
       return null;
     }
@@ -69,6 +72,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
       }));
       return true;
     } catch (err: any) {
+      if (err.response?.status === 401) return false;
       set({ error: err.message, loading: false });
       return false;
     }
@@ -87,6 +91,7 @@ export const useFollowUpStore = create<FollowUpState>((set, get) => ({
       }));
       return true;
     } catch (err: any) {
+      if (err.response?.status === 401) return false;
       set({ error: err.message, loading: false });
       return false;
     }

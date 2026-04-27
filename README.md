@@ -1,6 +1,6 @@
-# EduCRM - Modern Education Management System
+# CentraCRM - Modern Education Management System
 
-EduCRM is a premium, high-performance CRM tailored for educational institutions. It streamlines lead management, counseling, applications, and financial tracking with a focus on security and mobile accessibility.
+CentraCRM is a premium, high-performance CRM tailored for educational institutions. It streamlines lead management, counseling, applications, and financial tracking with a focus on security and mobile accessibility.
 
 ## 🚀 Features
 
@@ -16,7 +16,7 @@ EduCRM is a premium, high-performance CRM tailored for educational institutions.
 - **Webinar Integration**: Manage webinar registrations and attendance tracking.
 
 ### 3. Progressive Web App (PWA)
-- **Installable**: Use EduCRM as a native app on iOS and Android.
+- **Installable**: Use CentraCRM as a native app on iOS and Android.
 - **Mobile Optimized**: FAB for quick lead addition and one-tap communication (Call/WhatsApp).
 
 ### 4. Advanced Security

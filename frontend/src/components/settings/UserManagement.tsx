@@ -75,7 +75,7 @@ export const UserManagement = () => {
             <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
             User Management
           </h3>
-          <p className="text-xs text-slate-500 font-medium">Create and manage platform access for your team</p>
+            <p className="text-xs text-muted-foreground font-medium">Create and manage platform access for your team</p>
         </div>
         <button
           onClick={() => setShowCreateForm(!showCreateForm)}
@@ -176,7 +176,7 @@ export const UserManagement = () => {
       <div className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-y-3">
           <thead>
-            <tr className="text-left text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-4">
+            <tr className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-4">
               <th className="pb-4 pl-4 text-center w-16">User</th>
               <th className="pb-4">Name & Email</th>
               <th className="pb-4">Role</th>
@@ -187,18 +187,18 @@ export const UserManagement = () => {
           <tbody>
             {users.map((u) => (
               <tr key={u.id} className="group">
-                <td className="bg-white/5 rounded-l-2xl py-4 pl-4">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-800 border border-white/5 flex items-center justify-center text-xs font-bold text-slate-400">
+                <td className="bg-muted py-4 pl-4 rounded-l-2xl">
+                  <div className="w-10 h-10 rounded-full bg-muted border border-border flex items-center justify-center text-xs font-bold text-muted-foreground">
                     {u.name[0]}
                   </div>
                 </td>
-                <td className="bg-white/5 py-4">
+                <td className="bg-muted py-4">
                   <div>
-                    <p className="text-sm font-bold text-slate-200">{u.name}</p>
-                    <p className="text-[10px] text-slate-500 font-bold">{u.email}</p>
+                    <p className="text-sm font-bold text-foreground">{u.name}</p>
+                    <p className="text-[10px] text-muted-foreground font-bold">{u.email}</p>
                   </div>
                 </td>
-                <td className="bg-white/5 py-4">
+                <td className="bg-muted py-4">
                   <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black border ${
                     u.role === 'ADMIN' ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' :
                     u.role === 'COUNSELOR' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' :
@@ -210,11 +210,11 @@ export const UserManagement = () => {
                     {u.role.replace('_', ' ')}
                   </div>
                 </td>
-                <td className="bg-white/5 py-4">
-                  <p className="text-[10px] text-slate-500 font-black">{new Date(u.createdAt).toLocaleDateString()}</p>
+                <td className="bg-muted py-4">
+                  <p className="text-[10px] text-muted-foreground font-black">{new Date(u.createdAt).toLocaleDateString()}</p>
                 </td>
-                <td className="bg-white/5 rounded-r-2xl py-4 pr-4 text-right">
-                  <button className="p-2 hover:bg-red-500/10 text-slate-500 hover:text-red-400 rounded-lg transition-colors">
+                <td className="bg-muted py-4 rounded-r-2xl pr-4 text-right">
+                  <button className="p-2 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 rounded-lg transition-colors">
                     <Trash2 size={16} />
                   </button>
                 </td>

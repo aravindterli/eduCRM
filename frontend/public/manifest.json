@@ -1,6 +1,6 @@
 {
-  "name": "EduCRM",
-  "short_name": "EduCRM",
+  "name": "CentraCRM",
+  "short_name": "CentraCRM",
   "description": "Modern Education CRM",
   "start_url": "/",
   "display": "standalone",

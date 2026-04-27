@@ -1,13 +1,13 @@
-# EduCRM Visual Flow Documentation
+# CentraCRM Visual Flow Documentation
 
-This document provides a visual guide to the core workflows within EduCRM.
+This document provides a visual guide to the core workflows within CentraCRM.
 
 ---
 
 ## 1. Dashboard & Analytics
 The dashboard is the central hub for monitoring institutional performance. It provides real-time statistics on leads, admissions, and revenue, along with acquisition trends and a recent activity log.
 
-![EduCRM Dashboard](file:///C:/Users/aravi/.gemini/antigravity/brain/77dfef45-e1fd-4211-8ace-1de7054b6fa7/dashboard_flow_1773666225689.png)
+![CentraCRM Dashboard](file:///C:/Users/aravi/.gemini/antigravity/brain/77dfef45-e1fd-4211-8ace-1de7054b6fa7/dashboard_flow_1773666225689.png)
 
 ---
 
@@ -39,6 +39,6 @@ Administrators and Marketing teams can manage lead sources and marketing campaig
 ---
 
 ## 📱 Mobile Accessibility
-The EduCRM is fully responsive and can be installed as a PWA, providing floating action buttons (FAB) for quick lead entry while on the go.
+The CentraCRM is fully responsive and can be installed as a PWA, providing floating action buttons (FAB) for quick lead entry while on the go.
 
 ![Mobile View Example](file:///C:/Users/aravi/.gemini/antigravity/brain/77dfef45-e1fd-4211-8ace-1de7054b6fa7/mobile_actions.png)

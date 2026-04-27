@@ -8,7 +8,7 @@ import { hashPassword } from '../utils/auth';
 async function createTeam() {
   console.log('--- Creating Team Accounts ---');
 
-  const password = await hashPassword('educrm123'); // Default password for new staff
+  const password = await hashPassword('centracrm123'); // Default password for new staff
 
   const roles = await prisma.role.findMany();
   const telecallerRole = roles.find(r => r.type === 'TELECALLER');
@@ -20,9 +20,9 @@ async function createTeam() {
   }
 
   const teamMembers = [
-    { name: 'Telecaller B', email: 'telecaller.b@educrm.com', roleId: telecallerRole.id },
-    { name: 'Telecaller C', email: 'telecaller.c@educrm.com', roleId: telecallerRole.id },
-    { name: 'assignedTo B', email: 'assignedTo.b@educrm.com', roleId: assignedToRole.id },
+    { name: 'Telecaller B', email: 'telecaller.b@centracrm.com', roleId: telecallerRole.id },
+    { name: 'Telecaller C', email: 'telecaller.c@centracrm.com', roleId: telecallerRole.id },
+    { name: 'assignedTo B', email: 'assignedTo.b@centracrm.com', roleId: assignedToRole.id },
   ];
 
   for (const member of teamMembers) {

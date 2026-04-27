@@ -71,7 +71,7 @@ export const downloadMonthlyPDF = async (req: Request, res: Response) => {
     const doc = new PDFDocument({ margin: 50 });
     
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=EduCRM_Report_${reportData.month.replace(' ', '_')}.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=CentraCRM_Report_${reportData.month.replace(' ', '_')}.pdf`);
     
     doc.pipe(res);
     await ReportService.generateMonthlyPDF(doc, reportData);

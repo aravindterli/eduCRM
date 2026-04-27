@@ -37,7 +37,7 @@ export class BackupService {
         console.warn('[BackupService] pg_dump failed. Falling back to Node-native extraction...');
         try {
           const backupData: any = {};
-          let sqlContent = `-- EduCRM Native SQL Backup\n-- Generated: ${new Date().toISOString()}\n\n`;
+          let sqlContent = `-- CentraCRM Native SQL Backup\n-- Generated: ${new Date().toISOString()}\n\n`;
           sqlContent += "SET session_replication_role = 'replica';\n\n";
 
           const models = Object.keys(prisma).filter(key => 

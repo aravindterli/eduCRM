@@ -21,7 +21,7 @@ export class DocumentGeneratorService {
         const stream = fs.createWriteStream(filePath);
         doc.pipe(stream);
 
-        doc.fontSize(25).text('EduCRM University', { align: 'center' });
+        doc.fontSize(25).text('CentraCRM University', { align: 'center' });
         doc.moveDown();
         doc.fontSize(18).text('Admission Confirmation Letter', { align: 'center' });
         doc.moveDown();
@@ -35,7 +35,7 @@ export class DocumentGeneratorService {
         doc.moveDown();
         doc.text('We look forward to welcoming you to our campus.');
         doc.moveDown(2);
-        doc.text('Sincerely,\nAdmissions Office\nEduCRM');
+        doc.text('Sincerely,\nAdmissions Office\nCentraCRM');
 
         doc.end();
 

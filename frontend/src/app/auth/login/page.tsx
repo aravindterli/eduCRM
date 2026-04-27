@@ -4,7 +4,7 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { authService } from '@/services/auth.service';
 import { useAuthStore } from '@/store/auth.store';
 import { useRouter } from 'next/navigation';
@@ -19,6 +19,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
   const { setAuth } = useAuthStore();
   const router = useRouter();
 
@@ -45,65 +46,72 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen animated-bg flex items-center justify-center p-4">
-      <div className="w-full max-w-md glass p-8 rounded-3xl border-white/10 shadow-2xl relative overflow-hidden group">
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl group-hover:bg-blue-600/30 transition-all duration-700" />
-        <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-indigo-600/20 rounded-full blur-3xl group-hover:bg-indigo-600/30 transition-all duration-700" />
-
-        <div className="relative z-10 text-center mb-8">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-2">
-            Welcome to EduCRM
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white p-10 rounded-[2rem] border border-slate-200 shadow-2xl shadow-slate-200/50 relative overflow-hidden">
+        <div className="relative z-10 text-center mb-10">
+          <h1 className="text-3xl font-black text-slate-900 mb-3 tracking-tight">
+            CentraCRM
           </h1>
-          <p className="text-slate-400 text-sm">Sign in to manage your education platform</p>
+          <p className="text-slate-500 text-sm font-medium">Welcome back. Please enter your details.</p>
         </div>
 
         {error && (
-          <div className="relative z-10 mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center gap-3 text-red-400 text-sm animate-shake">
+          <div className="relative z-10 mb-8 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 text-red-600 text-sm animate-shake">
             <AlertCircle size={18} />
-            <p>{error}</p>
+            <p className="font-semibold">{error}</p>
           </div>
         )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="relative z-10 space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Email Address</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] ml-1">Email Address</label>
             <div className="relative">
-              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 {...register('email')}
                 type="email"
-                placeholder="admin@educrm.com"
-                className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm outline-none focus:border-blue-500/50 focus:ring-4 ring-blue-500/10 transition-all"
+                placeholder="admin@centracrm.com"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-4 text-sm outline-none focus:border-slate-900 focus:bg-white transition-all text-slate-900"
               />
             </div>
-            {errors.email && <p className="text-destructive text-[10px] ml-1">{errors.email.message}</p>}
+            {errors.email && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.email.message}</p>}
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider ml-1">Password</label>
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.1em] ml-1">Password</label>
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 {...register('password')}
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 placeholder="••••••••"
-                className="w-full bg-white/5 border border-white/5 rounded-2xl py-3.5 pl-12 pr-4 text-sm outline-none focus:border-blue-500/50 focus:ring-4 ring-blue-500/10 transition-all"
+                className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-4 pl-12 pr-12 text-sm outline-none focus:border-slate-900 focus:bg-white transition-all text-slate-900"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
-            {errors.password && <p className="text-destructive text-[10px] ml-1">{errors.password.message}</p>}
+            {errors.password && <p className="text-red-500 text-[10px] font-bold ml-1">{errors.password.message}</p>}
           </div>
 
-          <button
-            disabled={loading}
-            type="submit"
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 py-3.5 rounded-2xl font-bold text-sm shadow-xl shadow-blue-500/20 transition-all flex items-center justify-center gap-2 group-active:scale-[0.98]"
-          >
-            {loading ? <Loader2 className="animate-spin" size={20} /> : 'Sign In to Account'}
-          </button>
+          <div className="pt-2">
+            <button
+              disabled={loading}
+              type="submit"
+              className="w-full bg-slate-900 hover:bg-black text-white py-4 rounded-2xl font-bold text-sm shadow-xl shadow-slate-900/10 transition-all flex items-center justify-center gap-2 active:scale-[0.98] disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="animate-spin" size={20} /> : 'Sign In to Dashboard'}
+            </button>
+          </div>
         </form>
 
-        <p className="relative z-10 text-center mt-8 text-xs text-slate-500">
-          Secure enterprise authentication. Protected by EduCRM Shield.
+        <p className="relative z-10 text-center mt-10 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+          Secure Access • CentraCRM v1.0
         </p>
       </div>
     </div>

@@ -13,8 +13,10 @@ interface User {
 interface AuthState {
   user: User | null;
   token: string | null;
+  tokenExpired: boolean;
   setAuth: (user: User, token: string) => void;
   logout: () => void;
+  setTokenExpired: (expired: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -22,14 +24,16 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      tokenExpired: false,
       setAuth: (user, token) => {
-        set({ user, token });
-        localStorage.setItem('educrm_token', token);
+        set({ user, token, tokenExpired: false });
+        localStorage.setItem('centracrm_token', token);
       },
       logout: () => {
-        set({ user: null, token: null });
-        localStorage.removeItem('educrm_token');
+        set({ user: null, token: null, tokenExpired: false });
+        localStorage.removeItem('centracrm_token');
       },
+      setTokenExpired: (expired) => set({ tokenExpired: expired }),
     }),
     {
       name: 'auth-storage',

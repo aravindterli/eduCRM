@@ -8,7 +8,7 @@ let webinarId = '';
 let applicationId = '';
 
 async function runAudit() {
-  console.log('--- EDUCRM ADMIN API AUDIT START ---');
+  console.log('--- CENTRACRM ADMIN API AUDIT START ---');
 
   try {
     // 1. Auth - Login

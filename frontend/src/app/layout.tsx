@@ -5,7 +5,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "EduCRM - Global Education Management",
+  title: "CentraCRM - Global Education Management",
   description: "Premium CRM for international education consultants",
 };
 

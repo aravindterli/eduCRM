@@ -32,6 +32,9 @@ export const useReportStore = create<ReportState>((set) => ({
     try {
       const data = await reportService.getFunnel();
       set({ funnelData: data });
+    } catch (err: any) {
+      if (err.response?.status === 401) return;
+      console.error('[ReportStore] Funnel fetch error:', err);
     } finally {
       set({ loading: false });
     }
@@ -42,6 +45,9 @@ export const useReportStore = create<ReportState>((set) => ({
     try {
       const data = await reportService.getPrograms();
       set({ programData: data });
+    } catch (err: any) {
+      if (err.response?.status === 401) return;
+      console.error('[ReportStore] Programs fetch error:', err);
     } finally {
       set({ loading: false });
     }
@@ -52,6 +58,9 @@ export const useReportStore = create<ReportState>((set) => ({
     try {
       const data = await reportService.getFinance();
       set({ financeData: data });
+    } catch (err: any) {
+      if (err.response?.status === 401) return;
+      console.error('[ReportStore] Finance fetch error:', err);
     } finally {
       set({ loading: false });
     }
@@ -62,6 +71,9 @@ export const useReportStore = create<ReportState>((set) => ({
     try {
       const data = await reportService.getLeadAnalytics();
       set({ leadStats: data });
+    } catch (err: any) {
+      if (err.response?.status === 401) return;
+      console.error('[ReportStore] LeadStats fetch error:', err);
     } finally {
       set({ loading: false });
     }
@@ -72,6 +84,9 @@ export const useReportStore = create<ReportState>((set) => ({
     try {
       const data = await reportService.getassignedTos();
       set({ counselorData: data });
+    } catch (err: any) {
+      if (err.response?.status === 401) return;
+      console.error('[ReportStore] Counselors fetch error:', err);
     } finally {
       set({ loading: false });
     }
@@ -82,6 +97,9 @@ export const useReportStore = create<ReportState>((set) => ({
     try {
       const data = await reportService.getActivities();
       set({ activityLogs: data });
+    } catch (err: any) {
+      if (err.response?.status === 401) return;
+      console.error('[ReportStore] Activities fetch error:', err);
     } finally {
       set({ loading: false });
     }

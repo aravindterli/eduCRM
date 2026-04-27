@@ -5,7 +5,7 @@ const JITSI_DOMAIN = process.env.JITSI_DOMAIN || 'meet.jit.si';
 
 /** generate a url-safe slug from a uuid */
 function makeRoomSlug(id: string): string {
-  return 'educrm-' + id.replace(/-/g, '').slice(0, 12);
+  return 'centracrm-' + id.replace(/-/g, '').slice(0, 12);
 }
 
 export class FollowUpService {

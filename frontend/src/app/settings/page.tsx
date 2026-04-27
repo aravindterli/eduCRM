@@ -112,7 +112,7 @@ export default function SettingsPage() {
 
                 <div className="space-y-4">
                   <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Theme Preference</label>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <button
                       onClick={() => setTheme('ocean')}
                       className={`p-4 rounded-2xl border transition-all text-center ${theme === 'ocean' ? 'bg-blue-600/20 border-blue-500 text-blue-400' : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'}`}
@@ -133,7 +133,7 @@ export default function SettingsPage() {
                       onClick={() => setTheme('light')}
                       className={`p-4 rounded-2xl border transition-all text-center ${theme === 'light' ? 'bg-primary/20 border-primary text-primary' : 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/10'}`}
                     >
-                      <div className="w-full h-2 bg-white border border-slate-200 rounded mb-2" />
+                      <div className="w-full h-2 bg-white border border-slate-300 rounded mb-2" />
                       <span className="text-[10px] font-bold uppercase tracking-wider">High Contrast</span>
                     </button>
                   </div>
@@ -180,12 +180,12 @@ export default function SettingsPage() {
             </div>
 
             <div className="pt-8 border-t border-white/5 flex justify-end gap-3">
-              <button
+              {/* <button
                 onClick={() => setFormData({ name: user?.name || '', email: user?.email || '' })}
                 className="px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-white/5 transition-all text-slate-400"
               >
                 Reset Changes
-              </button>
+              </button> */}
               <button
                 onClick={handleSave}
                 disabled={isSaving}

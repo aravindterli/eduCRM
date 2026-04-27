@@ -88,7 +88,7 @@ export default function ApplyPage() {
           <div className="space-y-4">
             <h2 className="text-4xl font-black text-white">Application Received!</h2>
             <p className="text-slate-400 font-medium leading-relaxed">
-              Thank you for choosing EduCRM. Your profile has been prioritized, and our chief assignedTo will reach out to you within the next 24 hours.
+              Thank you for choosing CentraCRM. Your profile has been prioritized, and our chief assignedTo will reach out to you within the next 24 hours.
             </p>
           </div>
           <button
@@ -268,7 +268,7 @@ export default function ApplyPage() {
 
       <footer className="relative z-10 p-8 border-t border-white/5 mt-auto bg-slate-950/80 backdrop-blur">
         <div className="max-w-6xl mx-auto flex flex-col md:row-auto justify-between items-center gap-4">
-          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">© 2026 EduCRM Global. All rights reserved.</p>
+          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">© 2026 CentraCRM Global. All rights reserved.</p>
           <div className="flex gap-6 text-[10px] font-black text-slate-500 uppercase tracking-widest">
             <a href="#" className="hover:text-blue-400 transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-blue-400 transition-colors">Terms of Service</a>

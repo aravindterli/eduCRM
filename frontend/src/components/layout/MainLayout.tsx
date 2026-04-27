@@ -23,7 +23,7 @@ const routeRoles: Record<string, string[]> = {
 export const MainLayout = ({ children }: { children: React.ReactNode }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [mounted, setMounted] = React.useState(false);
-  const { user, token } = useAuthStore();
+  const { user, token, tokenExpired, setTokenExpired, logout } = useAuthStore();
   const { theme, accent, syncWithUser } = useThemeStore();
   const { init, disconnect } = useNotificationStore();
   const router = useRouter();
@@ -46,7 +46,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
     if (mounted && !token) {
       router.push('/auth/login');
     }
-    
+
     if (mounted && token && user) {
       init(user.id, token);
     }
@@ -68,10 +68,10 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
       <div className={`fixed inset-0 z-50 lg:hidden ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
         <div className="relative w-64 h-full">
-           <Sidebar />
+          <Sidebar />
         </div>
       </div>
- 
+
       <div className="hidden lg:block">
         <Sidebar />
       </div>
@@ -79,7 +79,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
       <main className="lg:pl-64 min-h-screen">
         <header className="h-20 border-b border-border glass sticky top-0 z-40 px-4 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(true)}
               className="lg:hidden p-2 hover:bg-white/5 rounded-xl text-muted-foreground"
             >
@@ -92,7 +92,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
           </div>
           <div className="flex items-center gap-4">
             <NotificationBell />
-            <Link 
+            <Link
               href="/settings"
               className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-primary/80 border border-white/20 shadow-lg shadow-primary/10 flex items-center justify-center hover:scale-110 transition-transform group cursor-pointer"
               title="Profile Settings"
@@ -112,7 +112,7 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
               </div>
               <h1 className="text-2xl font-bold text-foreground mb-2">Access Restricted</h1>
               <p className="text-muted-foreground max-w-sm">You don't have the necessary permissions to view this section. Please contact your administrator if you believe this is an error.</p>
-              <button 
+              <button
                 onClick={() => router.push('/')}
                 className="mt-8 bg-white/5 hover:bg-white/10 px-8 py-3 rounded-2xl text-sm font-bold transition-all border border-border"
               >
@@ -121,15 +121,16 @@ export const MainLayout = ({ children }: { children: React.ReactNode }) => {
             </div>
           )}
         </div>
-        
+
         {/* Mobile Floating Action Button */}
-        <button 
+        <button
           onClick={() => router.push('/leads?create=true')}
           className="lg:hidden fixed bottom-6 right-6 w-14 h-14 bg-primary rounded-full shadow-xl shadow-primary/40 flex items-center justify-center text-primary-foreground active:scale-95 transition-all z-40"
         >
           <Plus size={28} />
         </button>
       </main>
+
     </div>
   );
 };

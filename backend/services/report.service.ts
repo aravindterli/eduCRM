@@ -217,7 +217,7 @@ export class ReportService {
 
   async generateMonthlyPDF(doc: PDFKit.PDFDocument, data: any) {
     // Header
-    doc.fillColor('#2563eb').fontSize(24).text('EduCRM', 50, 50);
+    doc.fillColor('#2563eb').fontSize(24).text('CentraCRM', 50, 50);
     doc.fillColor('#64748b').fontSize(10).text('MONTHLY PERFORMANCE REPORT', 50, 80);
     doc.fillColor('#1e293b').fontSize(14).text(data.month, 50, 95);
     
@@ -265,7 +265,7 @@ export class ReportService {
     });
 
     // Footer
-    doc.fillColor('#94a3b8').fontSize(8).text(`Generated on ${new Date().toLocaleString()} • EduCRM Intelligence`, 50, 700, { align: 'center', width: 500 });
+    doc.fillColor('#94a3b8').fontSize(8).text(`Generated on ${new Date().toLocaleString()} • CentraCRM Intelligence`, 50, 700, { align: 'center', width: 500 });
     
     doc.end();
   }
@@ -299,7 +299,7 @@ export class ReportService {
 
     // Decorative Header
     doc.rect(0, 0, 612, 120).fill('#0f172a');
-    doc.fillColor('#3b82f6').fontSize(28).text('EduCRM', 50, 45, { characterSpacing: 1 });
+    doc.fillColor('#3b82f6').fontSize(28).text('CentraCRM', 50, 45, { characterSpacing: 1 });
     doc.fillColor('#ffffff').fontSize(10).text('OFFICIAL PAYMENT RECEIPT', 50, 80, { characterSpacing: 2 });
     
     // Receipt Info (Right aligned in header)
@@ -364,11 +364,11 @@ export class ReportService {
     y = 650;
     doc.moveTo(350, y).lineTo(550, y).stroke('#e2e8f0');
     doc.fillColor('#64748b').fontSize(9).text('Authorized Signatory', 350, y + 10, { align: 'center', width: 200 });
-    doc.fontSize(8).text('EduCRM Financial Department', 350, y + 25, { align: 'center', width: 200 });
+    doc.fontSize(8).text('CentraCRM Financial Department', 350, y + 25, { align: 'center', width: 200 });
 
     // Footer
     doc.fillColor('#cbd5e1').fontSize(8).text('This is a computer-generated document and does not require a physical signature.', 50, 730, { align: 'center', width: 500 });
-    doc.fillColor('#94a3b8').text('EduCRM Global • www.educrm.com • support@educrm.com', 50, 745, { align: 'center', width: 500 });
+    doc.fillColor('#94a3b8').text('CentraCRM Global • www.centracrm.com • support@centracrm.com', 50, 745, { align: 'center', width: 500 });
 
     doc.end();
   }

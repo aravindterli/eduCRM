@@ -24,8 +24,8 @@ export const MetricCard = ({ label, value, trend, icon: Icon, color }: MetricCar
     <div className="p-6 rounded-3xl glass border-white/5 relative overflow-hidden group hover:border-white/10 transition-all">
       <div className="flex justify-between items-start relative z-10">
         <div>
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">{label}</p>
-          <h3 className="text-3xl font-black text-slate-100">{value}</h3>
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{label}</p>
+          <h3 className="text-3xl font-black text-foreground">{value}</h3>
         </div>
         <div className={`p-3 rounded-2xl ${colorClasses[color]} ring-1 group-hover:scale-110 transition-transform`}>
           <Icon size={24} />
@@ -37,7 +37,7 @@ export const MetricCard = ({ label, value, trend, icon: Icon, color }: MetricCar
           <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg">
             {trend}
           </span>
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">vs last month</span>
+          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">vs last month</span>
         </div>
       )}
 

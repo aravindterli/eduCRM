@@ -203,7 +203,7 @@ export default function BulkBroadcastPage() {
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1 block">Email Subject</label>
                     <input
                       type="text"
-                      placeholder="e.g. Exciting News from EduCRM!"
+                      placeholder="e.g. Exciting News from CentraCRM!"
                       value={formData.emailSubject}
                       onChange={(e) => setFormData({...formData, emailSubject: e.target.value})}
                       className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-orange-500 text-white"

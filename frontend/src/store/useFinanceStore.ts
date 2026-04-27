@@ -24,9 +24,9 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     try {
       const data = await financeService.getAllFees();
       set({ fees: data, loading: false });
-    } catch (error) {
-      console.error('Failed to fetch fees:', error);
-      set({ loading: false });
+    } catch (error: any) {
+      if (error.response?.status === 401) return;
+      console.error('Operation failed:', error);
     }
   },
 
@@ -34,7 +34,8 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     try {
       const data = await financeService.getStats();
       set({ stats: data });
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 401) return;
       console.error('Failed to fetch stats:', error);
     }
   },
@@ -46,7 +47,8 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       get().fetchFees();
       get().fetchStats();
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 401) return false;
       console.error('Failed to record payment:', error);
       return false;
     }
@@ -56,7 +58,8 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     try {
       const data = await financeService.getExistingLink(feeId);
       return data?.link || null;
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 401) return null;
       console.error('Failed to fetch existing link:', error);
       return null;
     }
@@ -67,6 +70,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       const data = await financeService.generatePaymentLink(feeId);
       return { link: data.link || null, error: null, isNew: data.isNew };
     } catch (error: any) {
+      if (error.response?.status === 401) return { link: null, error: null };
       console.error('Failed to generate payment link:', error);
       const errorMessage = error.response?.data?.message || 'Failed to generate payment link. Please try again.';
       return { link: null, error: errorMessage };
@@ -82,6 +86,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       }
       return { updated: result.updated, message: result.message || 'Check complete' };
     } catch (error: any) {
+       if (error.response?.status === 401) return { updated: false, message: '' };
        console.error('Failed to sync payment:', error);
        return { updated: false, message: error.response?.data?.message || 'Sync failed' };
     }

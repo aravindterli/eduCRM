@@ -169,7 +169,7 @@ export class FeeService {
           amount,
           currency: 'INR',
           accept_partial: false,
-          description: `EduCRM Tuition Installment`,
+          description: `CentraCRM Tuition Installment`,
           customer: {
             name: lead?.name || 'Student',
             email: email || undefined,

@@ -114,7 +114,7 @@ export default function TemplatesPage() {
                 rows={4}
                 value={formData.content}
                 onChange={e => setFormData({...formData, content: e.target.value})}
-                placeholder="Hi ${name}, welcome to EduCRM!..."
+                placeholder="Hi ${name}, welcome to CentraCRM!..."
                 className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-white resize-none"
               />
             </div>

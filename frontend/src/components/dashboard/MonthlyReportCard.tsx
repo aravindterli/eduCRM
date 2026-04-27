@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FileText, Download, Loader2, Calendar } from 'lucide-react';
-import api from '@/utils/api';
+import api from '@/services/api';
 
 export const MonthlyReportCard = () => {
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,7 @@ export const MonthlyReportCard = () => {
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `EduCRM_Report_${new Date().getMonth() + 1}_${new Date().getFullYear()}.pdf`);
+      link.setAttribute('download', `CentraCRM_Report_${new Date().getMonth() + 1}_${new Date().getFullYear()}.pdf`);
       document.body.appendChild(link);
       link.click();
       link.remove();

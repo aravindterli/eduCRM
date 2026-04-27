@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAuthStore } from '@/store/auth.store';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -8,7 +9,7 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('educrm_token');
+  const token = localStorage.getItem('centracrm_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -18,15 +19,13 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Check if it's an authentication error (401)
     if (error.response?.status === 401) {
-      localStorage.removeItem('educrm_token');
-      localStorage.removeItem('educrm_user');
+      const { logout } = useAuthStore.getState();
       
-      // Prevent infinite redirect loops if we're already on the login page
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        window.location.href = '/login?expired=true';
-      }
+      localStorage.removeItem('centracrm_token');
+      localStorage.removeItem('centracrm_user');
+      
+      logout(); // This clears the state and triggers MainLayout redirect
     }
     return Promise.reject(error);
   }

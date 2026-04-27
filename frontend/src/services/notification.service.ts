@@ -1,31 +1,24 @@
-import axios from 'axios';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
-
-const getHeaders = (token?: string | null) => {
-  const finalToken = token || localStorage.getItem('token');
-  return { headers: { Authorization: `Bearer ${finalToken}` } };
-};
+import api from './api';
 
 export const notificationService = {
   getAll: async (token?: string | null) => {
-    const response = await axios.get(`${API_URL}/notifications`, getHeaders(token));
+    const response = await api.get('/notifications');
     return response.data;
   },
 
-  markAsRead: async (id: string, token?: string | null) => {
-    await axios.put(`${API_URL}/notifications/${id}/read`, {}, getHeaders(token));
+  markAsRead: async (id: string) => {
+    await api.put(`/notifications/${id}/read`);
   },
 
-  markAllRead: async (token?: string | null) => {
-    await axios.put(`${API_URL}/notifications/mark-all-read`, {}, getHeaders(token));
+  markAllRead: async () => {
+    await api.put('/notifications/mark-all-read');
   },
 
-  clearAll: async (token?: string | null) => {
-    await axios.delete(`${API_URL}/notifications/clear-all`, getHeaders(token));
+  clearAll: async () => {
+    await api.delete('/notifications/clear-all');
   },
 
-  delete: async (id: string, token?: string | null) => {
-    await axios.delete(`${API_URL}/notifications/${id}`, getHeaders(token));
+  delete: async (id: string) => {
+    await api.delete(`/notifications/${id}`);
   }
 };

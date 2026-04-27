@@ -1,4 +1,4 @@
-const CACHE_NAME = 'educrm-cache-v1';
+const CACHE_NAME = 'centracrm-cache-v1';
 const urlsToCache = [
   '/',
   '/manifest.json',

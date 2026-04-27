@@ -80,7 +80,8 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
       const data = await notificationService.getAll(activeToken);
       const unread = data.filter((n: any) => !n.isRead).length;
       set({ notifications: data, unreadCount: unread });
-    } catch (err) {
+    } catch (err: any) {
+      if (err.response?.status === 401) return;
       console.error('[NotificationStore] Fetch failed:', err);
     }
   },

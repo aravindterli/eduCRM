@@ -1,4 +1,4 @@
-import api from '@/utils/api';
+import api from '@/services/api';
 
 export const counselingService = {
   getStudents: async () => {

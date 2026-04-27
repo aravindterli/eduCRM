@@ -38,8 +38,9 @@ export const Sidebar = () => {
     <aside className="fixed left-0 top-0 h-screen w-64 glass border-r border-border flex flex-col z-50">
       <div className="p-8">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-          EduCRM
+          CentraCRM
         </h1>
+        <span className="text-xs text-muted-foreground">v1.0.0</span>
       </div>
 
       <nav className="flex-1 px-4 space-y-2 overflow-y-auto scrollbar-hide">

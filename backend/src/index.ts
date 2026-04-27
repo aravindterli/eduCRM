@@ -74,7 +74,7 @@ app.use('/api/v1/notifications', notificationRoutes);
 app.get('/api/v1/ping', (req, res) => res.send('pong')); // Added ping endpoint
 
 app.get('/health', (req, res) => {
-  res.json({ status: 'UP', message: 'EduCRM API v1 is running', timestamp: new Date() });
+  res.json({ status: 'UP', message: 'CentraCRM API v1 is running', timestamp: new Date() });
 });
 
 // Meta requires a Privacy Policy URL

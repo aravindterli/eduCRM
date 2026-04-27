@@ -1,6 +1,6 @@
-# EduCRM User Manual
+# CentraCRM User Manual
 
-Welcome to the EduCRM! This manual will guide you through the features and workflows of the system, tailored to your specific role.
+Welcome to the CentraCRM! This manual will guide you through the features and workflows of the system, tailored to your specific role.
 
 ---
 
@@ -57,7 +57,7 @@ Your dashboard provides a high-level view of:
 
 ## 📱 Mobile Access (PWA)
 
-EduCRM is a Progressive Web App. You can install it on your phone:
+CentraCRM is a Progressive Web App. You can install it on your phone:
 1. **Android**: Open the CRM in Chrome and tap "Add to Home Screen" when prompted.
 2. **iOS**: Open in Safari, tap the Share icon, and select "Add to Home Screen".
 

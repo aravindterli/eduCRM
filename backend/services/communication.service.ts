@@ -43,8 +43,8 @@ export class CommunicationService {
         }
       });
 
-      let subject = `EduCRM: ${templateKey.replace(/_/g, ' ').toUpperCase()}`;
-      let bodyText = `Hello ${data.name},\nThis is a notification for: ${templateKey}\nThank you, EduCRM Team.`;
+      let subject = `CentraCRM: ${templateKey.replace(/_/g, ' ').toUpperCase()}`;
+      let bodyText = `Hello ${data.name},\nThis is a notification for: ${templateKey}\nThank you, CentraCRM Team.`;
 
       if (dbTemplate) {
         subject = dbTemplate.subject || subject;
@@ -58,7 +58,7 @@ export class CommunicationService {
 
       const info = await this.transporter.sendMail({
 
-        from: process.env.EMAIL_FROM || '"The Foundrys" <no-reply@educrm.com>',
+        from: process.env.EMAIL_FROM || '"The Foundrys" <no-reply@centracrm.com>',
         to,
         subject: formattedSubject,
         text: formattedContent.replace(/<[^>]*>?/gm, ''),
@@ -103,7 +103,7 @@ export class CommunicationService {
       <table width="600" cellpadding="0" cellspacing="0" style="background:#1e293b;border-radius:24px;border:1px solid #334155;overflow:hidden;box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
         <!-- Header -->
         <tr><td style="background: linear-gradient(135deg, #3b82f6, #6366f1); padding: 48px 40px;">
-          <p style="margin:0;color:rgba(255,255,255,0.7);font-size:12px;font-weight:800;letter-spacing:4px;text-transform:uppercase;">EduCRM Admissions</p>
+          <p style="margin:0;color:rgba(255,255,255,0.7);font-size:12px;font-weight:800;letter-spacing:4px;text-transform:uppercase;">CentraCRM Admissions</p>
           <h1 style="margin:12px 0 0;color:#ffffff;font-size:28px;font-weight:800;line-height:1.2;">${title}</h1>
         </td></tr>
         <!-- Content -->
@@ -113,8 +113,8 @@ export class CommunicationService {
         </td></tr>
         <!-- Footer -->
         <tr><td style="padding:32px 40px;background:#0f172a;border-top:1px solid #1e293b;">
-          <p style="margin:0;color:#475569;font-size:12px;line-height:1.5;">You are receiving this communication from EduCRM regarding your application or interested program. If you have any questions, please reply to this email.</p>
-          <p style="margin:16px 0 0;color:#475569;font-size:12px;">&copy; 2026 EduCRM. All rights reserved.</p>
+          <p style="margin:0;color:#475569;font-size:12px;line-height:1.5;">You are receiving this communication from CentraCRM regarding your application or interested program. If you have any questions, please reply to this email.</p>
+          <p style="margin:16px 0 0;color:#475569;font-size:12px;">&copy; 2026 CentraCRM. All rights reserved.</p>
         </td></tr>
       </table>
     </td></tr>
@@ -160,7 +160,7 @@ export class CommunicationService {
 
     try {
       const info = await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',
+        from: process.env.EMAIL_FROM || '"CentraCRM Admissions" <no-reply@centracrm.com>',
         to,
         subject,
         text: `Counseling session with ${data.assignedToName} on ${dateStr} at ${timeStr}. Join: ${data.meetingUrl}`,
@@ -214,7 +214,7 @@ export class CommunicationService {
 
     try {
       const info = await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"EduCRM Webinars" <no-reply@educrm.com>',
+        from: process.env.EMAIL_FROM || '"CentraCRM Webinars" <no-reply@centracrm.com>',
         to,
         subject,
         text: `You're registered for ${webinar.title} on ${dateStr} at ${timeStr}. Join here: ${webinar.meetingUrl}`,
@@ -352,7 +352,7 @@ export class CommunicationService {
 
   async sendAutoResponse(lead: any) {
     const programName = lead.program?.name || 'our programs';
-    const subject = '👋 Welcome to EduCRM Admissions';
+    const subject = '👋 Welcome to CentraCRM Admissions';
     const content = `
       <p>Hi <strong>${lead.name}</strong>,</p>
       <p>Thank you for inquiring about ${programName}. We are excited about your interest in taking the next step with us.</p>
@@ -376,7 +376,7 @@ export class CommunicationService {
 
     if (lead.email) {
       await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',
+        from: process.env.EMAIL_FROM || '"CentraCRM Admissions" <no-reply@centracrm.com>',
         to: lead.email,
         subject,
         html
@@ -403,7 +403,7 @@ export class CommunicationService {
 
     if (lead.email) {
       await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',
+        from: process.env.EMAIL_FROM || '"CentraCRM Admissions" <no-reply@centracrm.com>',
         to: lead.email,
         subject,
         html
@@ -430,7 +430,7 @@ export class CommunicationService {
 
     if (lead.email) {
       await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',
+        from: process.env.EMAIL_FROM || '"CentraCRM Admissions" <no-reply@centracrm.com>',
         to: lead.email,
         subject,
         html
@@ -439,7 +439,7 @@ export class CommunicationService {
   }
 
   async sendRejectionNotification(lead: any, reason: string) {
-    const subject = 'Update regarding your Application at EduCRM';
+    const subject = 'Update regarding your Application at CentraCRM';
     const content = `
       <p>Hi <strong>${lead.name}</strong>,</p>
       <p>Thank you for your interest in our programs and for the time you took to apply.</p>
@@ -452,7 +452,7 @@ export class CommunicationService {
 
     if (lead.email) {
       await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',
+        from: process.env.EMAIL_FROM || '"CentraCRM Admissions" <no-reply@centracrm.com>',
         to: lead.email,
         subject,
         html
@@ -484,7 +484,7 @@ export class CommunicationService {
 
     try {
       await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"EduCRM Alerts" <no-reply@educrm.com>',
+        from: process.env.EMAIL_FROM || '"CentraCRM Alerts" <no-reply@centracrm.com>',
         to: assignedTo.email,
         subject,
         html,

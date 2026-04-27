@@ -44,7 +44,7 @@ export default function LeadsPage() {
 
   React.useEffect(() => {
     const fetchStaff = async () => {
-      const token = localStorage.getItem('educrm_token');
+      const token = localStorage.getItem('centracrm_token');
       try {
         const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/users`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -144,7 +144,7 @@ export default function LeadsPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
             <input
               placeholder="Search leads..."
-              className="w-full bg-white/5 border-none rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-1 ring-white/10"
+              className="w-full bg-muted border border-border rounded-xl pl-10 pr-4 py-2 text-sm outline-none focus:ring-1 ring-primary/30"
             />
           </div>
            <div className="flex gap-2">
@@ -183,24 +183,24 @@ export default function LeadsPage() {
                     {selectedLeadIds.length > 0 && selectedLeadIds.length < filteredLeads.length && <div className="w-2.5 h-0.5 bg-white/50 rounded-full" />}
                   </div>
                 </th>
-                <th className="px-6 py-4 font-medium">Lead Info</th>
-                <th className="px-6 py-4 font-medium hidden sm:table-cell">Stage</th>
-                <th className="px-6 py-4 font-medium hidden md:table-cell">Source</th>
-                <th className="px-6 py-4 font-medium hidden md:table-cell">Owner</th>
-                <th className="px-6 py-4 font-medium hidden sm:table-cell">Created At</th>
-                <th className="px-6 py-4 font-medium text-right">Actions</th>
+                <th className="px-6 py-4 font-black text-[10px] text-muted-foreground uppercase tracking-widest text-left">Lead Info</th>
+                <th className="px-6 py-4 font-black text-[10px] text-muted-foreground uppercase tracking-widest text-left hidden sm:table-cell">Stage</th>
+                <th className="px-6 py-4 font-black text-[10px] text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Source</th>
+                <th className="px-6 py-4 font-black text-[10px] text-muted-foreground uppercase tracking-widest text-left hidden md:table-cell">Owner</th>
+                <th className="px-6 py-4 font-black text-[10px] text-muted-foreground uppercase tracking-widest text-left hidden sm:table-cell">Created At</th>
+                <th className="px-6 py-4 font-black text-[10px] text-muted-foreground uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center text-slate-500 italic">
+                  <td colSpan={6} className="py-20 text-center text-muted-foreground italic">
                     Loading leads from server...
                   </td>
                 </tr>
               ) : filteredLeads.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-20 text-center text-slate-500 italic">
+                  <td colSpan={6} className="py-20 text-center text-muted-foreground italic">
                     No leads found.
                   </td>
                 </tr>
@@ -303,17 +303,17 @@ export default function LeadsPage() {
         {/* Pagination Footer */}
         <div className="px-6 py-4 border-t border-white/5 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <p className="text-xs text-slate-500">
-              Showing <span className="text-white font-medium">{(page - 1) * limit + 1}</span> to{' '}
-              <span className="text-white font-medium">
+            <p className="text-xs text-muted-foreground">
+              Showing <span className="text-foreground font-semibold">{(page - 1) * limit + 1}</span> to{' '}
+              <span className="text-foreground font-semibold">
                 {Math.min(page * limit, total)}
               </span> of{' '}
-              <span className="text-white font-medium">{total}</span> leads
+              <span className="text-foreground font-semibold">{total}</span> leads
             </p>
             <select
               value={limit}
               onChange={(e) => fetchLeads(1, Number(e.target.value))}
-              className="bg-white/5 border-none rounded-lg text-[10px] text-slate-400 outline-none focus:ring-1 ring-white/10 px-2 py-1 cursor-pointer"
+                className="bg-muted border border-border rounded-lg text-[10px] text-muted-foreground outline-none focus:ring-1 ring-primary/30 px-2 py-1 cursor-pointer"
             >
               <option value="10">10 per page</option>
               <option value="20">20 per page</option>
@@ -382,7 +382,7 @@ export default function LeadsPage() {
             <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
               {selectedLeadIds.length}
             </span>
-            <span className="text-sm font-medium text-white">Leads selected</span>
+            <span className="text-sm font-medium text-foreground">Leads selected</span>
           </div>
           <div className="flex items-center gap-3">
             <button

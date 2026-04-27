@@ -57,8 +57,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
              <div className="glass rounded-3xl border-white/5 overflow-hidden flex flex-col h-[350px]">
-                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                    <h2 className="font-bold text-slate-200 flex items-center gap-2 text-sm">
+                <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+                    <h2 className="font-bold text-foreground flex items-center gap-2 text-sm">
                       <Activity size={18} className="text-blue-400" />
                       Conversion Funnel
                     </h2>
@@ -92,8 +92,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
              </div>
              
              <div className="glass rounded-3xl border-white/5 overflow-hidden flex flex-col h-[350px]">
-                <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                    <h2 className="font-bold text-slate-200 flex items-center gap-2 text-sm">
+                <div className="p-6 border-b border-border flex justify-between items-center bg-muted/30">
+                    <h2 className="font-bold text-foreground flex items-center gap-2 text-sm">
                       <PieChart size={18} className="text-indigo-400" />
                       Source Distribution
                     </h2>
@@ -121,8 +121,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
              <div className="glass rounded-3xl border-white/5 overflow-hidden min-h-[220px]">
-                <div className="p-5 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
-                  <h3 className="font-bold text-sm text-slate-200">Program Performance</h3>
+                <div className="p-5 border-b border-border bg-muted/30 flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-foreground">Program Performance</h3>
                 </div>
                 <div className="p-5 space-y-4">
                    {programData?.length > 0 ? programData.slice(0, 5).map((p: any, i: number) => (
@@ -143,8 +143,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
              </div>
 
              <div className="glass rounded-3xl border-white/5 overflow-hidden">
-                <div className="p-5 border-b border-white/5 bg-white/[0.02] flex justify-between items-center">
-                  <h3 className="font-bold text-sm text-slate-200">Team Leaderboard</h3>
+                <div className="p-5 border-b border-border bg-muted/30 flex justify-between items-center">
+                  <h3 className="font-bold text-sm text-foreground">Team Leaderboard</h3>
                 </div>
                 <div className="p-5 space-y-4">
                    {counselorData?.length > 0 ? counselorData.slice(0, 5).map((c: any, i: number) => (

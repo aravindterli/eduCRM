@@ -53,20 +53,56 @@
   --popover-foreground: 222 47% 11%;
   --primary: 210 100% 50%;
   --primary-foreground: 210 100% 98%;
-  --secondary: 210 40% 96%;
+  --secondary: 210 40% 92%;
   --secondary-foreground: 222 47% 11%;
-  --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 47%;
-  --accent: 210 40% 96%;
+  --muted: 210 40% 92%;
+  --muted-foreground: 215 25% 35%;
+  --accent: 210 40% 92%;
   --accent-foreground: 222 47% 11%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
+  --border: 214 32% 70%;
+  --input: 214 32% 70%;
   --ring: 222 47% 11%;
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-bg: rgba(255, 255, 255, 0.98);
+  --glass-border: rgba(0, 0, 0, 0.3);
 }
+
+/* Light Theme Accessibility Overrides */
+.theme-light .text-slate-500,
+.theme-light .text-slate-400,
+.theme-light .text-muted-foreground {
+  color: #1e293b !important; /* Dark Slate-800: Strong visibility for subheaders and labels */
+}
+
+.theme-light .text-slate-300,
+.theme-light .text-slate-200 {
+  color: #334155 !important; /* Slate-700: Clearly readable secondary text */
+}
+
+.theme-light .border-white\/5,
+.theme-light .border-white\/10,
+.theme-light .border-border {
+  border-color: rgba(0, 0, 0, 0.25) !important; /* Sharp, visible dividers */
+}
+
+.theme-light .bg-white\/5,
+.theme-light .bg-white\/\[0\.02\],
+.theme-light .bg-white\/10 {
+  background-color: rgba(0, 0, 0, 0.05) !important; /* Visible card backgrounds */
+}
+
+.theme-light .glass {
+  background: rgba(255, 255, 255, 1) !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+}
+
+.theme-light h2, 
+.theme-light h3 {
+  color: #0f172a !important; /* Slate-900: Strong headings */
+}
+
 
 /* Accent Overrides */
 .accent-blue { --primary: 210 100% 50%; }
@@ -151,3 +187,5 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+

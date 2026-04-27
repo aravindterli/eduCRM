@@ -136,7 +136,7 @@ export const handleBulkBroadcast = async (req: Request, res: Response) => {
             const html = CommunicationService.getBaseTemplate(emailSubject || 'Special Announcement', personalizedContent);
             
             await CommunicationService.transporter.sendMail({
-              from: process.env.EMAIL_FROM || '"EduCRM Admissions" <no-reply@educrm.com>',
+              from: process.env.EMAIL_FROM || '"CentraCRM Admissions" <no-reply@centracrm.com>',
               to: String(email),
               subject: emailSubject || 'Special Announcement',
               html,

@@ -40,7 +40,7 @@ export const LeadDetails = ({ lead, isOpen, onClose, staff }: LeadDetailsProps) 
   const submitLogInteraction = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoggingInteraction(true);
-    const token = localStorage.getItem('educrm_token');
+    const token = localStorage.getItem('centracrm_token');
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leads/${lead.id}/log-interaction`, {
         method: 'POST',
@@ -131,7 +131,7 @@ export const LeadDetails = ({ lead, isOpen, onClose, staff }: LeadDetailsProps) 
     if (!newNote.trim()) return;
     setAddingNote(true);
     try {
-      const token = localStorage.getItem('educrm_token');
+      const token = localStorage.getItem('centracrm_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leads/${lead.id}/notes`, {
         method: 'POST',
         headers: {
@@ -155,7 +155,7 @@ export const LeadDetails = ({ lead, isOpen, onClose, staff }: LeadDetailsProps) 
     if (!selectedTemplate) return;
     setSendingTemplate(true);
     try {
-      const token = localStorage.getItem('educrm_token');
+      const token = localStorage.getItem('centracrm_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/leads/${lead.id}/send-template`, {
         method: 'POST',
         headers: {
@@ -188,7 +188,7 @@ export const LeadDetails = ({ lead, isOpen, onClose, staff }: LeadDetailsProps) 
     formData.append('applicationId', lead.application.id);
 
     try {
-      const token = localStorage.getItem('educrm_token');
+      const token = localStorage.getItem('centracrm_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/documents/upload`, {
         method: 'POST',
         headers: {
@@ -209,7 +209,7 @@ export const LeadDetails = ({ lead, isOpen, onClose, staff }: LeadDetailsProps) 
   const handleVerifyDocument = async (docId: string, status: string) => {
     setVerifyingDocId(docId);
     try {
-      const token = localStorage.getItem('educrm_token');
+      const token = localStorage.getItem('centracrm_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/documents/${docId}/verify`, {
         method: 'PATCH',
         headers: {
@@ -238,7 +238,7 @@ export const LeadDetails = ({ lead, isOpen, onClose, staff }: LeadDetailsProps) 
     }
     setDownloadingLetter(true);
     try {
-      const token = localStorage.getItem('educrm_token');
+      const token = localStorage.getItem('centracrm_token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${lead.application.id}/letter`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });

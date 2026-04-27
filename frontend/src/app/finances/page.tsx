@@ -144,7 +144,7 @@ export default function FinancesPage() {
                         {fee.status === 'COMPLETED' && (
                           <button 
                             onClick={() => {
-                              const token = localStorage.getItem('educrm_token');
+                              const token = localStorage.getItem('centracrm_token');
                               window.open(`${process.env.NEXT_PUBLIC_API_URL}/reports/payments/${fee.id}/receipt?token=${token}`, '_blank');
                             }}
                             className="p-2 hover:bg-white/5 rounded-lg text-slate-500 hover:text-blue-400 transition-all ml-auto" 

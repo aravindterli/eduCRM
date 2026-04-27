@@ -26,7 +26,7 @@ export const DashboardFollowUps = () => {
   return (
     <div className="glass rounded-3xl border-white/5 overflow-hidden flex flex-col">
       <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-        <h2 className="font-bold text-slate-200 flex items-center gap-2 text-sm">
+        <h2 className="font-bold text-foreground flex items-center gap-2 text-sm">
           <Phone size={18} className="text-emerald-400" />
           Priority Follow-ups
         </h2>
@@ -40,8 +40,8 @@ export const DashboardFollowUps = () => {
           <div key={f.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-all group">
             <div className="flex justify-between items-start gap-4">
               <div className="space-y-1 min-w-0">
-                <p className="text-xs font-bold text-slate-200 truncate">{f.lead?.name}</p>
-                <div className="flex items-center gap-2 text-[10px] text-slate-500 font-medium">
+                <p className="text-xs font-bold text-foreground truncate">{f.lead?.name}</p>
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium">
                   <Clock size={10} />
                   {new Date(f.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   {f.createdBy && (
@@ -65,7 +65,7 @@ export const DashboardFollowUps = () => {
             <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500/30 flex items-center justify-center">
               <CheckCircle2 size={24} />
             </div>
-            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">No pending calls</p>
+            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No pending calls</p>
           </div>
         )}
       </div>
@@ -73,7 +73,7 @@ export const DashboardFollowUps = () => {
       <div className="p-4 border-t border-white/5 bg-white/[0.01]">
          <Link 
             href="/leads"
-            className="w-full py-2.5 rounded-xl border border-white/10 flex items-center justify-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:bg-white/5 transition-all"
+            className="w-full py-2.5 rounded-xl border border-white/10 flex items-center justify-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest hover:bg-white/5 transition-all"
          >
            View Lead Pipeline
            <ChevronRight size={14} />

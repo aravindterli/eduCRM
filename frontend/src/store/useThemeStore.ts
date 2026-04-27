@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import api from '@/utils/api';
+import api from '@/services/api';
 
 export type ThemeType = 'ocean' | 'slate' | 'light';
 export type AccentType = 'blue' | 'indigo' | 'emerald' | 'rose' | 'purple' | 'violet' | 'pink' | 'fuchsia' | 'cyan' | 'teal' | 'lime' | 'amber' | 'orange' | 'red' | 'yellow' | 'slate' | 'gray' | 'zinc';
@@ -32,7 +32,7 @@ export const useThemeStore = create<ThemeState>()(
       },
     }),
     {
-      name: 'educrm-theme-storage',
+      name: 'centracrm-theme-storage',
     }
   )
 );

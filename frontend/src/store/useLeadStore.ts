@@ -48,6 +48,7 @@ export const useLeadStore = create<LeadState>((set, get) => ({
         loading: false 
       });
     } catch (err: any) {
+      if (err.response?.status === 401) return;
       set({ error: err.message, loading: false });
     }
   },
@@ -58,6 +59,7 @@ export const useLeadStore = create<LeadState>((set, get) => ({
       const data = await leadService.getStats();
       set({ stats: data, loading: false });
     } catch (err: any) {
+      if (err.response?.status === 401) return;
       set({ error: err.message, loading: false });
     }
   },

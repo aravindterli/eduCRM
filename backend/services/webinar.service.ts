@@ -6,7 +6,7 @@ import LeadService from './lead.service';
 export class WebinarService {
   async createWebinar(data: any) {
     const slug = data.title.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-') + '-' + Math.random().toString(36).substring(2, 7);
-    const meetingUrl = `https://meet.jit.si/educrm-${slug}#config.prejoinPageEnabled=false&config.startWithAudioMuted=true&config.startWithVideoMuted=true`;
+    const meetingUrl = `https://meet.jit.si/centracrm-${slug}#config.prejoinPageEnabled=false&config.startWithAudioMuted=true&config.startWithVideoMuted=true`;
 
     return await prisma.webinar.create({
       data: {

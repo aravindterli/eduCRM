@@ -262,7 +262,7 @@ export default function WebinarRegistrationPage() {
 
       <footer className="relative z-10 p-12 border-t border-white/5 mt-auto bg-slate-950/80 backdrop-blur">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-loose">© 2026 EduCRM Global. Empowering students worldwide through expertise.</p>
+          <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest leading-loose">© 2026 CentraCRM Global. Empowering students worldwide through expertise.</p>
           <div className="flex gap-8 text-[10px] font-black text-slate-600 uppercase tracking-widest">
             <a href="#" className="hover:text-purple-400 transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-purple-400 transition-colors">Terms of Experience</a>

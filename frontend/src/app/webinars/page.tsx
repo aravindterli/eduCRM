@@ -183,7 +183,7 @@ export default function WebinarsPage() {
                       Copy Link
                     </button>
                     <a
-                      href={`${w.meetingUrl}&userInfo.displayName="${encodeURIComponent(user?.name || 'EduCRM Host')}"`}
+                      href={`${w.meetingUrl}&userInfo.displayName="${encodeURIComponent(user?.name || 'CentraCRM Host')}"`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all border border-emerald-500/20"

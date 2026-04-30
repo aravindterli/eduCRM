@@ -102,6 +102,8 @@ model Lead {
   program              Program?              @relation(fields: [interestedProgramId], references: [id])
   notes                LeadNote[]
   webinarRegistrations WebinarRegistration[]
+  scheduledNotifications ScheduledNotification[]
+
 
   @@index([phone])
   @@index([email])
@@ -253,9 +255,11 @@ model MessageTemplate {
   channel   String
   subject   String?
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  notificationRules NotificationRule[]
 }
+
 
 enum LeadNoteType {
   GENERAL
@@ -307,3 +311,43 @@ enum PaymentStatus {
   FAILED
   REFUNDED
 }
+
+model NotificationRule {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  trigger     String
+  channel     String
+  templateId  String?
+  offsets     Int[]    @default([0])
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  template    MessageTemplate? @relation(fields: [templateId], references: [id])
+}
+
+model ScheduledNotification {
+  id          String   @id @default(uuid())
+  ruleId      String?
+  trigger     String
+  channel     String
+  recipientId String?
+  contactInfo String?
+  templateId  String?
+  templateKey String?
+  subject     String?
+  body        String?
+  payload     Json?
+  scheduledAt DateTime
+  sentAt      DateTime?
+  status      String   @default("PENDING")
+  retryCount  Int      @default(0)
+  errorLog    String?
+  leadId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lead        Lead?    @relation(fields: [leadId], references: [id])
+}
+

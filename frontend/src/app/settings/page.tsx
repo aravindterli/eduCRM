@@ -8,6 +8,7 @@ import { useThemeStore } from '@/store/useThemeStore';
 import { authService } from '@/services/auth.service';
 
 import { UserManagement } from '@/components/settings/UserManagement';
+import { NotificationRules } from '@/components/settings/NotificationRules';
 
 export default function SettingsPage() {
   const { user, setAuth, token } = useAuthStore();
@@ -55,6 +56,7 @@ export default function SettingsPage() {
 
   if (user?.role === 'ADMIN') {
     tabs.push({ icon: UserPlus, label: 'Users' });
+    tabs.push({ icon: Bell, label: 'Notifications' });
   }
 
   return (
@@ -89,6 +91,8 @@ export default function SettingsPage() {
 
         {activeTab === 'Users' ? (
           <UserManagement />
+        ) : activeTab === 'Notifications' ? (
+          <NotificationRules />
         ) : (
           <div className="max-w-2xl space-y-8">
             <div>

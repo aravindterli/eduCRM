@@ -18,6 +18,7 @@ import documentRoutes from '../routes/document.routes';
 import templateRoutes from '../routes/template.routes';
 import whatsappRoutes from '../routes/whatsapp.routes';
 import notificationRoutes from '../routes/notification.routes';
+import notificationRuleRoutes from '../routes/notificationRule.routes';
 
 import { auditMiddleware } from '../middleware/audit';
 import SchedulerService from '../services/scheduler.service';
@@ -40,7 +41,7 @@ app.use(cors({
   origin: (origin, callback) => {
     // allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     const trimmedOrigin = origin.trim();
     if (allowedOrigins.indexOf(trimmedOrigin) !== -1 || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
@@ -70,6 +71,7 @@ app.use('/api/v1/documents', documentRoutes);
 app.use('/api/v1/templates', templateRoutes);
 app.use('/api/v1/whatsapp', whatsappRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/notification-rules', notificationRuleRoutes);
 
 app.get('/api/v1/ping', (req, res) => res.send('pong')); // Added ping endpoint
 
@@ -108,10 +110,10 @@ app.get('/privacy-policy', (req, res) => {
 httpServer.listen(PORT, () => {
   console.log(`🚀 Backend server running on http://localhost:${PORT}`);
   console.log(`📡 API Base Path: http://localhost:${PORT}/api/v1`);
-  
+
   // Initialize Socket.io
   initSocket(httpServer);
-  
+
   // Initialize Background Jobs
   SchedulerService.startAllJobs();
 });

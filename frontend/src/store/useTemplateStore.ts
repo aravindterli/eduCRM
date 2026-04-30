@@ -8,7 +8,7 @@ interface TemplateState {
   createTemplate: (data: any) => Promise<boolean>;
   updateTemplate: (id: string, data: any) => Promise<boolean>;
   deleteTemplate: (id: string) => Promise<boolean>;
-  syncWhatsAppTemplates: (wabaId?: string) => Promise<any>;
+
 }
 
 export const useTemplateStore = create<TemplateState>((set, get) => ({
@@ -68,18 +68,4 @@ export const useTemplateStore = create<TemplateState>((set, get) => ({
       set({ loading: false });
     }
   },
-
-  syncWhatsAppTemplates: async (wabaId?: string) => {
-    set({ loading: true });
-    try {
-      const { data } = await API.post('/templates/sync/whatsapp', { wabaId });
-      get().fetchTemplates();
-      return data;
-    } catch (error: any) {
-      console.error('Failed to sync templates:', error);
-      return { success: false, message: error.response?.data?.message || 'Sync failed' };
-    } finally {
-      set({ loading: false });
-    }
-  }
 }));

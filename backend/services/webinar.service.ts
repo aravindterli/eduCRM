@@ -2,6 +2,7 @@ import prisma from '../config/prisma';
 import { autoAssignLead } from '../utils/assignment';
 import CommunicationService from './communication.service';
 import LeadService from './lead.service';
+import NotificationDispatcher from './notificationDispatcher.service';
 
 export class WebinarService {
   async createWebinar(data: any) {
@@ -47,14 +48,41 @@ export class WebinarService {
       data: { stage: 'WEBINAR_REGISTERED' },
     });
 
-    // Send confirmation email
+    // Send confirmation + enqueue multi-timing reminders
     try {
       const [lead, webinar] = await Promise.all([
         prisma.lead.findUnique({ where: { id: leadId } }),
         prisma.webinar.findUnique({ where: { id: webinarId } })
       ]);
-      if (lead && webinar && lead.email) {
-        await CommunicationService.sendWebinarRegistrationEmail(lead, webinar);
+      if (lead && webinar) {
+        const webinarTime = new Date(webinar.date);
+        const payload = {
+          name: lead.name,
+          webinarTitle: webinar.title,
+          webinarDate: webinarTime.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata' }),
+          webinarTime: webinarTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }),
+          meetingUrl: webinar.meetingUrl || '',
+        };
+
+        // L5: Immediate confirmation
+        NotificationDispatcher.enqueueFromTrigger({
+          trigger: 'WEBINAR_REGISTERED',
+          eventTime: new Date(),
+          leadId: lead.id,
+          contactInfo: lead.email || lead.phone,
+          payload,
+        }).catch(() => {});
+
+        // L6: Reminders at 1 day, 1 hr, 15 min before
+        NotificationDispatcher.enqueueFromTrigger({
+          trigger: 'WEBINAR_STARTING',
+          eventTime: webinarTime,
+          leadId: lead.id,
+          contactInfo: lead.email || lead.phone,
+          payload,
+        }).catch(() => {});
+
+
       }
     } catch (err) {
       console.error('[WebinarService] Failed to send registration email:', err);
@@ -70,11 +98,21 @@ export class WebinarService {
     });
 
     if (attended) {
-      await prisma.lead.update({
+      const lead = await prisma.lead.update({
         where: { id: registration.leadId },
         data: { stage: 'WEBINAR_ATTENDED' },
       });
+
+      // Notify lead (Post-Webinar thank you)
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'WEBINAR_ATTENDED',
+        eventTime: new Date(),
+        leadId: lead.id,
+        contactInfo: lead.email || lead.phone,
+        payload: { name: lead.name, webinarTitle: (registration as any).webinar?.title || 'the webinar' },
+      }).catch(() => {});
     }
+
 
     return registration;
   }
@@ -155,8 +193,16 @@ export class WebinarService {
 
     if (isNewLead) {
       await autoAssignLead(lead.id);
-      await CommunicationService.sendAutoResponse(lead);
+      // Trigger lead creation notification
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'LEAD_CREATED',
+        eventTime: new Date(),
+        leadId: lead.id,
+        contactInfo: lead.email || lead.phone,
+        payload: { name: lead.name, leadSource: lead.leadSource },
+      }).catch(() => { });
     }
+
 
     // Lead Scoring (for both new and existing leads as it's a new interaction)
     await LeadService.calculateLeadScore(lead.id);
@@ -190,15 +236,10 @@ export class WebinarService {
       }
     });
 
-    // 4. Send confirmation email
-    try {
-      const webinar = await prisma.webinar.findUnique({ where: { id: webinarId } });
-      if (lead && webinar && lead.email) {
-        await CommunicationService.sendWebinarRegistrationEmail(lead, webinar);
-      }
-    } catch (err) {
-      console.error('[WebinarService] Failed to send registration email:', err);
-    }
+    // Note: WEBINAR_REGISTERED notification is handled via the registerLead path 
+    // or we can add it here if needed. Since we are using enqueueFromTrigger 
+    // for reminders, immediate confirmation should be an offset: 0 rule.
+
 
     return { message: 'Registration successful', lead, registration };
   }

@@ -3,6 +3,7 @@ import prisma from '../config/prisma';
 import LeadRepository from '../repositories/lead.repository';
 import { autoAssignLead } from '../utils/assignment';
 import CommunicationService from './communication.service';
+import NotificationDispatcher from './notificationDispatcher.service';
 
 
 export class LeadService {
@@ -24,25 +25,60 @@ export class LeadService {
     // Automatic Assignment
     const assignedLead = await autoAssignLead(lead.id);
 
-    // Notify assigned assignedTo/telecaller
-    if (assignedLead && assignedLead.assignedId) {
-      const assignedTo = await prisma.user.findUnique({
-        where: { id: assignedLead.assignedId }
-      });
-      if (assignedTo) {
-        await CommunicationService.sendassignedToNotification(assignedTo, assignedLead);
-      }
-    }
-
-    // Automated Communication
-    await CommunicationService.sendAutoResponse(lead);
-
     // Initial Scoring
     await this.calculateLeadScore(lead.id);
 
     // Activity Logging
     const AuditService = (await import('./audit.service')).default;
     await AuditService.log(`New lead created: ${lead.name}`, undefined, { leadId: lead.id, source: lead.leadSource });
+
+    // ── Notification Triggers (Consolidated) ──────────────────────────────────────────────
+    
+    // L1: Welcome to lead (Email + WhatsApp)
+    NotificationDispatcher.enqueueFromTrigger({
+      trigger: 'LEAD_CREATED',
+      eventTime: new Date(),
+      leadId: lead.id,
+      contactInfo: lead.email || lead.phone,
+      payload: { name: lead.name, phone: lead.phone, email: lead.email || '', source: lead.leadSource },
+    }).catch(() => { });
+
+    // A1: Notify Admins of new lead
+    const adminUsers = await prisma.user.findMany({ where: { role: { type: 'ADMIN' } } });
+    for (const admin of adminUsers) {
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'LEAD_CREATED',
+        eventTime: new Date(),
+        leadId: lead.id,
+        recipientId: admin.id,
+        payload: { leadName: lead.name, source: lead.leadSource },
+      }).catch(() => { });
+    }
+
+
+    // T1: New lead assigned (Staff Alert) + L2: Lead Assignment Notification (Student Alert)
+    const assignedId = assignedLead?.assignedId || lead.assignedId;
+    if (assignedId) {
+      const assignedUser = await prisma.user.findUnique({ 
+        where: { id: assignedId },
+        include: { role: true }
+      });
+      
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'LEAD_ASSIGNED',
+        eventTime: new Date(),
+        leadId: lead.id,
+        recipientId: assignedId,
+        contactInfo: lead.phone || lead.email, // Passing lead info here allows the LEAD_ASSIGNED rules to target the lead too!
+        payload: { 
+          name: lead.name, 
+          staffName: assignedUser?.name || 'Your Counselor',
+          source: lead.leadSource,
+          leadPhone: lead.phone 
+        },
+      }).catch(() => { });
+    }
+
 
     return lead;
   }
@@ -127,9 +163,9 @@ export class LeadService {
     // --- ENFORCE DATA PRIVACY (RBAC) ---
     if (requestingUser) {
       const userRole = typeof requestingUser.role === 'string' ? requestingUser.role : requestingUser.role?.type;
-      
+
       const isTeamMember = userRole === 'TELECALLER' || userRole === 'COUNSELOR';
-      
+
       if (isTeamMember) {
         // Telecallers, Counselors, and assignedTos only see leads assigned to them via assignedId (owner field)
         where.assignedId = requestingUser.id;
@@ -148,7 +184,7 @@ export class LeadService {
       skip,
       take,
       where,
-      orderBy: { updatedAt: 'desc' }, // Switched to updatedAt to keep active leads at the top
+      orderBy: { createdAt: 'desc' },
     });
 
     return {
@@ -202,19 +238,83 @@ export class LeadService {
     if (data.stage === 'COUNSELING_SCHEDULED' && existingLead.stage !== 'COUNSELING_SCHEDULED') {
       const { default: AssignmentService } = await import('./assignment.service');
       const assignedLead = await AssignmentService.assignToassignedTo(id);
-      
+
       if (assignedLead && assignedLead.assignedId) {
         // Log a specialized handover note
         await this.addNote(
-          id, 
+          id,
           `Handover: Lead moved to COUNSELING_SCHEDULED. Automatically assigned to assignedTo: ${assignedLead.assignedTo?.name || 'Academic Team'}.`,
           'REMARK',
           requestingUserId || 'system'
         );
+
+        // Notify counselor and lead about counseling handover
+        NotificationDispatcher.enqueueFromTrigger({
+          trigger: 'COUNSELING_SCHEDULED',
+          eventTime: new Date(),
+          leadId: id,
+          recipientId: assignedLead.assignedId,
+          contactInfo: updatedLead.phone || updatedLead.email,
+          payload: { 
+            name: updatedLead.name, 
+            counselorName: assignedLead.assignedTo?.name || 'Academic Counselor' 
+          },
+        }).catch(() => { });
       }
     }
 
-    return await LeadRepository.update(id, data);
+
+    const updatedLead = await LeadRepository.update(id, data);
+
+    // Trigger stage change notification if stage changed
+    if (data.stage && data.stage !== existingLead.stage) {
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'LEAD_STAGE_CHANGED',
+        eventTime: new Date(),
+        leadId: id,
+        contactInfo: updatedLead.email || updatedLead.phone,
+        payload: { name: updatedLead.name, stage: data.stage },
+      }).catch(() => { });
+    }
+
+    if (data.stage === 'LOST_LEAD') {
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'LEAD_LOST',
+        eventTime: new Date(),
+        leadId: id,
+        contactInfo: updatedLead.email || updatedLead.phone,
+        payload: { name: updatedLead.name, reason: data.statusNote || 'No reason provided' },
+      }).catch(() => { });
+
+      // A2: Notify Admins when lead is LOST
+      const adminUsers = await prisma.user.findMany({ where: { role: { type: 'ADMIN' } } });
+      for (const admin of adminUsers) {
+        NotificationDispatcher.enqueueFromTrigger({
+          trigger: 'LEAD_LOST',
+          eventTime: new Date(),
+          leadId: id,
+          recipientId: admin.id,
+          payload: { leadName: updatedLead.name, reason: data.statusNote || 'No reason provided' },
+        }).catch(() => { });
+      }
+    }
+
+
+
+
+
+    // ── Notification Trigger: manual assignment ───────────────────────────
+    NotificationDispatcher.enqueueFromTrigger({
+      trigger: 'LEAD_ASSIGNED',
+      eventTime: new Date(),
+      leadId: id,
+      recipientId: data.assignedId, // Target the new assigned user for internal notif
+      payload: { name: updatedLead.name, leadId: id, source: updatedLead.leadSource },
+    }).catch(() => { });
+
+    return updatedLead;
+
+
   }
 
   async deleteLead(id: string) {
@@ -227,10 +327,22 @@ export class LeadService {
   }
 
   async assignLead(id: string, assignedId: string) {
-    return await LeadRepository.update(id, {
+    const updated = await LeadRepository.update(id, {
       assignedTo: { connect: { id: assignedId } }
     });
+
+    // ── Notification Trigger: manual assignment ───────────────────────────
+    NotificationDispatcher.enqueueFromTrigger({
+      trigger: 'LEAD_ASSIGNED',
+      eventTime: new Date(),
+      leadId: id,
+      recipientId: assignedId,
+      payload: { name: updated.name, leadId: id, source: updated.leadSource },
+    }).catch(() => { });
+
+    return updated;
   }
+
 
   async getLeadStats(userId?: string, role?: string) {
     const isTeamMember = role === 'TELECALLER' || role === 'COUNSELOR';

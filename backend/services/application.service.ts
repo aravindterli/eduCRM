@@ -1,6 +1,7 @@
 import prisma from '../config/prisma';
 import DocumentGeneratorService from './documentGenerator.service';
 import CommunicationService from './communication.service';
+import NotificationDispatcher from './notificationDispatcher.service';
 
 export class ApplicationService {
   async createApplication(data: any) {
@@ -16,6 +17,18 @@ export class ApplicationService {
       where: { id: data.leadId },
       data: { stage: 'APPLICATION_STARTED' },
     });
+
+    // L7: Notify lead to complete application
+    const lead = await prisma.lead.findUnique({ where: { id: data.leadId } });
+    if (lead) {
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'APPLICATION_STARTED',
+        eventTime: new Date(),
+        leadId: lead.id,
+        contactInfo: lead.email || lead.phone,
+        payload: { name: lead.name },
+      }).catch(() => {});
+    }
 
     return application;
   }
@@ -44,6 +57,17 @@ export class ApplicationService {
         where: { id: application.leadId },
         data: { stage: 'APPLICATION_SUBMITTED' },
       });
+      // L8: Notify lead — application received
+      const lead = await prisma.lead.findUnique({ where: { id: application.leadId } });
+      if (lead) {
+        NotificationDispatcher.enqueueFromTrigger({
+          trigger: 'APPLICATION_SUBMITTED',
+          eventTime: new Date(),
+          leadId: lead.id,
+          contactInfo: lead.email || lead.phone,
+          payload: { name: lead.name },
+        }).catch(() => {});
+      }
     }
 
     if (status === 'REJECTED') {
@@ -52,19 +76,17 @@ export class ApplicationService {
         data: { stage: 'RE_ENGAGEMENT' },
       });
 
-      // Auto-schedule Re-engagement Follow-up (30 days from now)
       if (lead.assignedId) {
         await prisma.followUp.create({
           data: {
             leadId: lead.id,
             assignedId: lead.assignedId,
             notes: `Automated re-engagement after application rejection. Reason: ${reason || 'N/A'}`,
-            scheduledAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 days
+            scheduledAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           }
         });
       }
 
-      // Audit Log
       await prisma.auditLog.create({
         data: {
           action: 'APPLICATION_REJECTED',
@@ -72,9 +94,29 @@ export class ApplicationService {
         }
       });
 
-      // Notify student
-      await CommunicationService.sendRejectionNotification(lead, reason || 'Incomplete documentation');
+      // Dispatcher trigger handles professional notification to lead
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'APPLICATION_REJECTED',
+        eventTime: new Date(),
+        leadId: lead.id,
+        contactInfo: lead.email || lead.phone,
+        payload: { name: lead.name, reason: reason || 'Incomplete documentation' },
+      }).catch(() => {});
     }
+
+    if (status === 'VERIFIED') {
+      const lead = await prisma.lead.findUnique({ where: { id: application.leadId } });
+      if (lead) {
+        NotificationDispatcher.enqueueFromTrigger({
+          trigger: 'APPLICATION_VERIFIED',
+          eventTime: new Date(),
+          leadId: lead.id,
+          contactInfo: lead.email || lead.phone,
+          payload: { name: lead.name },
+        }).catch(() => {});
+      }
+    }
+
 
     return application;
   }
@@ -148,10 +190,47 @@ export class ApplicationService {
       data: { stage: 'ADMISSION_CONFIRMED' },
     });
 
-    // Notify Student
-    await CommunicationService.sendAdmissionConfirmation(application.lead, admission);
+    // Dispatcher trigger handles professional notification to student
+    NotificationDispatcher.enqueueFromTrigger({
+      trigger: 'ADMISSION_CONFIRMED',
+      eventTime: new Date(),
+      leadId: application.leadId,
+      contactInfo: application.lead.email || application.lead.phone,
+      payload: { name: application.lead.name, enrollmentId, programName: admission.program.name },
+    }).catch(() => {});
+
+    // F1: Notify Finance team (In-App alert)
+    const financeUsers = await prisma.user.findMany({
+      where: { role: { type: 'FINANCE' } }
+    });
+
+    for (const user of financeUsers) {
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'ADMISSION_CONFIRMED',
+        eventTime: new Date(),
+        leadId: application.leadId,
+        recipientId: user.id,
+        payload: { leadName: application.lead.name, enrollmentId, programName: admission.program.name },
+      }).catch(() => {});
+    }
+
+    // A3: Notify Admin team (In-App alert)
+    const adminUsers = await prisma.user.findMany({
+      where: { role: { type: 'ADMIN' } }
+    });
+
+    for (const user of adminUsers) {
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger: 'ADMISSION_CONFIRMED',
+        eventTime: new Date(),
+        leadId: application.leadId,
+        recipientId: user.id,
+        payload: { leadName: application.lead.name, enrollmentId, programName: admission.program.name },
+      }).catch(() => {});
+    }
 
     return admission;
+
   }
 
   async getAdmissionLetter(applicationId: string) {

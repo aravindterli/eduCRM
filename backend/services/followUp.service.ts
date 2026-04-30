@@ -1,5 +1,6 @@
 import prisma from '../config/prisma';
 import CommunicationService from './communication.service';
+import NotificationDispatcher from './notificationDispatcher.service';
 
 const JITSI_DOMAIN = process.env.JITSI_DOMAIN || 'meet.jit.si';
 
@@ -39,25 +40,61 @@ export class FollowUpService {
         },
       });
 
-      // 3. send email invite only for meetings
-      const leadEmail = (followUp.lead as any)?.email;
-      if (leadEmail) {
-        CommunicationService.sendFollowUpInvite(leadEmail, {
-          leadName: followUp.lead.name,
-          assignedToName: (followUp as any).assignedTo?.name || 'Your assignedTo',
-          scheduledAt,
-          meetingUrl,
-          notes: data.notes,
-          leadId,
-        }).catch((err: any) =>
-          console.error('[FollowUp] Email invite failed:', err.message)
-        );
-      }
+      // Triggers handle the invite/reminders for meetings via FOLLOW_UP_CREATED
+      this.fireFollowUpTriggers(updated).catch(() => {});
       return updated;
     }
 
+
+    // Fire triggers for non-meeting follow-ups too
+    this.fireFollowUpTriggers(followUp).catch(() => {});
     return followUp;
   }
+
+  // Fire dispatcher after follow-up is created
+  private async fireFollowUpTriggers(followUp: any) {
+    const lead = followUp.lead;
+    const assignedTo = (followUp as any).assignedTo;
+    const scheduledAt = new Date(followUp.scheduledAt);
+
+    // Determine the trigger key based on lead stage
+    const trigger = lead?.stage === 'COUNSELING_SCHEDULED' ? 'COUNSELING_SCHEDULED' : 'FOLLOW_UP_CREATED';
+
+    // T2/T3/C3/C4: Remind the assigned user (telecaller/counselor) before the call/session
+    if (assignedTo) {
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger,
+        eventTime: scheduledAt, // offsets apply from this time (e.g. -10, -30 mins)
+        leadId: lead?.id,
+        recipientId: assignedTo.id,
+        contactInfo: assignedTo.email,
+        payload: {
+          name: assignedTo.name,
+          leadName: lead?.name || 'Lead',
+          scheduledAt: scheduledAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+          notes: followUp.notes || '',
+          meetingUrl: followUp.meetingUrl || '',
+        },
+      }).catch(() => {});
+    }
+
+    // L3/L4: Remind the lead (external) about the call/session
+    if (lead?.phone || lead?.email) {
+      NotificationDispatcher.enqueueFromTrigger({
+        trigger,
+        eventTime: scheduledAt,
+        leadId: lead.id,
+        contactInfo: lead.email || lead.phone,
+        payload: {
+          name: lead.name,
+          scheduledAt: scheduledAt.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+          notes: followUp.notes || '',
+          meetingUrl: followUp.meetingUrl || '',
+        },
+      }).catch(() => {});
+    }
+  }
+
 
   async getFollowUpsByLead(leadId: string) {
     return await prisma.followUp.findMany({

@@ -1,5 +1,6 @@
 import prisma from '../config/prisma';
 import Razorpay from 'razorpay';
+import NotificationDispatcher from './notificationDispatcher.service';
 
 
 export class FeeService {
@@ -74,6 +75,32 @@ export class FeeService {
     // Activity Logging
     const AuditService = (await import('./audit.service')).default;
     await AuditService.log(`Verified payment of $${payment.amount}`, undefined, { feeId: payment.feeId, transactionId: payment.transactionId });
+
+    // L12 + F4: Payment received — notify student + finance
+    try {
+      const feeWithLead = await prisma.fee.findUnique({
+        where: { id: data.feeId },
+        include: { admission: { include: { application: { include: { lead: true } } } } }
+      });
+      const lead = feeWithLead?.admission?.application?.lead;
+      if (lead) {
+        NotificationDispatcher.enqueueFromTrigger({
+          trigger: 'PAYMENT_RECEIVED',
+          eventTime: new Date(),
+          leadId: lead.id,
+          contactInfo: lead.email || lead.phone,
+          payload: { 
+            name: lead.name, 
+            amount: data.amount, 
+            purpose: feeWithLead?.admission?.program?.name || 'Tuition',
+            transactionId: data.transactionId,
+            paymentDate: new Date().toLocaleDateString('en-IN')
+          },
+        }).catch(() => {});
+      }
+
+
+    } catch (_) {}
 
     return payment;
   }

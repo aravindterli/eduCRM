@@ -10,8 +10,8 @@ interface FinanceState {
   fetchStats: () => Promise<void>;
   recordPayment: (data: any) => Promise<boolean>;
   getExistingLink: (feeId: string) => Promise<string | null>;
-  generatePaymentLink: (feeId: string) => Promise<{ link: string | null, error: string | null, isNew?: boolean }>;
-  syncPaymentStatus: (feeId: string) => Promise<{ updated: boolean, message: string }>;
+  generatePaymentLink: (feeId: string) => Promise<{ link: string | null, error: string | null, isNew?: boolean, connectorError?: boolean, connector?: string }>;
+  syncPaymentStatus: (feeId: string) => Promise<{ updated: boolean, message: string, connectorError?: boolean, connector?: string }>;
 }
 
 export const useFinanceStore = create<FinanceState>((set, get) => ({
@@ -71,6 +71,15 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       return { link: data.link || null, error: null, isNew: data.isNew };
     } catch (error: any) {
       if (error.response?.status === 401) return { link: null, error: null };
+      // Handle CONNECTOR_NOT_CONFIGURED error (422)
+      if (error.response?.status === 422 && error.response?.data?.code === 'CONNECTOR_NOT_CONFIGURED') {
+        return {
+          link: null,
+          error: error.response.data.message,
+          connectorError: true,
+          connector: error.response.data.connector
+        };
+      }
       console.error('Failed to generate payment link:', error);
       const errorMessage = error.response?.data?.message || 'Failed to generate payment link. Please try again.';
       return { link: null, error: errorMessage };
@@ -87,6 +96,10 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       return { updated: result.updated, message: result.message || 'Check complete' };
     } catch (error: any) {
        if (error.response?.status === 401) return { updated: false, message: '' };
+       // Handle CONNECTOR_NOT_CONFIGURED error (422)
+       if (error.response?.status === 422 && error.response?.data?.code === 'CONNECTOR_NOT_CONFIGURED') {
+         return { updated: false, message: error.response.data.message, connectorError: true, connector: error.response.data.connector };
+       }
        console.error('Failed to sync payment:', error);
        return { updated: false, message: error.response?.data?.message || 'Sync failed' };
     }

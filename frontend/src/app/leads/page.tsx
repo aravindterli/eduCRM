@@ -7,6 +7,7 @@ import { LeadDetails } from '@/components/leads/LeadDetails';
 import { LeadImportModal } from '@/components/leads/LeadImportModal';
 import { BulkWhatsAppDrawer } from '@/components/leads/BulkWhatsAppDrawer';
 import { useLeadStore } from '@/store/useLeadStore';
+import ConnectorWarning from '@/components/shared/ConnectorWarning';
 import React from 'react';
 
 const stageColors: Record<string, string> = {
@@ -49,6 +50,9 @@ export default function LeadsPage() {
   const [isBulkWhatsAppOpen, setIsBulkWhatsAppOpen] = React.useState(false);
   const [staff, setStaff] = React.useState<any[]>([]);
   const [selectedOwner, setSelectedOwner] = React.useState<string>('');
+
+  // Connector warning state — shown when WhatsApp/SMS/Twilio is not configured
+  const [connectorWarning, setConnectorWarning] = React.useState<{ connector: string; message: string } | null>(null);
 
   // Sorting and Filtering State
   const [sortBy, setSortBy] = React.useState<string>('createdAt');
@@ -131,16 +135,28 @@ export default function LeadsPage() {
         isOpen={!!selectedLead}
         onClose={() => setSelectedLead(null)}
         staff={staff}
+        onConnectorError={(connector, message) => setConnectorWarning({ connector, message })}
       />
       <BulkWhatsAppDrawer
         isOpen={isBulkWhatsAppOpen}
         onClose={() => setIsBulkWhatsAppOpen(false)}
         selectedLeadIds={selectedLeadIds}
+        onConnectorError={(connector, message) => setConnectorWarning({ connector, message })}
         onSuccess={() => {
           setSelectedLeadIds([]);
           fetchLeads(page, limit);
         }}
       />
+
+      {/* Connector Not Configured Warning Modal */}
+      {connectorWarning && (
+        <ConnectorWarning
+          connector={connectorWarning.connector}
+          message={connectorWarning.message}
+          modal
+          onDismiss={() => setConnectorWarning(null)}
+        />
+      )}
 
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div>

@@ -7,8 +7,9 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
-
 import TenantService from '../services/tenant.service';
+import ConnectorCredentials from '../utils/connectorCredentials';
+import { ConnectorNotConfiguredError } from '../utils/connectorError';
 
 export const getLeadFormStructure = async (req: any, res: Response) => {
   try {
@@ -267,10 +268,18 @@ export const reactivateLead = async (req: any, res: Response) => {
 
 export const googleAdsWebhook = async (req: Request, res: Response) => {
   try {
-    const { user_column_data, google_key } = req.body;
+    const { user_column_data, google_key, tenantId } = req.body;
 
-    // 1. Security check
-    if (google_key !== process.env.GOOGLE_ADS_WEBHOOK_KEY) {
+    // 1. Security check — verify against tenant-specific key if tenantId provided, else global env
+    let expectedKey = process.env.GOOGLE_ADS_WEBHOOK_KEY || '';
+    if (tenantId) {
+      try {
+        const creds = await ConnectorCredentials.getGoogleAds(tenantId);
+        expectedKey = creds.webhookKey;
+      } catch (_) { /* fall back to env key */ }
+    }
+
+    if (!expectedKey || google_key !== expectedKey) {
       return res.status(401).json({ message: 'Invalid Google Key' });
     }
 
@@ -517,44 +526,62 @@ export const initiateLeadCall = async (req: any, res: Response) => {
 
 export const getTwilioToken = async (req: any, res: Response) => {
   try {
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const apiKey = process.env.TWILIO_API_KEY;
-    const apiSecret = process.env.TWILIO_API_SECRET;
+    const creds = await ConnectorCredentials.getTwilio(req.tenantId);
 
-    if (!accountSid || !apiKey || !apiSecret) {
-      return res.status(400).json({ message: 'Twilio credentials not fully configured in .env' });
+    if (!creds.apiKey || !creds.apiSecret) {
+      return res.status(422).json({
+        code: 'CONNECTOR_NOT_CONFIGURED',
+        connector: 'Twilio',
+        message: 'Please configure your Twilio API Key and API Secret in Settings → Connectors to enable browser calling.'
+      });
     }
 
     const identity = req.user.id;
     const token = new twilio.jwt.AccessToken(
-      accountSid,
-      apiKey,
-      apiSecret,
+      creds.accountSid,
+      creds.apiKey,
+      creds.apiSecret,
       { identity: identity }
     );
 
     const grant = new twilio.jwt.AccessToken.VoiceGrant({
-      outgoingApplicationSid: process.env.TWILIO_TWIML_APP_SID,
+      outgoingApplicationSid: creds.twimlAppSid,
       incomingAllow: true
     });
     token.addGrant(grant);
 
     res.json({ token: token.toJwt() });
   } catch (error: any) {
+    if (error instanceof ConnectorNotConfiguredError) {
+      return res.status(422).json({
+        code: 'CONNECTOR_NOT_CONFIGURED',
+        connector: error.connector,
+        message: error.message
+      });
+    }
     res.status(500).json({ message: error.message });
   }
 };
 
-export const handleTwilioVoice = async (req: Request, res: Response) => {
+export const handleTwilioVoice = async (req: any, res: Response) => {
   console.log('[Twilio Voice] Received request:', req.body);
   const VoiceResponse = twilio.twiml.VoiceResponse;
   const response = new VoiceResponse();
 
   const to = req.body.To;
   const userId = req.body.UserId;
-  
+
   if (to) {
-    const dial = response.dial({ callerId: process.env.TWILIO_PHONE_NUMBER });
+    // Resolve caller ID from tenant config
+    let callerPhoneNumber = process.env.TWILIO_PHONE_NUMBER || '';
+    try {
+      if (req.tenantId) {
+        const creds = await ConnectorCredentials.getTwilio(req.tenantId);
+        callerPhoneNumber = creds.phoneNumber;
+      }
+    } catch (_) { /* fall back to env */ }
+
+    const dial = response.dial({ callerId: callerPhoneNumber });
     dial.number({
       statusCallbackEvent: 'answered completed',
       statusCallback: `${process.env.BACKEND_URL}/api/v1/leads/twilio/status?userId=${userId}`,

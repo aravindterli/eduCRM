@@ -4,6 +4,8 @@ import * as xlsx from 'xlsx';
 import CommunicationService from '../services/communication.service';
 import fs from 'fs';
 import path from 'path';
+import nodemailer from 'nodemailer';
+import ConnectorCredentials from '../utils/connectorCredentials';
 
 export const createCampaign = async (req: Request, res: Response) => {
   try {
@@ -86,11 +88,13 @@ export const handleBulkBroadcast = async (req: Request, res: Response) => {
       if (shouldSendWhatsApp) {
         if (phone) {
           try {
+            const tenantId = (req as any).tenantId || '';
             await CommunicationService.sendWhatsApp(
-              String(phone), 
+              tenantId,
+              String(phone),
               '', // No custom message
-              undefined, 
-              imageUrl || undefined, 
+              undefined,
+              imageUrl || undefined,
               templateName
             );
             results.whatsappSuccess++;
@@ -134,14 +138,27 @@ export const handleBulkBroadcast = async (req: Request, res: Response) => {
             }
 
             const html = CommunicationService.getBaseTemplate(emailSubject || 'Special Announcement', personalizedContent);
-            
-            await CommunicationService.transporter.sendMail({
-              from: process.env.EMAIL_FROM || '"CentraCRM Admissions" <no-reply@centracrm.com>',
-              to: String(email),
-              subject: emailSubject || 'Special Announcement',
-              html,
-              attachments: attachments.length > 0 ? attachments : undefined
-            });
+
+            // Build per-tenant SMTP transporter
+            const tenantId = (req as any).tenantId || '';
+            let transporter: any;
+            try {
+              const smtpCreds = await ConnectorCredentials.getSmtp(tenantId);
+              transporter = nodemailer.createTransport({
+                host: smtpCreds.host, port: smtpCreds.port, secure: smtpCreds.secure,
+                auth: { user: smtpCreds.user, pass: smtpCreds.pass },
+                tls: { rejectUnauthorized: false },
+              });
+              await transporter.sendMail({
+                from: smtpCreds.from,
+                to: String(email),
+                subject: emailSubject || 'Special Announcement',
+                html,
+                attachments: attachments.length > 0 ? attachments : undefined
+              });
+            } catch (smtpErr: any) {
+              throw smtpErr; // Propagate to outer catch
+            }
             results.emailSuccess++;
             results.successes.push({ type: 'Email', email });
           } catch (err: any) {

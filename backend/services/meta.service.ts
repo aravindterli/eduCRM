@@ -1,17 +1,26 @@
 import axios from 'axios';
 import LeadService from './lead.service';
 import prisma from '../config/prisma';
+import ConnectorCredentials from '../utils/connectorCredentials';
+import { ConnectorNotConfiguredError } from '../utils/connectorError';
 
 export class MetaService {
   private readonly version = 'v19.0';
   private readonly baseUrl = 'https://graph.facebook.com';
 
   /**
-   * Fetches full lead data from Meta Graph API using leadgen_id
+   * Fetches full lead data from Meta Graph API using leadgen_id.
+   * Optionally accepts tenantId for tenant-scoped credentials.
    */
-  async fetchLeadData(leadgenId: string) {
-    const accessToken = process.env.META_ACCESS_TOKEN;
-    if (!accessToken) throw new Error('META_ACCESS_TOKEN not configured');
+  async fetchLeadData(leadgenId: string, tenantId?: string) {
+    let accessToken: string;
+    if (tenantId) {
+      const creds = await ConnectorCredentials.getMeta(tenantId);
+      accessToken = creds.accessToken || creds.whatsappToken;
+    } else {
+      accessToken = process.env.META_ACCESS_TOKEN || '';
+      if (!accessToken) throw new ConnectorNotConfiguredError('Meta (WhatsApp)', 'META_ACCESS_TOKEN not configured');
+    }
 
     try {
       const response = await axios.get(`${this.baseUrl}/${this.version}/${leadgenId}`, {
@@ -28,11 +37,17 @@ export class MetaService {
   }
 
   /**
-   * Fetches historical leads from a specific Meta Form ID
+   * Fetches historical leads from a specific Meta Form ID.
    */
-  async fetchHistoricalLeads(formId: string) {
-    const accessToken = process.env.META_ACCESS_TOKEN;
-    if (!accessToken) throw new Error('META_ACCESS_TOKEN not configured');
+  async fetchHistoricalLeads(formId: string, tenantId?: string) {
+    let accessToken: string;
+    if (tenantId) {
+      const creds = await ConnectorCredentials.getMeta(tenantId);
+      accessToken = creds.accessToken || creds.whatsappToken;
+    } else {
+      accessToken = process.env.META_ACCESS_TOKEN || '';
+      if (!accessToken) throw new ConnectorNotConfiguredError('Meta (WhatsApp)', 'META_ACCESS_TOKEN not configured');
+    }
 
     try {
       const response = await axios.get(`${this.baseUrl}/${this.version}/${formId}/leads`, {
@@ -49,11 +64,17 @@ export class MetaService {
   }
 
   /**
-   * Fetches all pages the user has access to
+   * Fetches all pages the user has access to.
    */
-  async fetchUserPages() {
-    const accessToken = process.env.META_ACCESS_TOKEN;
-    if (!accessToken) throw new Error('META_ACCESS_TOKEN not configured');
+  async fetchUserPages(tenantId?: string) {
+    let accessToken: string;
+    if (tenantId) {
+      const creds = await ConnectorCredentials.getMeta(tenantId);
+      accessToken = creds.accessToken || creds.whatsappToken;
+    } else {
+      accessToken = process.env.META_ACCESS_TOKEN || '';
+      if (!accessToken) throw new ConnectorNotConfiguredError('Meta (WhatsApp)', 'META_ACCESS_TOKEN not configured');
+    }
 
     try {
       const response = await axios.get(`${this.baseUrl}/${this.version}/me/accounts`, {
@@ -67,11 +88,17 @@ export class MetaService {
   }
 
   /**
-   * Fetches lead gen forms for a specific page
+   * Fetches lead gen forms for a specific page.
    */
-  async fetchLeadForms(pageId: string) {
-    const accessToken = process.env.META_ACCESS_TOKEN;
-    if (!accessToken) throw new Error('META_ACCESS_TOKEN not configured');
+  async fetchLeadForms(pageId: string, tenantId?: string) {
+    let accessToken: string;
+    if (tenantId) {
+      const creds = await ConnectorCredentials.getMeta(tenantId);
+      accessToken = creds.accessToken || creds.whatsappToken;
+    } else {
+      accessToken = process.env.META_ACCESS_TOKEN || '';
+      if (!accessToken) throw new ConnectorNotConfiguredError('Meta (WhatsApp)', 'META_ACCESS_TOKEN not configured');
+    }
 
     try {
       const response = await axios.get(`${this.baseUrl}/${this.version}/${pageId}/leadgen_forms`, {
@@ -132,12 +159,18 @@ export class MetaService {
   }
 
   /**
-   * Subscribes the App to a Page's leadgen notifications
-   * This is REQUIRED for webhooks to start flowing
+   * Subscribes the App to a Page's leadgen notifications.
+   * This is REQUIRED for webhooks to start flowing.
    */
-  async subscribePage(pageId: string) {
-    const accessToken = process.env.META_ACCESS_TOKEN;
-    if (!accessToken) throw new Error('META_ACCESS_TOKEN not configured');
+  async subscribePage(pageId: string, tenantId?: string) {
+    let accessToken: string;
+    if (tenantId) {
+      const creds = await ConnectorCredentials.getMeta(tenantId);
+      accessToken = creds.accessToken || creds.whatsappToken;
+    } else {
+      accessToken = process.env.META_ACCESS_TOKEN || '';
+      if (!accessToken) throw new ConnectorNotConfiguredError('Meta (WhatsApp)', 'META_ACCESS_TOKEN not configured');
+    }
 
     try {
       const response = await axios.post(

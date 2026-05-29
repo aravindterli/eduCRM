@@ -1,9 +1,27 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
 import FeeService from '../services/fee.service';
+import ConnectorCredentials from '../utils/connectorCredentials';
 
 export const handleRazorpayWebhook = async (req: Request, res: Response) => {
-  const secret = process.env.RAZORPAY_WEBHOOK_SECRET || 'your_webhook_secret_here';
+  // Resolve the webhook secret — prefer the tenant that owns the payment link
+  // The tenantId may be embedded in the reference_id (format: F_{feeId}) from the event payload
+  let secret = process.env.RAZORPAY_WEBHOOK_SECRET || 'your_webhook_secret_here';
+
+  try {
+    // Best-effort: try to extract tenantId from the fee to get per-tenant webhook secret
+    const referenceId = req.body?.payload?.payment_link?.entity?.reference_id as string | undefined;
+    if (referenceId?.startsWith('F_')) {
+      const feeId = referenceId.split('_')[1];
+      const { default: prisma } = await import('../config/prisma');
+      const fee = await prisma.fee.findUnique({ where: { id: feeId }, select: { tenantId: true } });
+      if (fee?.tenantId) {
+        const creds = await ConnectorCredentials.getRazorpay(fee.tenantId).catch(() => null);
+        if (creds?.webhookSecret) secret = creds.webhookSecret;
+      }
+    }
+  } catch (_) { /* use default secret */ }
+
   const signature = req.headers['x-razorpay-signature'] as string;
 
   if (!signature) {

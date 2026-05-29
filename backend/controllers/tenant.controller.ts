@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../config/prisma';
+import ConnectorCredentials, { invalidateConnectorCache } from '../utils/connectorCredentials';
 
 export const getTenantConfig = async (req: any, res: Response) => {
   try {
@@ -46,6 +47,9 @@ export const updateTenantConfig = async (req: any, res: Response) => {
       where: { id: req.tenantId },
       data: { config: updatedConfig }
     });
+
+    // Invalidate connector credential cache so updated keys take effect immediately
+    invalidateConnectorCache(req.tenantId);
 
     res.json({ success: true, message: 'Configuration updated' });
   } catch (error: any) {
@@ -101,6 +105,20 @@ export const getConnectorDefinitionsForTenant = async (req: Request, res: Respon
   try {
     const definitions = await (prisma as any).connectorDefinition.findMany();
     res.json(definitions);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * GET /tenant/connectors/status
+ * Returns a status map of which connectors are configured for the tenant.
+ * Does NOT expose credentials — only boolean configured flags and source (tenant or env).
+ */
+export const getConnectorStatus = async (req: any, res: Response) => {
+  try {
+    const statusMap = await ConnectorCredentials.getStatusMap(req.tenantId);
+    res.json({ connectors: statusMap });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }

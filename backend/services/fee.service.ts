@@ -1,20 +1,18 @@
 import prisma from '../config/prisma';
 import Razorpay from 'razorpay';
 import NotificationDispatcher from './notificationDispatcher.service';
+import ConnectorCredentials from '../utils/connectorCredentials';
+import { ConnectorNotConfiguredError } from '../utils/connectorError';
 
 
 export class FeeService {
-  private razorpay: Razorpay | null;
-
-  constructor() {
-    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-      this.razorpay = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
-      });
-    } else {
-      this.razorpay = null;
-    }
+  /**
+   * Resolves a per-tenant Razorpay client.
+   * Throws ConnectorNotConfiguredError if the tenant has not configured Razorpay.
+   */
+  private async getRazorpayClient(tenantId: string): Promise<Razorpay> {
+    const creds = await ConnectorCredentials.getRazorpay(tenantId);
+    return new Razorpay({ key_id: creds.keyId, key_secret: creds.keySecret });
   }
 
   async generateFeePlan(admissionId: string, baseAmount: number, scholarshipAmount: number = 0, installments: number = 1) {
@@ -149,26 +147,30 @@ export class FeeService {
     });
   }
 
-  async generatePaymentLink(feeId: string) {
-    const fee = await prisma.fee.findUnique({ 
-      where: { id: feeId }, 
-      include: { admission: { include: { application: { include: { lead: true } } } } } 
+  async generatePaymentLink(feeId: string, tenantId?: string) {
+    const fee = await prisma.fee.findUnique({
+      where: { id: feeId },
+      include: { admission: { include: { application: { include: { lead: true } } } } }
     });
-    
+
     if (!fee) throw new Error('Fee record not found');
+
+    const resolvedTenantId = tenantId || fee.tenantId;
 
     const totalPaid = (await prisma.payment.aggregate({ where: { feeId, status: 'SUCCESS' }, _sum: { amount: true } }))._sum.amount || 0;
     const amountDue = fee.amount - totalPaid;
 
     if (amountDue <= 0) throw new Error('Fee is already fully paid');
 
-    if (this.razorpay) {
+    const razorpay = await this.getRazorpayClient(resolvedTenantId);
+
+    if (razorpay) {
       try {
         const referenceId = `F_${fee.id}`;
         
         // Check if a link already exists for this fee
         try {
-          const existingLinks = await this.razorpay.paymentLink.all({
+          const existingLinks = await razorpay.paymentLink.all({
             // Note: SDK might not support filtering by reference_id directly in .all() depending on version,
             // but the API does. If SDK fails, we'll catch and try to create anyway.
           });
@@ -212,67 +214,63 @@ export class FeeService {
 
         console.log('[Finance][Razorpay] Creating Payment Link with Payload:', JSON.stringify(payload, null, 2));
 
-        const paymentLink = await this.razorpay.paymentLink.create(payload);
+        const paymentLink = await razorpay.paymentLink.create(payload);
         return { success: true, link: paymentLink.short_url, paymentLinkId: paymentLink.id, isNew: true };
       } catch (razorError: any) {
+        if (razorError instanceof ConnectorNotConfiguredError) throw razorError;
         console.error('[Finance][Razorpay] Complete Error Object:', JSON.stringify(razorError, null, 2));
         const errorMessage = razorError.error?.description || razorError.description || razorError.message || 'Unknown error';
         throw new Error(`Razorpay Error: ${errorMessage}`);
       }
-    } else {
-      console.log(`[Finance][Simulation] Razorpay keys missing. Mocking Payment Link for ${fee.id}`);
-      return { success: true, link: `https://rzp.io/mock/${fee.id}`, paymentLinkId: `mock_${Date.now()}`, isNew: true };
-    }
+    } // end if (razorpay)
   }
 
-  async syncPaymentStatus(feeId: string) {
+  async syncPaymentStatus(feeId: string, tenantId?: string) {
     const fee = await prisma.fee.findUnique({ where: { id: feeId } });
     if (!fee) throw new Error('Fee record not found');
     if (fee.status === 'COMPLETED') return { status: 'COMPLETED', updated: false };
 
-    if (this.razorpay) {
-      try {
-        const referenceId = `F_${fee.id}`;
-        const links = await this.razorpay.paymentLink.all({
-          reference_id: referenceId
-        } as any);
-        const paidLink = (links as any).items?.find((l: any) => l.reference_id === referenceId && l.status === 'paid');
+    const resolvedTenantId = tenantId || fee.tenantId;
 
-        if (paidLink) {
-          await this.recordPayment({
-            feeId,
-            amount: paidLink.amount_paid / 100,
-            method: 'Razorpay (Manual Sync)',
-            transactionId: paidLink.payment_id,
-          });
-          return { status: 'COMPLETED', updated: true };
-        }
-        return { status: fee.status, updated: false, message: 'No paid links found for this fee' };
-      } catch (error: any) {
-        console.error('[Finance][Sync] Razorpay Sync Error:', error);
-        throw new Error(`Sync Failed: ${error.message}`);
+    try {
+      const razorpay = await this.getRazorpayClient(resolvedTenantId);
+      const referenceId = `F_${fee.id}`;
+      const links = await razorpay.paymentLink.all({ reference_id: referenceId } as any);
+      const paidLink = (links as any).items?.find((l: any) => l.reference_id === referenceId && l.status === 'paid');
+
+      if (paidLink) {
+        await this.recordPayment({
+          feeId,
+          amount: paidLink.amount_paid / 100,
+          method: 'Razorpay (Manual Sync)',
+          transactionId: paidLink.payment_id,
+        });
+        return { status: 'COMPLETED', updated: true };
       }
+      return { status: fee.status, updated: false, message: 'No paid links found for this fee' };
+    } catch (error: any) {
+      if (error instanceof ConnectorNotConfiguredError) throw error;
+      console.error('[Finance][Sync] Razorpay Sync Error:', error);
+      throw new Error(`Sync Failed: ${error.message}`);
     }
-    return { status: fee.status, updated: false, message: 'Simulation mode: Sync not possible' };
   }
 
-  async getExistingLink(feeId: string) {
-    if (this.razorpay) {
-      try {
-        const referenceId = `F_${feeId}`;
-        // Pass reference_id to API to filter correctly and avoid pagination issues
-        const links = await this.razorpay.paymentLink.all({
-          reference_id: referenceId
-        } as any);
-        
-        const active = (links as any).items?.find((l: any) => l.reference_id === referenceId && l.status === 'created');
-        
-        if (active) {
-          return { success: true, link: active.short_url, paymentLinkId: active.id };
-        }
-      } catch (error) {
-        console.error('[Finance] Error fetching existing link:', error);
+  async getExistingLink(feeId: string, tenantId?: string) {
+    try {
+      const fee = await prisma.fee.findUnique({ where: { id: feeId } });
+      const resolvedTenantId = tenantId || fee?.tenantId;
+      if (!resolvedTenantId) return null;
+
+      const razorpay = await this.getRazorpayClient(resolvedTenantId);
+      const referenceId = `F_${feeId}`;
+      const links = await razorpay.paymentLink.all({ reference_id: referenceId } as any);
+      const active = (links as any).items?.find((l: any) => l.reference_id === referenceId && l.status === 'created');
+
+      if (active) {
+        return { success: true, link: active.short_url, paymentLinkId: active.id };
       }
+    } catch (error) {
+      console.error('[Finance] Error fetching existing link:', error);
     }
     return null;
   }

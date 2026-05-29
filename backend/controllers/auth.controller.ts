@@ -2,9 +2,8 @@ import { Request, Response } from 'express';
 import prisma from '../config/prisma';
 import { hashPassword, comparePassword, generateToken } from '../utils/auth';
 import crypto from 'crypto';
-import { CommunicationService } from '../services/communication.service';
-
-const commService = new CommunicationService();
+import nodemailer from 'nodemailer';
+import ConnectorCredentials from '../utils/connectorCredentials';
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -301,13 +300,26 @@ export const inviteUser = async (req: any, res: Response) => {
     const tenantName = invitation.tenant.name;
     const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/accept-invite?token=${token}`;
 
-    await commService.transporter.sendMail({
-      from: process.env.EMAIL_FROM || '"CentraCRM" <no-reply@centracrm.com>',
-      to: email,
-      subject: `Invitation to join ${tenantName} on CentraCRM`,
-      text: `You have been invited to join ${tenantName} on CentraCRM. Click the link to accept and set your password: ${inviteLink}`,
-      html: `<p>You have been invited to join <strong>${tenantName}</strong> on CentraCRM.</p><p>Click the link below to accept and set your password:</p><a href="${inviteLink}">${inviteLink}</a>`
-    });
+    try {
+      const smtpCreds = await ConnectorCredentials.getSmtp(creator.tenantId);
+      const transporter = nodemailer.createTransport({
+        host: smtpCreds.host,
+        port: smtpCreds.port,
+        secure: smtpCreds.secure,
+        auth: { user: smtpCreds.user, pass: smtpCreds.pass },
+        tls: { rejectUnauthorized: false },
+      });
+      await transporter.sendMail({
+        from: smtpCreds.from,
+        to: email,
+        subject: `Invitation to join ${tenantName} on CentraCRM`,
+        text: `You have been invited to join ${tenantName} on CentraCRM. Click the link to accept: ${inviteLink}`,
+        html: `<p>You have been invited to join <strong>${tenantName}</strong> on CentraCRM.</p><p>Click the link below to accept and set your password:</p><a href="${inviteLink}">${inviteLink}</a>`
+      });
+    } catch (emailErr: any) {
+      console.warn('[Invite] Could not send invitation email:', emailErr.message);
+      // Don't fail the invitation — email is best-effort
+    }
 
     res.status(201).json({ message: 'Invitation sent successfully', invitation });
   } catch (error: any) {
@@ -384,13 +396,25 @@ export const resendInvitation = async (req: any, res: Response) => {
     const tenantName = invitation.tenant.name;
     const inviteLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/accept-invite?token=${invitation.token}`;
 
-    await commService.transporter.sendMail({
-      from: process.env.EMAIL_FROM || '"CentraCRM" <no-reply@centracrm.com>',
-      to: invitation.email,
-      subject: `Invitation to join ${tenantName} on CentraCRM`,
-      text: `You have been invited to join ${tenantName} on CentraCRM. Click the link to accept and set your password: ${inviteLink}`,
-      html: `<p>You have been invited to join <strong>${tenantName}</strong> on CentraCRM.</p><p>Click the link below to accept and set your password:</p><a href="${inviteLink}">${inviteLink}</a>`
-    });
+    try {
+      const smtpCreds = await ConnectorCredentials.getSmtp(req.user.tenantId);
+      const transporter = nodemailer.createTransport({
+        host: smtpCreds.host,
+        port: smtpCreds.port,
+        secure: smtpCreds.secure,
+        auth: { user: smtpCreds.user, pass: smtpCreds.pass },
+        tls: { rejectUnauthorized: false },
+      });
+      await transporter.sendMail({
+        from: smtpCreds.from,
+        to: invitation.email,
+        subject: `Invitation to join ${tenantName} on CentraCRM`,
+        text: `You have been invited to join ${tenantName} on CentraCRM. Click the link to accept: ${inviteLink}`,
+        html: `<p>You have been invited to join <strong>${tenantName}</strong> on CentraCRM.</p><p>Click the link below to accept and set your password:</p><a href="${inviteLink}">${inviteLink}</a>`
+      });
+    } catch (emailErr: any) {
+      console.warn('[ResendInvite] Could not send email:', emailErr.message);
+    }
 
     res.json({ message: 'Invitation resent successfully' });
   } catch (error: any) {

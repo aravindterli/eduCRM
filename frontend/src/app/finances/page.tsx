@@ -8,6 +8,7 @@ import { IndianRupee, CreditCard, TrendingUp, Download, Search, FileText } from 
 import { PaymentModal } from '@/components/finances/PaymentModal';
 import { useFinanceStore } from '@/store/useFinanceStore';
 import { useAuthStore } from '@/store/auth.store';
+import ConnectorWarning from '@/components/shared/ConnectorWarning';
 
 export default function FinancesPage() {
   const { fees, stats, fetchFees, fetchStats, loading } = useFinanceStore();
@@ -15,6 +16,9 @@ export default function FinancesPage() {
   const [search, setSearch] = React.useState('');
   const { user } = useAuthStore();
   const sector = user?.sector || 'GENERIC';
+
+  // Connector warning state
+  const [connectorWarning, setConnectorWarning] = React.useState<{ connector: string; message: string } | null>(null);
 
   const labels = {
     GENERIC: {
@@ -74,11 +78,22 @@ export default function FinancesPage() {
 
   return (
     <MainLayout>
-      <PaymentModal 
-        isOpen={!!selectedFee} 
-        onClose={() => setSelectedFee(null)} 
-        fee={selectedFee} 
+      <PaymentModal
+        isOpen={!!selectedFee}
+        onClose={() => setSelectedFee(null)}
+        fee={selectedFee}
+        onConnectorError={(connector, message) => setConnectorWarning({ connector, message })}
       />
+
+      {/* Razorpay Connector Warning Modal */}
+      {connectorWarning && (
+        <ConnectorWarning
+          connector={connectorWarning.connector}
+          message={connectorWarning.message}
+          modal
+          onDismiss={() => setConnectorWarning(null)}
+        />
+      )}
       
       <div className="flex justify-between items-center mb-8 text-[#1A1A1A]">
         <div>

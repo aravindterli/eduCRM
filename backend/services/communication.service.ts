@@ -2,34 +2,12 @@ import nodemailer from 'nodemailer';
 import prisma from '../config/prisma';
 import twilio from 'twilio';
 import axios from 'axios';
+import ConnectorCredentials from '../utils/connectorCredentials';
+import { ConnectorNotConfiguredError } from '../utils/connectorError';
 
 export class CommunicationService {
-  public transporter: nodemailer.Transporter;
-  private twilioClient: twilio.Twilio | null;
 
-  constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.office365.com',
-      port: Number(process.env.SMTP_PORT) || 587,
-      secure: false, // Must be false for 587 (STARTTLS)
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000
-    });
-
-    if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_ACCOUNT_SID.startsWith('AC') && process.env.TWILIO_AUTH_TOKEN && !process.env.TWILIO_AUTH_TOKEN.includes('auth_token_here')) {
-      this.twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-    } else {
-      this.twilioClient = null;
-    }
-  }
+  // ─── Email ───────────────────────────────────────────────────────────────────
 
   async sendEmail(tenantId: string, to: string, templateKey: string, data: any, leadId?: string) {
     console.log(`[Email] Dispatching ${templateKey} to ${to} for tenant ${tenantId}...`);
@@ -37,12 +15,26 @@ export class CommunicationService {
     try {
       if (!to) return { success: false, error: 'No email provided' };
 
+      // Resolve per-tenant SMTP credentials
+      const smtpCreds = await ConnectorCredentials.getSmtp(tenantId);
+
+      const transporter = nodemailer.createTransport({
+        host: smtpCreds.host,
+        port: smtpCreds.port,
+        secure: smtpCreds.secure,
+        auth: { user: smtpCreds.user, pass: smtpCreds.pass },
+        tls: { rejectUnauthorized: false },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+      });
+
       const dbTemplate = await prisma.messageTemplate.findFirst({
         where: {
           tenantId,
           OR: [{ name: templateKey }, { id: templateKey }],
-          channel: 'EMAIL'
-        }
+          channel: 'EMAIL',
+        },
       });
 
       let subject = `CentraCRM: ${templateKey.replace(/_/g, ' ').toUpperCase()}`;
@@ -55,15 +47,14 @@ export class CommunicationService {
 
       const formattedSubject = this.formatTemplate(subject, data);
       const formattedContent = this.formatTemplate(bodyText, data);
-
       const html = this.getBaseTemplate(formattedSubject, formattedContent);
 
-      const info = await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"The Foundrys" <no-reply@centracrm.com>',
+      const info = await transporter.sendMail({
+        from: smtpCreds.from,
         to,
         subject: formattedSubject,
         text: formattedContent.replace(/<[^>]*>?/gm, ''),
-        html
+        html,
       });
 
       console.log(`[Email] Dispatched successfully: ${info.messageId}`);
@@ -76,12 +67,16 @@ export class CommunicationService {
             type: 'EMAIL',
             direction: 'OUTBOUND',
             message: `Subject: ${formattedSubject}`,
-            status: 'SENT'
-          }
+            status: 'SENT',
+          },
         });
       }
       return { success: true, provider: 'SMTP', messageId: info.messageId };
     } catch (error: any) {
+      if (error instanceof ConnectorNotConfiguredError) {
+        console.warn(`[Email] Connector not configured for tenant ${tenantId}: ${error.message}`);
+        return { success: false, error: error.message, connectorError: true, connector: error.connector };
+      }
       console.error(`[Email] Failed to send to ${to}:`, error.message);
       return { success: false, error: error.message };
     }
@@ -91,6 +86,20 @@ export class CommunicationService {
     console.log(`[Onboarding Email] Preparing message for ${lead.email} in tenant ${tenantId}...`);
     try {
       if (!lead.email) return { success: false, error: 'Lead has no email' };
+
+      // Resolve per-tenant SMTP credentials
+      const smtpCreds = await ConnectorCredentials.getSmtp(tenantId);
+
+      const transporter = nodemailer.createTransport({
+        host: smtpCreds.host,
+        port: smtpCreds.port,
+        secure: smtpCreds.secure,
+        auth: { user: smtpCreds.user, pass: smtpCreds.pass },
+        tls: { rejectUnauthorized: false },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+      });
 
       const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:3000';
       const uploadLink = `${frontendUrl}/apply?applicationId=${application.id}&tenantId=${tenantId}`;
@@ -148,12 +157,12 @@ ${tenant.name}`;
         { label: 'Upload Onboarding Documents', url: uploadLink }
       );
 
-      const info = await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || '"The Foundrys" <noreply@thefoundrys.com>',
+      const info = await transporter.sendMail({
+        from: smtpCreds.from,
         to: lead.email,
         subject: subject,
         text: bodyContent.replace(/<[^>]*>?/gm, ''),
-        html
+        html,
       });
 
       console.log(`[Onboarding Email] Dispatched successfully: ${info.messageId}`);
@@ -165,160 +174,165 @@ ${tenant.name}`;
           type: 'EMAIL',
           direction: 'OUTBOUND',
           message: `Onboarding Link Sent. Subject: ${subject}`,
-          status: 'SENT'
-        }
+          status: 'SENT',
+        },
       });
 
       return { success: true, messageId: info.messageId };
     } catch (error: any) {
+      if (error instanceof ConnectorNotConfiguredError) {
+        console.warn(`[Onboarding Email] SMTP not configured for tenant ${tenantId}`);
+        return { success: false, error: error.message, connectorError: true, connector: error.connector };
+      }
       console.error(`[Onboarding Email] Failed to send to ${lead.email}:`, error.message);
       return { success: false, error: error.message };
     }
   }
 
+  // ─── SMS ─────────────────────────────────────────────────────────────────────
+
   async sendSMS(tenantId: string, phone: string, message: string, leadId?: string) {
     console.log(`[SMS] Dispatching to ${phone} for tenant ${tenantId}...`);
     try {
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { config: true }
-      });
-      
-      const config = (tenant?.config as any) || {};
-      const twilioConfig = config.twilio || {};
-      
-      const accountSid = twilioConfig.accountSid || process.env.TWILIO_ACCOUNT_SID;
-      const authToken = twilioConfig.authToken || process.env.TWILIO_AUTH_TOKEN;
-      const phoneNumber = twilioConfig.phoneNumber || process.env.TWILIO_PHONE_NUMBER;
-      
-      let client = this.twilioClient;
-      
-      if (twilioConfig.accountSid && twilioConfig.authToken) {
-        client = twilio(twilioConfig.accountSid, twilioConfig.authToken);
-      }
+      const creds = await ConnectorCredentials.getTwilio(tenantId);
+      const client = twilio(creds.accountSid, creds.authToken);
 
-      if (client && phoneNumber) {
-        await client.messages.create({
-          body: message,
-          from: phoneNumber,
-          to: phone
-        });
-      } else {
-        console.log(`[SMS][Simulation] Twilio not configured. Simulated SMS sent to ${phone}: ${message}`);
-      }
+      await client.messages.create({
+        body: message,
+        from: creds.phoneNumber,
+        to: phone,
+      });
+
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message, status: 'SENT' }
+          data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message, status: 'SENT' },
         });
       }
       return { success: true };
     } catch (error: any) {
+      if (error instanceof ConnectorNotConfiguredError) {
+        console.warn(`[SMS] Twilio not configured for tenant ${tenantId}`);
+        if (leadId) {
+          await prisma.communicationLog.create({
+            data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message: `NOT SENT (Twilio not configured): ${message}`, status: 'FAILED' },
+          });
+        }
+        return { success: false, error: error.message, connectorError: true, connector: error.connector };
+      }
       console.error(`[SMS] Failed to send to ${phone}:`, error.message);
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message: `FAILED: ${message}`, status: 'FAILED' }
+          data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message: `FAILED: ${message}`, status: 'FAILED' },
         });
       }
       return { success: false, error: error.message };
     }
   }
 
+  // ─── WhatsApp ─────────────────────────────────────────────────────────────────
+
   async sendWhatsApp(tenantId: string, phone: string, message: string, leadId?: string, imageUrl?: string, templateName?: string) {
     const formattedPhone = phone.length === 10 ? `91${phone}` : phone.replace('+', '');
     console.log(`[WhatsApp] Dispatching to ${formattedPhone} for tenant ${tenantId}... ${templateName ? `(Template: ${templateName})` : ''}`);
     try {
-      const tenant = await prisma.tenant.findUnique({
-        where: { id: tenantId },
-        select: { config: true }
-      });
-      
-      const config = (tenant?.config as any) || {};
-      const metaConfig = config.meta || {};
-      
-      const whatsappToken = metaConfig.whatsappToken || process.env.META_WHATSAPP_TOKEN;
-      const phoneNumberId = metaConfig.phoneNumberId || process.env.META_PHONE_NUMBER_ID;
+      const creds = await ConnectorCredentials.getMeta(tenantId);
 
-      if (whatsappToken && phoneNumberId) {
-        let payload: any = {};
-        if (templateName) {
-          payload = {
-            messaging_product: 'whatsapp',
-            to: formattedPhone,
-            type: 'template',
-            template: {
-              name: templateName,
-              language: { code: 'en' },
-              ...(imageUrl && {
-                components: [{ type: 'header', parameters: [{ type: 'image', image: { link: imageUrl } }] }]
-              })
-            }
-          };
-        } else {
-          payload = imageUrl
-            ? { messaging_product: 'whatsapp', to: formattedPhone, type: 'image', image: { link: imageUrl, caption: message } }
-            : { messaging_product: 'whatsapp', to: formattedPhone, type: 'text', text: { body: message } };
-        }
-
-        await axios.post(
-          `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
-          payload,
-          { headers: { 'Authorization': `Bearer ${whatsappToken}`, 'Content-Type': 'application/json' } }
-        );
+      let payload: any = {};
+      if (templateName) {
+        payload = {
+          messaging_product: 'whatsapp',
+          to: formattedPhone,
+          type: 'template',
+          template: {
+            name: templateName,
+            language: { code: 'en' },
+            ...(imageUrl && {
+              components: [{ type: 'header', parameters: [{ type: 'image', image: { link: imageUrl } }] }],
+            }),
+          },
+        };
       } else {
-        console.log(`[WhatsApp][Simulation] Meta API not configured. Simulated msg sent to ${phone}: ${message}`);
+        payload = imageUrl
+          ? { messaging_product: 'whatsapp', to: formattedPhone, type: 'image', image: { link: imageUrl, caption: message } }
+          : { messaging_product: 'whatsapp', to: formattedPhone, type: 'text', text: { body: message } };
       }
+
+      await axios.post(
+        `https://graph.facebook.com/v17.0/${creds.phoneNumberId}/messages`,
+        payload,
+        { headers: { Authorization: `Bearer ${creds.whatsappToken}`, 'Content-Type': 'application/json' } }
+      );
 
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, tenantId, type: 'WHATSAPP', direction: 'OUTBOUND', message, status: 'SENT' }
+          data: { leadId, tenantId, type: 'WHATSAPP', direction: 'OUTBOUND', message, status: 'SENT' },
         });
       }
       return { success: true, provider: 'Meta' };
     } catch (error: any) {
+      if (error instanceof ConnectorNotConfiguredError) {
+        console.warn(`[WhatsApp] Meta not configured for tenant ${tenantId}`);
+        if (leadId) {
+          await prisma.communicationLog.create({
+            data: { leadId, tenantId, type: 'WHATSAPP', direction: 'OUTBOUND', message: `NOT SENT (Meta not configured): ${message}`, status: 'FAILED' },
+          });
+        }
+        return { success: false, error: error.message, connectorError: true, connector: error.connector };
+      }
       const metaErrorDetails = error.response?.data ? JSON.stringify(error.response.data) : error.message;
       console.error(`[WhatsApp] Failed to send to ${phone}:`, metaErrorDetails);
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, tenantId, type: 'WHATSAPP', direction: 'OUTBOUND', message: `FAILED: ${metaErrorDetails}`, status: 'FAILED' }
+          data: { leadId, tenantId, type: 'WHATSAPP', direction: 'OUTBOUND', message: `FAILED: ${metaErrorDetails}`, status: 'FAILED' },
         });
       }
       return { success: false, error: metaErrorDetails };
     }
   }
 
+  // ─── RCS (fallback to SMS) ────────────────────────────────────────────────────
+
   async sendRCS(tenantId: string, phone: string, message: string, leadId?: string) {
     console.log(`[RCS] Attempting RCS to ${phone} for tenant ${tenantId}...`);
     try {
-      if (this.twilioClient && process.env.TWILIO_RCS_MESSAGING_SID) {
-        await this.twilioClient.messages.create({
+      const creds = await ConnectorCredentials.getTwilio(tenantId);
+      if (creds.twimlAppSid) {
+        const client = twilio(creds.accountSid, creds.authToken);
+        await client.messages.create({
           body: message,
-          from: process.env.TWILIO_RCS_MESSAGING_SID,
-          to: phone
+          from: creds.twimlAppSid,
+          to: phone,
         });
         console.log(`[RCS] Sent successfully to ${phone}`);
-      } else {
-        console.log(`[RCS][Fallback] RCS not configured or failed, falling back to SMS.`);
-        return this.sendSMS(tenantId, phone, message, leadId);
+        if (leadId) {
+          await prisma.communicationLog.create({
+            data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message: `[RCS] ${message}`, status: 'SENT' },
+          });
+        }
+        return { success: true };
       }
-      if (leadId) {
-        await prisma.communicationLog.create({
-          data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message: `[RCS] ${message}`, status: 'SENT' }
-        });
-      }
-      return { success: true };
+      console.log(`[RCS][Fallback] RCS messaging SID not found, falling back to SMS.`);
+      return this.sendSMS(tenantId, phone, message, leadId);
     } catch (error: any) {
+      if (error instanceof ConnectorNotConfiguredError) {
+        return { success: false, error: error.message, connectorError: true, connector: error.connector };
+      }
       console.error(`[RCS] Failed, falling back to SMS:`, error.message);
       return this.sendSMS(tenantId, phone, message, leadId);
     }
   }
 
-  public getBaseTemplate(title: string, content: string, cta?: { label: string, url: string }) {
-    const ctaHtml = cta ? `
+  // ─── Email Template ───────────────────────────────────────────────────────────
+
+  public getBaseTemplate(title: string, content: string, cta?: { label: string; url: string }) {
+    const ctaHtml = cta
+      ? `
       <table cellpadding="0" cellspacing="0" style="margin-top: 32px;">
         <tr><td style="background-color: #ffffff; border-radius: 4px;">
           <a href="${cta.url}" target="_blank" style="display: inline-block; padding: 14px 32px; color: #000000; font-size: 14px; font-weight: 700; text-decoration: none; letter-spacing: 1px; text-transform: uppercase;">${cta.label}</a>
         </td></tr>
-      </table>` : '';
+      </table>`
+      : '';
 
     return `
 <!DOCTYPE html>
@@ -352,7 +366,6 @@ ${tenant.name}`;
 </body>
 </html>`;
   }
-
 
   private formatTemplate(template: string, data: any): string {
     return template.replace(/\${(\w+)}/g, (match, key) => {

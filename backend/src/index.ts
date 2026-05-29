@@ -22,6 +22,8 @@ import notificationRuleRoutes from '../routes/notificationRule.routes';
 import superadminRoutes from '../routes/superadmin.routes';
 import tenantRoutes from '../routes/tenant.routes';
 import marketingRoutes from '../routes/marketing.routes';
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './swagger';
 
 import { auditMiddleware } from '../middleware/audit';
 import SchedulerService from '../services/scheduler.service';
@@ -59,6 +61,9 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(morgan('dev'));
 app.use(auditMiddleware);
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+
+// Swagger API Documentation Console Sandbox
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // API Routes v1
 app.use('/api/v1/auth', authRoutes);

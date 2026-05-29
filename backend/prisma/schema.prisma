@@ -9,11 +9,65 @@ datasource db {
 
 model Role {
   id          String   @id @default(uuid())
-  type        RoleType @unique
+  name        String
+  type        RoleType
   permissions Json?
+  tenantId    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   users       User[]
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  sector    Sector   @default(EDUCATION)
+  config    Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users                  User[]
+  roles                  Role[]
+  invitations            Invitation[]
+  leads                  Lead[]
+  programs               Program[]
+  campaigns              Campaign[]
+  marketingCampaigns     MarketingCampaign[]
+  webinars               Webinar[]
+  notifications          Notification[]
+  followUps              FollowUp[]
+  counselingLogs         CounselingLog[]
+  applications           Application[]
+  auditLogs              AuditLog[]
+  communicationLogs      CommunicationLog[]
+  leadNotes              LeadNote[]
+  messageTemplates       MessageTemplate[]
+  notificationRules      NotificationRule[]
+  scheduledNotifications ScheduledNotification[]
+  admissions             Admission[]
+  fees                   Fee[]
+  payments               Payment[]
+  webinarRegistrations   WebinarRegistration[]
+  formTemplates          FormTemplate[]
+
+  // Billing Fields
+  subscriptionStatus     String   @default("ACTIVE") // ACTIVE, TRIAL, SUSPENDED
+  subscriptionPlan       String   @default("FREE")
+  nextBillingDate        DateTime?
+}
+
+model FormTemplate {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  sector      Sector
+  fields      Json     // Array of field objects {name, label, type, required, options[]}
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model User {
@@ -22,6 +76,7 @@ model User {
   email              String             @unique
   password           String
   roleId             String
+  tenantId           String?
   createdAt          DateTime           @default(now())
   updatedAt          DateTime           @updatedAt
   accent             String             @default("blue")
@@ -34,11 +89,25 @@ model User {
   leadNotes          LeadNote[]         @relation("AssignedNotes")
   notifications      Notification[]
   role               Role               @relation(fields: [roleId], references: [id])
+  tenant             Tenant?            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Invitation {
+  id           String   @id @default(uuid())
+  email        String
+  tenantId     String
+  roleId       String
+  token        String   @unique
+  status       String   @default("PENDING") // PENDING, ACCEPTED, EXPIRED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Notification {
   id          String    @id @default(uuid())
   userId      String
+  tenantId    String
   taskId      String?
   leadId      String?
   title       String
@@ -48,12 +117,15 @@ model Notification {
   scheduledAt DateTime?
   createdAt   DateTime  @default(now())
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([tenantId])
 }
 
 model Program {
   id           String        @id @default(uuid())
+  tenantId     String
   name         String
   description  String?
   baseFee      Float         @default(0)
@@ -62,10 +134,12 @@ model Program {
   admissions   Admission[]
   applications Application[]
   leads        Lead[]
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Campaign {
   id        String    @id @default(uuid())
+  tenantId  String
   name      String
   source    String
   startDate DateTime?
@@ -73,44 +147,68 @@ model Campaign {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   leads     Lead[]
+  tenant    Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model MarketingCampaign {
+  id             String    @id @default(uuid())
+  tenantId       String
+  name           String
+  channel        String
+  source         String?
+  templateId     String?
+  audienceFilters Json?
+  scheduledAt    DateTime?
+  status         String    @default("DRAFT")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  leads          Lead[]    @relation("MarketingCampaignLeads")
+  scheduledNotifications ScheduledNotification[]
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Lead {
-  id                   String                @id @default(uuid())
-  name                 String
-  phone                String
-  email                String?
-  location             String?
-  eduBackground        String?
-  qualification        String?
-  interestedProgramId  String?
-  leadSource           String
-  campaignId           String?
-  enquiryDate          DateTime              @default(now())
-  stage                LeadStage             @default(NEW_LEAD)
-  priority             Int                   @default(0)
-  tag                  LeadTag?
-  assignedId           String?               @map("counselorId")
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  application          Application?
-  communicationLogs    CommunicationLog[]
-  counselingLogs       CounselingLog[]
-  followUps            FollowUp[]
-  campaign             Campaign?             @relation(fields: [campaignId], references: [id])
-  assignedTo           User?                 @relation("AssignedLeads", fields: [assignedId], references: [id])
-  program              Program?              @relation(fields: [interestedProgramId], references: [id])
-  notes                LeadNote[]
-  webinarRegistrations WebinarRegistration[]
-  scheduledNotifications ScheduledNotification[]
+  id                     String                  @id @default(uuid())
+  tenantId               String
+  name                   String
+  phone                  String
+  email                  String?
+  location               String?
+  eduBackground          String?
+  qualification          String?
+  interestedProgramId    String?
+  leadSource             String
+  campaignId             String?
+  marketingCampaignId    String?
+  enquiryDate            DateTime                @default(now())
+  stage                  String                  @default("NEW")
+  priority               Int                     @default(0)
 
+  assignedId             String?                 @map("counselorId")
+  additionalData         Json?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  application            Application?
+  communicationLogs      CommunicationLog[]
+  counselingLogs         CounselingLog[]
+  followUps              FollowUp[]
+  campaign               Campaign?               @relation(fields: [campaignId], references: [id])
+  marketingCampaign      MarketingCampaign?      @relation("MarketingCampaignLeads", fields: [marketingCampaignId], references: [id])
+  assignedTo             User?                   @relation("AssignedLeads", fields: [assignedId], references: [id])
+  program                Program?                @relation(fields: [interestedProgramId], references: [id])
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  notes                  LeadNote[]
+  webinarRegistrations   WebinarRegistration[]
+  scheduledNotifications ScheduledNotification[]
 
   @@index([phone])
   @@index([email])
+  @@index([tenantId])
 }
 
 model FollowUp {
   id          String    @id @default(uuid())
+  tenantId    String
   leadId      String
   assignedId  String    @map("counselorId")
   notes       String?
@@ -122,10 +220,12 @@ model FollowUp {
   assignedTo  User      @relation("AssignedFollowUps", fields: [assignedId], references: [id])
   createdBy   User?     @relation("CreatedFollowUps", fields: [createdById], references: [id])
   lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Webinar {
   id            String                @id @default(uuid())
+  tenantId      String
   title         String
   description   String?
   date          DateTime
@@ -133,20 +233,24 @@ model Webinar {
   meetingId     String?
   meetingUrl    String?
   registrations WebinarRegistration[]
+  tenant        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model WebinarRegistration {
   id        String   @id @default(uuid())
+  tenantId  String
   webinarId String
   leadId    String
   attended  Boolean  @default(false)
   createdAt DateTime @default(now())
   lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   webinar   Webinar  @relation(fields: [webinarId], references: [id])
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model CounselingLog {
   id             String   @id @default(uuid())
+  tenantId       String
   leadId         String
   assignedId     String   @map("counselorId")
   notes          String?
@@ -154,10 +258,12 @@ model CounselingLog {
   createdAt      DateTime @default(now())
   assignedTo     User     @relation("AssignedSessions", fields: [assignedId], references: [id])
   lead           Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Application {
   id          String            @id @default(uuid())
+  tenantId    String
   leadId      String            @unique
   programId   String
   status      ApplicationStatus @default(STARTED)
@@ -167,6 +273,7 @@ model Application {
   lead        Lead              @relation(fields: [leadId], references: [id], onDelete: Cascade)
   program     Program           @relation(fields: [programId], references: [id])
   documents   Document[]
+  tenant      Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Document {
@@ -184,6 +291,7 @@ model Document {
 
 model Admission {
   id            String      @id @default(uuid())
+  tenantId      String
   applicationId String      @unique
   enrollmentId  String      @unique
   programId     String
@@ -191,10 +299,12 @@ model Admission {
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
   program       Program     @relation(fields: [programId], references: [id])
   fees          Fee[]
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Fee {
   id          String    @id @default(uuid())
+  tenantId    String
   admissionId String
   amount      Float
   dueDate     DateTime?
@@ -202,10 +312,12 @@ model Fee {
   createdAt   DateTime  @default(now())
   admission   Admission @relation(fields: [admissionId], references: [id], onDelete: Cascade)
   payments    Payment[]
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model Payment {
   id            String        @id @default(uuid())
+  tenantId      String
   feeId         String
   amount        Float
   method        String
@@ -213,18 +325,22 @@ model Payment {
   status        PaymentStatus @default(PENDING)
   createdAt     DateTime      @default(now())
   fee           Fee           @relation(fields: [feeId], references: [id], onDelete: Cascade)
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model AuditLog {
   id        String   @id @default(uuid())
+  tenantId  String
   userId    String?
   action    String
   details   Json?
   createdAt DateTime @default(now())
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model CommunicationLog {
   id         String   @id @default(uuid())
+  tenantId   String
   leadId     String
   type       String
   direction  String
@@ -236,10 +352,12 @@ model CommunicationLog {
   result     String?
   assignedTo User?    @relation("AssignedComms", fields: [assignedId], references: [id])
   lead       Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model LeadNote {
   id         String       @id @default(uuid())
+  tenantId   String
   leadId     String
   assignedId String       @map("counselorId")
   content    String
@@ -247,19 +365,21 @@ model LeadNote {
   type       LeadNoteType @default(GENERAL)
   assignedTo User         @relation("AssignedNotes", fields: [assignedId], references: [id])
   lead       Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  tenant     Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model MessageTemplate {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  channel   String
-  subject   String?
-  content   String
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  id                String             @id @default(uuid())
+  tenantId          String
+  name              String             @unique
+  channel           String
+  subject           String?
+  content           String
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   notificationRules NotificationRule[]
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
-
 
 enum LeadNoteType {
   GENERAL
@@ -269,33 +389,21 @@ enum LeadNoteType {
 }
 
 enum RoleType {
+  SUPERADMIN
   ADMIN
-  MARKETING_TEAM
-  TELECALLER
-  COUNSELOR
-  FINANCE
+  STANDARDUSER
 }
 
-enum LeadStage {
-  NEW_LEAD
-  CONTACT_ATTEMPTED
-  RESPONDED
-  INTERESTED
-  COUNSELING_SCHEDULED
-  WEBINAR_REGISTERED
-  WEBINAR_ATTENDED
-  APPLICATION_STARTED
-  APPLICATION_SUBMITTED
-  ADMISSION_CONFIRMED
-  LOST_LEAD
-  RE_ENGAGEMENT
+enum Sector {
+  EDUCATION
+  REAL_ESTATE
+  HEALTHCARE
+  GENERIC
 }
 
-enum LeadTag {
-  HOT
-  WARM
-  COLD
-}
+
+
+
 
 enum ApplicationStatus {
   STARTED
@@ -314,6 +422,7 @@ enum PaymentStatus {
 
 model NotificationRule {
   id          String   @id @default(uuid())
+  tenantId    String
   name        String
   description String?
   trigger     String
@@ -324,11 +433,13 @@ model NotificationRule {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  template    MessageTemplate? @relation(fields: [templateId], references: [id])
+  template MessageTemplate? @relation(fields: [templateId], references: [id])
+  tenant   Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model ScheduledNotification {
-  id          String   @id @default(uuid())
+  id          String    @id @default(uuid())
+  tenantId    String
   ruleId      String?
   trigger     String
   channel     String
@@ -341,13 +452,26 @@ model ScheduledNotification {
   payload     Json?
   scheduledAt DateTime
   sentAt      DateTime?
-  status      String   @default("PENDING")
-  retryCount  Int      @default(0)
+  status      String    @default("PENDING")
+  retryCount  Int       @default(0)
   errorLog    String?
   leadId      String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  marketingCampaignId String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  lead        Lead?    @relation(fields: [leadId], references: [id])
+  lead              Lead?              @relation(fields: [leadId], references: [id])
+  marketingCampaign MarketingCampaign? @relation(fields: [marketingCampaignId], references: [id])
+  tenant            Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
+model ConnectorDefinition {
+  id           String   @id
+  name         String
+  category     String?
+  logo         String?
+  fields       Json
+  instructions Json
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

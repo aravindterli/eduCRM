@@ -15,7 +15,7 @@ import { authenticate, authorize } from '../middleware/auth';
 const router = Router();
 
 router.use(authenticate);
-router.use(authorize(['ADMIN', 'MARKETING_TEAM', 'FINANCE', 'TELECALLER', 'COUNSELOR']));
+router.use(authorize(['ADMIN', 'STANDARDUSER', 'MARKETING_TEAM', 'FINANCE', 'TELECALLER', 'COUNSELOR']));
 
 router.get('/leads', getLeadReports);
 router.get('/assignedTos', getCounselerStats);

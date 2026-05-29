@@ -2,7 +2,7 @@ import prisma from '../config/prisma';
 import assignmentService from './assignment.service';
 
 export class ImportService {
-  async importLeadsFromCSV(leadsData: any[]) {
+  async importLeadsFromCSV(tenantId: string, leadsData: any[]) {
     const results = {
       total: leadsData.length,
       success: 0,
@@ -15,18 +15,19 @@ export class ImportService {
         // 1. Create Lead
         const lead = await prisma.lead.create({
           data: {
+            tenantId,
             name: data.name,
             email: data.email,
             phone: data.phone,
             leadSource: data.leadSource || 'CSV_IMPORT',
             location: data.location,
             eduBackground: data.eduBackground,
-            stage: 'NEW_LEAD',
+            stage: 'NEW',
           }
         });
 
         // 2. Auto-Assign
-        await assignmentService.autoAssignLead(lead.id);
+        await assignmentService.autoAssignLead(tenantId, lead.id);
 
         results.success++;
       } catch (error: any) {

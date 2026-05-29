@@ -64,7 +64,7 @@ export class SchedulerService {
 
       const staleLeads = await prisma.lead.findMany({
         where: {
-          stage: 'NEW_LEAD',
+          stage: 'NEW',
           updatedAt: { lt: twoDaysAgo }
         }
       });
@@ -114,7 +114,7 @@ export class SchedulerService {
 
       const veryStaleLeads = await prisma.lead.findMany({
         where: {
-          stage: { in: ['LOST_LEAD', 'RE_ENGAGEMENT'] },
+          stage: { in: ['LOST', 'RE-ENGAGEMENT'] },
           updatedAt: { lt: sevenDaysAgo }
         }
       });

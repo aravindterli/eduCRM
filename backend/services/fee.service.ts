@@ -85,7 +85,7 @@ export class FeeService {
       const lead = feeWithLead?.admission?.application?.lead;
       if (lead) {
         NotificationDispatcher.enqueueFromTrigger({
-          trigger: 'PAYMENT_RECEIVED',
+          trigger: 'FEE_PAYMENT_RECEIVED',
           eventTime: new Date(),
           leadId: lead.id,
           contactInfo: lead.email || lead.phone,

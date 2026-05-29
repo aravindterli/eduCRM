@@ -1,10 +1,11 @@
 import prisma from '../config/prisma';
 
 export class AuditService {
-  async log(action: string, userId?: string, details?: any) {
+  async log(tenantId: string, action: string, userId?: string, details?: any) {
     try {
       return await prisma.auditLog.create({
         data: {
+          tenantId,
           action,
           userId,
           details: details ? JSON.parse(JSON.stringify(details)) : undefined,
@@ -15,8 +16,9 @@ export class AuditService {
     }
   }
 
-  async getRecentLogs(limit = 10) {
+  async getRecentLogs(tenantId: string, limit = 10) {
     return await prisma.auditLog.findMany({
+      where: { tenantId },
       take: limit,
       orderBy: { createdAt: 'desc' },
     });

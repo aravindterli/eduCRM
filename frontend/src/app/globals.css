@@ -1,138 +1,91 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+html {
+  font-size: 100%;
+}
+
 :root {
-  --background: 222 47% 11%;
-  --foreground: 213 31% 91%;
-  --card: 222 47% 11%;
-  --card-foreground: 213 31% 91%;
-  --popover: 222 47% 11%;
-  --popover-foreground: 213 31% 91%;
-  --primary: 210 100% 50%;
-  --primary-foreground: 210 100% 98%;
-  --secondary: 222 47% 11%;
-  --secondary-foreground: 210 100% 98%;
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
-  --accent: 217 33% 17%;
-  --accent-foreground: 210 100% 98%;
-  --destructive: 0 63% 31%;
-  --destructive-foreground: 210 100% 98%;
-  --border: 217 33% 17%;
-  --input: 217 33% 17%;
-  --ring: 213 27% 84%;
-  --glass-bg: rgba(15, 23, 42, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
-}
-
-.theme-slate {
-  --background: 222 0% 10%;
-  --foreground: 213 0% 91%;
-  --card: 222 0% 10%;
-  --card-foreground: 213 0% 91%;
-  --popover: 222 0% 10%;
-  --popover-foreground: 213 0% 91%;
-  --muted: 217 0% 17%;
-  --muted-foreground: 215 0% 65%;
-  --accent: 217 0% 17%;
-  --accent-foreground: 210 0% 98%;
-  --border: 217 0% 17%;
-  --input: 217 0% 17%;
-  --glass-bg: rgba(20, 20, 20, 0.8);
-}
-
-.theme-light {
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
-  --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --background: 36 33% 94%; /* #F5F1EB HSL equivalent */
+  --foreground: 0 0% 10%; /* #1A1A1A HSL equivalent */
+  --card: 0 0% 100%; /* Pure white card background */
+  --card-foreground: 0 0% 10%;
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --primary: 210 100% 50%;
-  --primary-foreground: 210 100% 98%;
-  --secondary: 210 40% 92%;
-  --secondary-foreground: 222 47% 11%;
-  --muted: 210 40% 92%;
-  --muted-foreground: 215 25% 35%;
-  --accent: 210 40% 92%;
-  --accent-foreground: 222 47% 11%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 0 0% 10%; /* Locked primary accent to premium Black */
+  --primary-foreground: 36 33% 94%;
+  --secondary: 36 20% 90%;
+  --secondary-foreground: 0 0% 10%;
+  --muted: 36 20% 90%;
+  --muted-foreground: 0 0% 40%;
+  --accent: 36 20% 90%;
+  --accent-foreground: 0 0% 10%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 210 40% 98%;
-  --border: 214 32% 70%;
-  --input: 214 32% 70%;
-  --ring: 222 47% 11%;
-  --glass-bg: rgba(255, 255, 255, 0.98);
-  --glass-border: rgba(0, 0, 0, 0.3);
+  --border: 0 0% 86%; /* Clean elegant border */
+  --input: 0 0% 86%;
+  --ring: 0 0% 10%;
+  --glass-bg: rgba(255, 255, 255, 0.95);
+  --glass-border: rgba(26, 26, 26, 0.08);
 }
 
-/* Light Theme Accessibility Overrides */
-.theme-light .text-slate-500,
-.theme-light .text-slate-400,
-.theme-light .text-muted-foreground {
-  color: #1e293b !important; /* Dark Slate-800: Strong visibility for subheaders and labels */
+/* Global utility overrides to seamlessly map dark-mode classes to premium white/cream cards */
+.bg-slate-950,
+.bg-slate-900,
+.bg-slate-800 {
+  background-color: #ffffff !important;
 }
 
-.theme-light .text-slate-300,
-.theme-light .text-slate-200 {
-  color: #334155 !important; /* Slate-700: Clearly readable secondary text */
+.text-slate-100 {
+  color: #1A1A1A !important;
 }
 
-.theme-light .border-white\/5,
-.theme-light .border-white\/10,
-.theme-light .border-border {
-  border-color: rgba(0, 0, 0, 0.25) !important; /* Sharp, visible dividers */
+.text-slate-500,
+.text-slate-400,
+.text-muted-foreground {
+  color: rgba(26, 26, 26, 0.6) !important;
 }
 
-.theme-light .bg-white\/5,
-.theme-light .bg-white\/\[0\.02\],
-.theme-light .bg-white\/10 {
-  background-color: rgba(0, 0, 0, 0.05) !important; /* Visible card backgrounds */
+.text-slate-300,
+.text-slate-200 {
+  color: rgba(26, 26, 26, 0.8) !important;
 }
 
-.theme-light .glass {
-  background: rgba(255, 255, 255, 1) !important;
-  border: 1.5px solid rgba(0, 0, 0, 0.15) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05) !important;
+.border-white\/5,
+.border-white\/10,
+.border-border {
+  border-color: rgba(26, 26, 26, 0.1) !important;
 }
 
-.theme-light h2, 
-.theme-light h3 {
-  color: #0f172a !important; /* Slate-900: Strong headings */
+.bg-white\/5,
+.bg-white\/\[0\.02\],
+.bg-white\/10 {
+  background-color: rgba(26, 26, 26, 0.04) !important;
 }
 
+.glass {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: 0 4px 20px -2px rgba(26, 26, 26, 0.04) !important;
+}
 
-/* Accent Overrides */
-.accent-blue { --primary: 210 100% 50%; }
-.accent-indigo { --primary: 239 84% 67%; }
-.accent-emerald { --primary: 142 70% 45%; }
-.accent-rose { --primary: 346 84% 61%; }
-.accent-amber { --primary: 38 92% 50%; }
-.accent-violet { --primary: 262 83% 58%; }
-.accent-cyan { --primary: 188 91% 46%; }
-.accent-orange { --primary: 24 95% 53%; }
-.accent-purple { --primary: 271 91% 65%; }
-.accent-pink { --primary: 330 81% 60%; }
-.accent-fuchsia { --primary: 292 91% 65%; }
-.accent-teal { --primary: 172 66% 50%; }
-.accent-lime { --primary: 84 81% 44%; }
-.accent-red { --primary: 0 84% 60%; }
-.accent-yellow { --primary: 48 96% 53%; }
-.accent-slate { --primary: 215 16% 47%; }
-.accent-gray { --primary: 215 14% 34%; }
-.accent-zinc { --primary: 240 5% 48%; }
+/* Accent Color System Clean-Up - All accents fallback to our premium black */
+.accent-blue, .accent-indigo, .accent-emerald, .accent-rose, .accent-amber, .accent-violet, .accent-cyan, .accent-orange, .accent-purple, .accent-pink, .accent-fuchsia, .accent-teal, .accent-lime, .accent-red, .accent-yellow, .accent-slate, .accent-gray, .accent-zinc {
+  --primary: 0 0% 10%;
+}
 
 * {
   border-color: hsl(var(--border));
-  font-family: 'Outfit', sans-serif;
 }
 
 body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   -webkit-font-smoothing: antialiased;
+  font-family: 'Inter', sans-serif;
 }
 
 /* Glassmorphism utility */
@@ -151,15 +104,17 @@ body {
 }
 
 @keyframes gradient {
-	0% {
-		background-position: 0% 50%;
-	}
-	50% {
-		background-position: 100% 50%;
-	}
-	100% {
-		background-position: 0% 50%;
-	}
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* Custom Scrollbar */
@@ -167,14 +122,17 @@ body {
   width: 6px;
   height: 6px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.02);
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
@@ -183,9 +141,47 @@ body {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
+fade-in-up {
+  animation: fadeInUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
 
+/* ─── Number Shimmer ─────────────────────────────────────────────────── */
+@keyframes numberShimmer {
+  0% {
+    filter: blur(4px);
+    opacity: 0;
+  }
+
+  100% {
+    filter: blur(0);
+    opacity: 1;
+  }
+}
+
+.num-appear {
+  animation: numberShimmer 0.5s ease both;
+}
+
+/* ─── Skeleton Shimmer ───────────────────────────────────────────────── */
+@keyframes shimmerSlide {
+  0% {
+    background-position: -400px 0;
+  }
+
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.04) 25%, rgba(255, 255, 255, 0.09) 50%, rgba(255, 255, 255, 0.04) 75%);
+  background-size: 800px 100%;
+  animation: shimmerSlide 1.4s infinite linear;
+  border-radius: 4px;
+}

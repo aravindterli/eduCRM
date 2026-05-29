@@ -31,48 +31,48 @@ export const FollowUpAlert = ({ task, onClose, onCall, onWhatsApp }: FollowUpAle
         exit={{ opacity: 0, scale: 0.9, y: 20 }}
         className="fixed bottom-6 right-6 z-[200] w-[380px]"
       >
-        <div className="glass-premium border border-primary/30 p-1 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden">
-          <div className="bg-black/40 rounded-[22px] overflow-hidden">
+        <div className="bg-white border border-black/10 p-1 rounded-[16px] shadow-2xl overflow-hidden">
+          <div className="bg-white rounded-[14px] overflow-hidden">
             {/* Header / Banner */}
-            <div className="h-1.5 w-full bg-gradient-to-r from-primary via-purple-500 to-pink-500 animate-gradient" />
+            <div className="h-1.5 w-full bg-[#1A1A1A]" />
             
             <div className="p-5">
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
                   <div className="relative">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary border border-primary/20">
+                    <div className="w-12 h-12 rounded-[12px] bg-blue-50 flex items-center justify-center text-blue-600 border border-blue-100">
                       <Bell size={24} className="animate-bounce" />
                     </div>
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-black flex items-center justify-center">
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-rose-500 rounded-full border-2 border-white flex items-center justify-center">
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-100 italic tracking-tight">Active Reminder</h3>
-                    <p className="text-[10px] uppercase font-bold tracking-tighter text-primary">Scheduled for NOW</p>
+                    <h3 className="font-bold text-[#1A1A1A] italic tracking-tight">Active Reminder</h3>
+                    <p className="text-[10px] uppercase font-bold tracking-tighter text-blue-600">Scheduled for NOW</p>
                   </div>
                 </div>
                 <button 
                     onClick={onClose}
-                    className="p-1.5 hover:bg-white/10 rounded-xl text-slate-400 transition-colors"
+                    className="p-1.5 hover:bg-gray-100 rounded-[8px] text-slate-400 hover:text-slate-800 transition-colors"
                 >
                   <X size={16} />
                 </button>
               </div>
 
               {/* Lead Info */}
-              <div className="bg-white/5 rounded-2xl p-4 border border-white/5 mb-4 group hover:border-primary/20 transition-all">
+              <div className="bg-[#F5F1EB]/50 rounded-[12px] p-4 border border-black/5 mb-4 group hover:border-black/20 transition-all">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center font-bold text-xs">
+                  <div className="w-8 h-8 rounded-[8px] bg-[#1A1A1A] text-[#F5F1EB] flex items-center justify-center font-bold text-xs shadow-sm">
                     {task.lead?.name?.[0] || 'L'}
                   </div>
                   <div>
-                    <h4 className="font-bold text-sm text-slate-200">{task.lead?.name}</h4>
+                    <h4 className="font-bold text-sm text-[#1A1A1A]">{task.lead?.name}</h4>
                     <p className="text-[10px] text-slate-500 font-medium">Source: {task.lead?.leadSource}</p>
                   </div>
                 </div>
                 {task.notes && (
-                  <p className="text-xs text-slate-400 italic bg-black/20 p-2 rounded-lg border border-white/5 line-clamp-2">
+                  <p className="text-xs text-slate-600 italic bg-white p-2 rounded-[8px] border border-black/10 line-clamp-2">
                     "{task.notes}"
                   </p>
                 )}
@@ -82,31 +82,31 @@ export const FollowUpAlert = ({ task, onClose, onCall, onWhatsApp }: FollowUpAle
               <div className="grid grid-cols-2 gap-3">
                 <button 
                   onClick={() => onCall(task.lead?.phone)}
-                  className="flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl text-xs font-bold transition-all shadow-[0_10px_20px_rgba(var(--primary-rgb),0.2)]"
+                  className="flex items-center justify-center gap-2 py-3 bg-[#1A1A1A] hover:bg-black/90 text-[#F5F1EB] rounded-[8px] text-xs font-bold transition-all shadow-sm"
                 >
                   <PhoneCall size={14} />
                   Voice Call
                 </button>
                 <button 
                   onClick={() => onWhatsApp(task.lead?.phone)}
-                  className="flex items-center justify-center gap-2 py-3 bg-emerald-500 hover:bg-emerald-400 text-white rounded-xl text-xs font-bold transition-all shadow-[0_10px_20px_rgba(16,185,129,0.2)]"
+                  className="flex items-center justify-center gap-2 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-[8px] text-xs font-bold transition-all shadow-sm"
                 >
                   <MessageCircle size={14} />
                   WhatsApp
                 </button>
               </div>
 
-              <div className="mt-4 pt-4 border-t border-white/5 flex items-center justify-between">
+              <div className="mt-4 pt-4 border-t border-black/5 flex items-center justify-between">
                 <div className="flex items-center gap-2 text-slate-500">
                   <Clock size={12} />
-                  <span className="text-[10px] font-bold uppercase">{new Date(task.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  <span className="text-[10px] font-bold uppercase text-slate-700">{new Date(task.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
                 {task.meetingUrl && (
                   <a 
                     href={task.meetingUrl}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-1.5 text-xs font-bold text-primary hover:underline"
+                    className="flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline"
                   >
                     <Video size={14} />
                     Meeting Link

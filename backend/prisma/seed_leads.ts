@@ -1,11 +1,11 @@
-import { PrismaClient, LeadStage, LeadTag, RoleType } from '@prisma/client';
+import { PrismaClient, LeadTag, RoleType } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding dummy leads...');
 
-  const assignedTo = await prisma.user.findFirst({ where: { role: { type: RoleType.COUNSELOR } } });
+  const assignedTo = await prisma.user.findFirst({ where: { role: { type: RoleType.STANDARDUSER } } });
   
   const leads = [
     {
@@ -14,7 +14,7 @@ async function main() {
       email: 'rahul.s@example.com',
       location: 'Mumbai',
       leadSource: 'Google Ads',
-      stage: LeadStage.NEW_LEAD,
+      stage: 'NEW',
       tag: LeadTag.HOT,
     },
     {
@@ -23,7 +23,7 @@ async function main() {
       email: 'priya.p@example.com',
       location: 'Delhi',
       leadSource: 'Facebook',
-      stage: LeadStage.INTERESTED,
+      stage: 'QUALIFIED',
       tag: LeadTag.WARM,
       assignedId: assignedTo?.id,
     },
@@ -33,7 +33,7 @@ async function main() {
       email: 'amit.k@example.com',
       location: 'Bangalore',
       leadSource: 'Organic Search',
-      stage: LeadStage.APPLICATION_STARTED,
+      stage: 'NEGOTIATION',
       tag: LeadTag.HOT,
       assignedId: assignedTo?.id,
     },
@@ -43,7 +43,7 @@ async function main() {
       email: 'sneha.g@example.com',
       location: 'Pune',
       leadSource: 'Referral',
-      stage: LeadStage.CONTACT_ATTEMPTED,
+      stage: 'CONTACTED',
       tag: LeadTag.COLD,
     },
     {
@@ -52,7 +52,7 @@ async function main() {
       email: 'vikram.s@example.com',
       location: 'Hyderabad',
       leadSource: 'Website Form',
-      stage: LeadStage.WEBINAR_REGISTERED,
+      stage: 'RESPONDED',
       tag: LeadTag.WARM,
       assignedId: assignedTo?.id,
     }

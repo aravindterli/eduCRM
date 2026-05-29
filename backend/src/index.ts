@@ -19,6 +19,9 @@ import templateRoutes from '../routes/template.routes';
 import whatsappRoutes from '../routes/whatsapp.routes';
 import notificationRoutes from '../routes/notification.routes';
 import notificationRuleRoutes from '../routes/notificationRule.routes';
+import superadminRoutes from '../routes/superadmin.routes';
+import tenantRoutes from '../routes/tenant.routes';
+import marketingRoutes from '../routes/marketing.routes';
 
 import { auditMiddleware } from '../middleware/audit';
 import SchedulerService from '../services/scheduler.service';
@@ -51,7 +54,8 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(morgan('dev'));
 app.use(auditMiddleware);
 app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
@@ -72,6 +76,9 @@ app.use('/api/v1/templates', templateRoutes);
 app.use('/api/v1/whatsapp', whatsappRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/notification-rules', notificationRuleRoutes);
+app.use('/api/v1/superadmin', superadminRoutes);
+app.use('/api/v1/tenant', tenantRoutes);
+app.use('/api/v1/marketing', marketingRoutes);
 
 app.get('/api/v1/ping', (req, res) => res.send('pong')); // Added ping endpoint
 

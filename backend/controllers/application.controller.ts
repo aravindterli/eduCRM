@@ -3,7 +3,7 @@ import ApplicationService from '../services/application.service';
 
 export const createApplication = async (req: Request, res: Response) => {
   try {
-    const app = await ApplicationService.createApplication(req.body);
+    const app = await ApplicationService.createApplication({ ...req.body, tenantId: (req as any).user?.tenantId });
     res.status(201).json(app);
   } catch (error: any) {
     res.status(400).json({ message: error.message });
@@ -52,5 +52,14 @@ export const getAdmissionLetter = async (req: Request, res: Response) => {
     res.json(result);
   } catch (error: any) {
     res.status(400).json({ message: error.message });
+  }
+};
+
+export const getPublicApplicationDetails = async (req: Request, res: Response) => {
+  try {
+    const details = await ApplicationService.getPublicApplicationDetails(req.params.id);
+    res.json(details);
+  } catch (error: any) {
+    res.status(404).json({ message: error.message });
   }
 };

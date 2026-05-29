@@ -5,17 +5,60 @@ import NotificationDispatcher from './notificationDispatcher.service';
 
 export class ApplicationService {
   async createApplication(data: any) {
+    // Check if an application already exists for this lead
+    const existing = await prisma.application.findUnique({
+      where: { leadId: data.leadId }
+    });
+
+    if (existing) {
+      let application = existing;
+      const programChanged = existing.programId !== data.programId;
+
+      if (programChanged) {
+        application = await prisma.application.update({
+          where: { id: existing.id },
+          data: {
+            program: { connect: { id: data.programId } }
+          }
+        });
+      }
+
+      // Ensure stage is updated
+      await prisma.lead.update({
+        where: { id: data.leadId },
+        data: { stage: 'NEGOTIATION' },
+      });
+
+      if (programChanged) {
+        const lead = await prisma.lead.findUnique({ where: { id: data.leadId } });
+        if (lead && lead.email) {
+          (async () => {
+            try {
+              const program = await prisma.program.findUnique({ where: { id: data.programId } });
+              const tenant = await prisma.tenant.findUnique({ where: { id: data.tenantId } });
+              await CommunicationService.sendOnboardingEmail(data.tenantId, lead, application, program, tenant);
+            } catch (err) {
+              console.error('[ApplicationService] Failed to re-send onboarding email:', err);
+            }
+          })();
+        }
+      }
+
+      return application;
+    }
+
     const application = await prisma.application.create({
       data: {
-        leadId: data.leadId,
-        programId: data.programId,
         status: 'STARTED',
+        lead: { connect: { id: data.leadId } },
+        program: { connect: { id: data.programId } },
+        tenant: { connect: { id: data.tenantId } }
       },
     });
 
     await prisma.lead.update({
       where: { id: data.leadId },
-      data: { stage: 'APPLICATION_STARTED' },
+      data: { stage: 'NEGOTIATION' },
     });
 
     // L7: Notify lead to complete application
@@ -28,6 +71,19 @@ export class ApplicationService {
         contactInfo: lead.email || lead.phone,
         payload: { name: lead.name },
       }).catch(() => {});
+
+      // Dispatch onboarding email with secure upload link
+      if (lead.email) {
+        (async () => {
+          try {
+            const program = await prisma.program.findUnique({ where: { id: data.programId } });
+            const tenant = await prisma.tenant.findUnique({ where: { id: data.tenantId } });
+            await CommunicationService.sendOnboardingEmail(data.tenantId, lead, application, program, tenant);
+          } catch (err) {
+            console.error('[ApplicationService] Failed to send onboarding email:', err);
+          }
+        })();
+      }
     }
 
     return application;
@@ -55,7 +111,7 @@ export class ApplicationService {
     if (status === 'SUBMITTED') {
       await prisma.lead.update({
         where: { id: application.leadId },
-        data: { stage: 'APPLICATION_SUBMITTED' },
+        data: { stage: 'NEGOTIATION' },
       });
       // L8: Notify lead — application received
       const lead = await prisma.lead.findUnique({ where: { id: application.leadId } });
@@ -73,7 +129,7 @@ export class ApplicationService {
     if (status === 'REJECTED') {
       const lead = await prisma.lead.update({
         where: { id: application.leadId },
-        data: { stage: 'RE_ENGAGEMENT' },
+        data: { stage: 'RE-ENGAGEMENT' },
       });
 
       if (lead.assignedId) {
@@ -170,6 +226,7 @@ export class ApplicationService {
         applicationId: application.id,
         enrollmentId,
         programId: application.programId,
+        tenantId: application.tenantId,
       },
       include: {
         program: true
@@ -182,12 +239,13 @@ export class ApplicationService {
         admissionId: admission.id,
         amount: admission.program.baseFee || 5000, // Fallback if not set
         status: 'PENDING',
+        tenantId: application.tenantId,
       }
     });
 
     await prisma.lead.update({
       where: { id: application.leadId },
-      data: { stage: 'ADMISSION_CONFIRMED' },
+      data: { stage: 'CONVERTED' },
     });
 
     // Dispatcher trigger handles professional notification to student
@@ -254,6 +312,49 @@ export class ApplicationService {
     });
 
     return { url: pdfUrl };
+  }
+
+  async getPublicApplicationDetails(applicationId: string) {
+    const application = await prisma.application.findUnique({
+      where: { id: applicationId },
+      include: {
+        lead: {
+          select: {
+            name: true,
+            email: true,
+            phone: true,
+            location: true,
+          }
+        },
+        program: {
+          select: {
+            name: true,
+            description: true,
+            baseFee: true,
+          }
+        },
+        tenant: {
+          select: {
+            name: true,
+            sector: true,
+          }
+        },
+        documents: {
+          select: {
+            id: true,
+            type: true,
+            name: true,
+            status: true,
+          }
+        }
+      }
+    });
+
+    if (!application) {
+      throw new Error('Application not found');
+    }
+
+    return application;
   }
 }
 

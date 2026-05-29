@@ -24,37 +24,39 @@ export const DashboardFollowUps = () => {
   };
 
   return (
-    <div className="glass rounded-3xl border-white/5 overflow-hidden flex flex-col">
-      <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-        <h2 className="font-bold text-foreground flex items-center gap-2 text-sm">
-          <Phone size={18} className="text-emerald-400" />
-          Priority Follow-ups
+    <div className="bg-white border border-black/10 rounded-[16px] overflow-hidden flex flex-col shadow-sm hover:border-black/20 transition-all duration-300">
+      <div className="p-5 border-b border-black/10 flex justify-between items-center bg-gray-50">
+        <h2 className="font-bold text-[#1A1A1A] flex items-center gap-2 text-sm">
+          <Phone size={16} className="text-emerald-600" />
+          PriorityFollowUps
         </h2>
-        <Link href="/follow-ups" className="text-[10px] font-black text-blue-400 uppercase tracking-widest hover:underline">
-          View All
+        <Link href="/follow-ups" className="text-[10px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-500 hover:underline">
+          ViewAll
         </Link>
       </div>
 
-      <div className="p-4 flex-1 overflow-y-auto space-y-3">
+      <div className="p-4 flex-1 overflow-y-auto space-y-3 max-h-[300px]">
         {todaysFollowUps.length > 0 ? todaysFollowUps.map((f: FollowUp) => (
-          <div key={f.id} className="p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-all group">
+          <div key={f.id} className="p-4 rounded-[8px] bg-slate-50/50 border border-black/5 hover:bg-slate-50 transition-all group">
             <div className="flex justify-between items-start gap-4">
               <div className="space-y-1 min-w-0">
-                <p className="text-xs font-bold text-foreground truncate">{f.lead?.name}</p>
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium">
-                  <Clock size={10} />
-                  {new Date(f.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <p className="text-xs font-bold text-[#1A1A1A] truncate">{f.lead?.name}</p>
+                <div className="flex flex-wrap items-center gap-2 text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+                  <span className="flex items-center gap-1">
+                    <Clock size={10} />
+                    {new Date(f.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                   {f.createdBy && (
-                    <span className="ml-2 px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 leading-none">
-                      by {f.createdBy.name}
+                    <span className="px-2 py-0.5 rounded-[6px] bg-blue-50 text-blue-600 border border-blue-100 leading-none">
+                      by {f.createdBy.name.split(' ')[0]}
                     </span>
                   )}
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => handleComplete(f.id)}
                 disabled={loading || completingId === f.id}
-                className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all disabled:opacity-50"
+                className="w-8 h-8 rounded-[8px] bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center hover:bg-emerald-500 hover:text-white transition-all disabled:opacity-50 shadow-sm"
               >
                 <CheckCircle2 size={16} className={completingId === f.id ? 'animate-pulse' : ''} />
               </button>
@@ -62,22 +64,22 @@ export const DashboardFollowUps = () => {
           </div>
         )) : (
           <div className="h-40 flex flex-col items-center justify-center text-center space-y-2">
-            <div className="w-12 h-12 rounded-full bg-emerald-500/10 text-emerald-500/30 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-[8px] bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center shadow-sm">
               <CheckCircle2 size={24} />
             </div>
-            <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">No pending calls</p>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">NoPendingCalls</p>
           </div>
         )}
       </div>
 
-      <div className="p-4 border-t border-white/5 bg-white/[0.01]">
-         <Link 
-            href="/leads"
-            className="w-full py-2.5 rounded-xl border border-white/10 flex items-center justify-center gap-2 text-[10px] font-black text-muted-foreground uppercase tracking-widest hover:bg-white/5 transition-all"
-         >
-           View Lead Pipeline
-           <ChevronRight size={14} />
-         </Link>
+      <div className="p-4 border-t border-black/10 bg-gray-50">
+        <Link
+          href="/leads"
+          className="w-full py-2.5 rounded-[8px] border border-black/10 bg-white flex items-center justify-center gap-2 text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:bg-slate-50 hover:text-[#1A1A1A] hover:border-black/20 shadow-sm transition-all"
+        >
+          ViewLeadPipeline
+          <ChevronRight size={14} />
+        </Link>
       </div>
     </div>
   );

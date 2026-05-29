@@ -58,7 +58,7 @@ export class FollowUpService {
     const scheduledAt = new Date(followUp.scheduledAt);
 
     // Determine the trigger key based on lead stage
-    const trigger = lead?.stage === 'COUNSELING_SCHEDULED' ? 'COUNSELING_SCHEDULED' : 'FOLLOW_UP_CREATED';
+    const trigger = lead?.stage === 'MEETING SCHEDULED' ? 'COUNSELING_SCHEDULED' : 'FOLLOW_UP_CREATED';
 
     // T2/T3/C3/C4: Remind the assigned user (telecaller/counselor) before the call/session
     if (assignedTo) {

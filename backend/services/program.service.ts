@@ -2,8 +2,9 @@
 import prisma from '../config/prisma';
 
 export class ProgramService {
-  async getAllPrograms() {
+  async getAllPrograms(tenantId?: string) {
     return await prisma.program.findMany({
+      where: tenantId ? { tenantId } : {},
       orderBy: { name: 'asc' }
     });
   }
@@ -25,6 +26,7 @@ export class ProgramService {
         name: data.name,
         description: data.description,
         baseFee: data.baseFee || 0,
+        tenantId: data.tenantId,
       }
     });
   }

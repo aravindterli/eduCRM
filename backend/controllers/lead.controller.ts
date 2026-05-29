@@ -1,15 +1,27 @@
 import { Request, Response } from 'express';
 import LeadService from '../services/lead.service';
 import CommunicationService from '../services/communication.service';
+import twilio from 'twilio';
 import prisma from '../config/prisma';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
 
-export const createLead = async (req: Request, res: Response) => {
+import TenantService from '../services/tenant.service';
+
+export const getLeadFormStructure = async (req: any, res: Response) => {
   try {
-    const lead = await LeadService.createLead(req.body);
+    const template = await TenantService.getActiveFormTemplate(req.tenantId, req.sector);
+    res.json(template || null);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const createLead = async (req: any, res: Response) => {
+  try {
+    const lead = await LeadService.createLead(req.tenantId, req.body);
     res.status(201).json(lead);
   } catch (error: any) {
     res.status(400).json({ message: error.message });
@@ -18,32 +30,43 @@ export const createLead = async (req: Request, res: Response) => {
 
 export const createPublicLead = async (req: Request, res: Response) => {
   try {
-    const lead = await LeadService.handlePublicApplication(req.body);
-    res.status(201).json(lead);
+    const { tenantId, ...leadData } = req.body;
+    if (!tenantId) return res.status(400).json({ message: 'tenantId is required for public applications' });
+    const result = await LeadService.handlePublicApplication(tenantId, leadData);
+    res.status(201).json({
+      success: true,
+      leadId: result.lead.id,
+      applicationId: result.applicationId,
+      lead: result.lead
+    });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }
 };
 
-export const getLeads = async (req: Request, res: Response) => {
+export const getLeads = async (req: any, res: Response) => {
   try {
-    const { page, limit, stage, assignedId, tag } = req.query;
-    const result = await LeadService.getAllLeads({
+    const { page, limit, stage, assignedId, tag, sortBy, sortOrder, name, email } = req.query;
+    const result = await LeadService.getAllLeads(req.tenantId, {
       page,
       limit,
       stage,
       assignedId,
-      tag
-    }, (req as any).user);
+      tag,
+      sortBy,
+      sortOrder,
+      name,
+      email
+    }, req.user);
     res.json(result);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
 };
 
-export const getLeadDetail = async (req: Request, res: Response) => {
+export const getLeadDetail = async (req: any, res: Response) => {
   try {
-    const lead = await LeadService.getLeadById(req.params.id);
+    const lead = await LeadService.getLeadById(req.tenantId, req.params.id);
     if (!lead) return res.status(404).json({ message: 'Lead not found' });
     res.json(lead);
   } catch (error: any) {
@@ -55,7 +78,7 @@ export const addLeadNote = async (req: any, res: Response) => {
   try {
     const { content, type } = req.body;
     if (!content) return res.status(400).json({ message: 'Content is required' });
-    const note = await LeadService.addNote(req.params.id, content, type, req.user.id);
+    const note = await LeadService.addNote(req.tenantId, req.params.id, content, type, req.user.id);
     res.status(201).json(note);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -66,7 +89,7 @@ export const logLeadInteraction = async (req: any, res: Response) => {
   try {
     const { type, message, direction, duration, result } = req.body;
     if (!type || !message) return res.status(400).json({ message: 'Type and message are required' });
-    const interaction = await LeadService.logInteraction(req.params.id, {
+    const interaction = await LeadService.logInteraction(req.tenantId, req.params.id, {
       type,
       message,
       direction: direction || 'OUTBOUND',
@@ -80,18 +103,18 @@ export const logLeadInteraction = async (req: any, res: Response) => {
   }
 };
 
-export const updateLead = async (req: Request, res: Response) => {
+export const updateLead = async (req: any, res: Response) => {
   try {
-    const lead = await LeadService.updateLead(req.params.id, req.body, (req as any).user?.id);
+    const lead = await LeadService.updateLead(req.tenantId, req.params.id, req.body, req.user?.id);
     res.json(lead);
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }
 };
 
-export const deleteLead = async (req: Request, res: Response) => {
+export const deleteLead = async (req: any, res: Response) => {
   try {
-    await LeadService.deleteLead(req.params.id);
+    await LeadService.deleteLead(req.tenantId, req.params.id);
     res.json({ success: true, message: 'Lead deleted successfully' });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
@@ -100,7 +123,7 @@ export const deleteLead = async (req: Request, res: Response) => {
 
 export const getLeadStats = async (req: any, res: Response) => {
   try {
-    const stats = await LeadService.getLeadStats(req.user?.id, req.user?.role);
+    const stats = await LeadService.getLeadStats(req.tenantId, req.user?.id, req.user?.role?.type);
     res.json(stats);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -110,22 +133,24 @@ export const getLeadStats = async (req: any, res: Response) => {
 import ImportService from '../services/import.service';
 import MetaService from '../services/meta.service';
 
-export const importLeads = async (req: Request, res: Response) => {
+export const importLeads = async (req: any, res: Response) => {
   try {
-    const results = await ImportService.importLeadsFromCSV(req.body.leads);
+    const results = await ImportService.importLeadsFromCSV(req.tenantId, req.body.leads);
     res.json(results);
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }
 };
 
-export const sendLeadTemplate = async (req: Request, res: Response) => {
+export const sendLeadTemplate = async (req: any, res: Response) => {
   try {
     const { templateId } = req.body;
-    const lead = await LeadService.getLeadById(req.params.id);
+    const lead = await LeadService.getLeadById(req.tenantId, req.params.id);
     if (!lead) return res.status(404).json({ message: 'Lead not found' });
 
-    const template = await prisma.messageTemplate.findUnique({ where: { id: templateId } });
+    const template = await prisma.messageTemplate.findFirst({ 
+      where: { id: templateId, tenantId: req.tenantId } 
+    });
     if (!template) return res.status(404).json({ message: 'Template not found' });
 
     // Personalize template
@@ -133,13 +158,13 @@ export const sendLeadTemplate = async (req: Request, res: Response) => {
 
     if (template.channel === 'WHATSAPP') {
       if (!lead.phone) return res.status(400).json({ message: 'Lead has no phone number' });
-      await CommunicationService.sendWhatsApp(lead.phone, messageContent, lead.id, undefined, template.name);
+      await CommunicationService.sendWhatsApp(req.tenantId, lead.phone, messageContent, lead.id, undefined, template.name);
     } else if (template.channel === 'SMS') {
       if (!lead.phone) return res.status(400).json({ message: 'Lead has no phone number' });
-      await CommunicationService.sendSMS(lead.phone, messageContent, lead.id);
+      await CommunicationService.sendSMS(req.tenantId, lead.phone, messageContent, lead.id);
     } else if (template.channel === 'EMAIL') {
       if (!lead.email) return res.status(400).json({ message: 'Lead has no email' });
-      await CommunicationService.sendEmail(lead.email, template.name, { name: lead.name, messageContent }, lead.id);
+      await CommunicationService.sendEmail(req.tenantId, lead.email, template.name, { name: lead.name, messageContent }, lead.id);
     }
 
     res.json({ success: true, message: 'Message queued for dispatch' });
@@ -148,7 +173,7 @@ export const sendLeadTemplate = async (req: Request, res: Response) => {
   }
 };
 
-export const bulkSendWhatsApp = async (req: Request, res: Response) => {
+export const bulkSendWhatsApp = async (req: any, res: Response) => {
   try {
     const { leadIds, message, imageUrl, templateName } = req.body;
     if (!leadIds || !Array.isArray(leadIds) || (!message && !templateName)) {
@@ -156,7 +181,7 @@ export const bulkSendWhatsApp = async (req: Request, res: Response) => {
     }
 
     const leads = await prisma.lead.findMany({
-      where: { id: { in: leadIds } }
+      where: { id: { in: leadIds }, tenantId: req.tenantId }
     });
 
     const results = [];
@@ -166,11 +191,10 @@ export const bulkSendWhatsApp = async (req: Request, res: Response) => {
         continue;
       }
 
-      // Personalize message if ${name} is present
       const personalizedMessage = message ? message.replace(/\${name}/g, lead.name) : '';
 
       try {
-        await CommunicationService.sendWhatsApp(lead.phone, personalizedMessage, lead.id, imageUrl, templateName);
+        await CommunicationService.sendWhatsApp(req.tenantId, lead.phone, personalizedMessage, lead.id, imageUrl, templateName);
         results.push({ leadId: lead.id, name: lead.name, success: true });
       } catch (error: any) {
         results.push({ leadId: lead.id, name: lead.name, success: false, error: error.message });
@@ -234,7 +258,7 @@ export const uploadWhatsAppMedia = async (req: Request, res: Response) => {
 };
 export const reactivateLead = async (req: any, res: Response) => {
   try {
-    const lead = await LeadService.reactivateLead(req.params.id, req.user.id);
+    const lead = await LeadService.reactivateLead(req.tenantId, req.params.id, req.user.id);
     res.json(lead);
   } catch (error: any) {
     res.status(400).json({ message: error.message });
@@ -283,7 +307,7 @@ export const googleAdsWebhook = async (req: Request, res: Response) => {
     // 4. Process lead
     const lead = await LeadService.handlePublicApplication(leadData);
 
-    res.status(201).json({ success: true, lead_id: lead.id, campaign: campaign?.name || null });
+    res.status(201).json({ success: true, lead_id: lead.lead.id, campaign: campaign?.name || null });
   } catch (error: any) {
     console.error('Google Ads Webhook Error:', error);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -408,4 +432,152 @@ export const getMetaForms = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({ message: error.message });
   }
+};
+
+export const getLeadMessages = async (req: any, res: Response) => {
+  try {
+    const messages = await prisma.communicationLog.findMany({
+      where: {
+        tenantId: req.tenantId,
+        leadId: req.params.id,
+        type: { in: ['SMS', 'WHATSAPP', 'RCS'] }
+      },
+      orderBy: { timestamp: 'desc' }
+    });
+    res.json(messages);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const sendLeadMessage = async (req: any, res: Response) => {
+  try {
+    const { message, channel } = req.body;
+    if (!message) return res.status(400).json({ message: 'Message is required' });
+    
+    const lead = await LeadService.getLeadById(req.tenantId, req.params.id);
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
+    if (!lead.phone) return res.status(400).json({ message: 'Lead has no phone number' });
+
+    let result;
+    if (channel === 'WHATSAPP') {
+      result = await CommunicationService.sendWhatsApp(req.tenantId, lead.phone, message, lead.id);
+    } else {
+      result = await CommunicationService.sendSMS(req.tenantId, lead.phone, message, lead.id);
+    }
+
+    if (result.success) {
+      res.json({ success: true, message: 'Message sent' });
+    } else {
+      res.status(500).json({ success: false, error: result.error });
+    }
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getLeadCalls = async (req: any, res: Response) => {
+  try {
+    const calls = await prisma.communicationLog.findMany({
+      where: {
+        tenantId: req.tenantId,
+        leadId: req.params.id,
+        type: 'CALL'
+      },
+      orderBy: { timestamp: 'desc' }
+    });
+    res.json(calls);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const initiateLeadCall = async (req: any, res: Response) => {
+  try {
+    const { duration, result: callResult } = req.body;
+    
+    const lead = await LeadService.getLeadById(req.tenantId, req.params.id);
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
+
+    // Simulate call by logging it
+    const interaction = await LeadService.logInteraction(req.tenantId, req.params.id, {
+      type: 'CALL',
+      message: `Call with ${lead.name}`,
+      direction: 'OUTBOUND',
+      duration: duration ? Number(duration) : undefined,
+      result: callResult || 'CONNECTED',
+      assignedId: req.user.id
+    });
+
+    res.status(201).json(interaction);
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const getTwilioToken = async (req: any, res: Response) => {
+  try {
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const apiKey = process.env.TWILIO_API_KEY;
+    const apiSecret = process.env.TWILIO_API_SECRET;
+
+    if (!accountSid || !apiKey || !apiSecret) {
+      return res.status(400).json({ message: 'Twilio credentials not fully configured in .env' });
+    }
+
+    const identity = req.user.id;
+    const token = new twilio.jwt.AccessToken(
+      accountSid,
+      apiKey,
+      apiSecret,
+      { identity: identity }
+    );
+
+    const grant = new twilio.jwt.AccessToken.VoiceGrant({
+      outgoingApplicationSid: process.env.TWILIO_TWIML_APP_SID,
+      incomingAllow: true
+    });
+    token.addGrant(grant);
+
+    res.json({ token: token.toJwt() });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const handleTwilioVoice = async (req: Request, res: Response) => {
+  console.log('[Twilio Voice] Received request:', req.body);
+  const VoiceResponse = twilio.twiml.VoiceResponse;
+  const response = new VoiceResponse();
+
+  const to = req.body.To;
+  const userId = req.body.UserId;
+  
+  if (to) {
+    const dial = response.dial({ callerId: process.env.TWILIO_PHONE_NUMBER });
+    dial.number({
+      statusCallbackEvent: 'answered completed',
+      statusCallback: `${process.env.BACKEND_URL}/api/v1/leads/twilio/status?userId=${userId}`,
+      statusCallbackMethod: 'POST'
+    }, to);
+  } else {
+    response.say('No destination provided.');
+  }
+
+  res.type('text/xml');
+  res.send(response.toString());
+};
+
+export const handleTwilioStatus = async (req: Request, res: Response) => {
+  const { userId } = req.query;
+  const { CallStatus } = req.body;
+  
+  console.log(`[Twilio Status] Call status for user ${userId}:`, CallStatus);
+  
+  if (userId) {
+    const { emitToUser } = require('../src/config/socket');
+    emitToUser(userId as string, 'twilio:callStatus', { status: CallStatus });
+  }
+  
+  res.sendStatus(200);
 };

@@ -76,49 +76,49 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
   return (
     <div className="fixed inset-0 z-[120] flex justify-end">
       <div 
-        className="absolute inset-0 bg-slate-950/40 backdrop-blur-sm transition-opacity"
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
-      <div className="relative w-full max-w-md h-full bg-background border-l border-border shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+      <div className="relative w-full max-w-md h-full bg-white border-l border-black/10 shadow-2xl flex flex-col animate-in slide-in-from-right duration-300 rounded-l-[16px] overflow-hidden text-[#1A1A1A]">
+        <div className="p-6 border-b border-black/10 flex items-center justify-between bg-gray-50">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <div className="w-10 h-10 rounded-[8px] bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
               <MessageSquare size={20} />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-foreground">Bulk WhatsApp</h2>
-              <p className="text-xs text-muted-foreground">Send message to {selectedLeadIds.length} leads</p>
+              <h2 className="text-lg font-bold text-[#1A1A1A]">Bulk WhatsApp</h2>
+              <p className="text-xs text-slate-500">Send message to {selectedLeadIds.length} leads</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground hover:text-foreground"
+            className="p-2 hover:bg-gray-100 rounded-[8px] transition-colors text-slate-500 hover:text-slate-800"
           >
             <X size={20} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
           <div className="space-y-4">
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex gap-3">
-              <Info className="text-blue-500 shrink-0" size={18} />
+            <div className="bg-blue-50 border border-blue-100 rounded-[12px] p-4 flex gap-3 shadow-sm">
+              <Info className="text-blue-600 shrink-0" size={18} />
               <p className="text-sm text-blue-700 leading-relaxed font-medium">
-                You can use <code className="bg-blue-500/20 px-1.5 py-0.5 rounded text-blue-600 font-bold">{"${name}"}</code> to personalize the message for each lead.
+                You can use <code className="bg-blue-100 px-1.5 py-0.5 rounded text-blue-800 font-bold">{"${name}"}</code> to personalize the message for each lead.
               </p>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-muted-foreground ml-1">Use Pre-approved Template</label>
+                <label className="text-sm font-bold text-slate-600 ml-1">Use Pre-approved Template</label>
                 <div className="relative">
                   <select
                     value={selectedTemplateName}
                     onChange={handleTemplateChange}
-                    className="w-full h-12 bg-muted border border-border rounded-xl px-4 text-sm outline-none focus:ring-2 ring-primary/20 transition-all appearance-none text-foreground font-medium"
+                    className="w-full h-12 bg-gray-50 border border-black/10 rounded-[8px] px-4 text-sm outline-none focus:ring-2 focus:ring-black/10 transition-all appearance-none text-[#1A1A1A] font-medium"
                   >
-                    <option value="" className="bg-background text-foreground">None (Custom Message)</option>
+                    <option value="" className="bg-white text-[#1A1A1A]">None (Custom Message)</option>
                     {whatsappTemplates.map(template => (
-                      <option key={template.id} value={template.name} className="bg-background text-foreground">
+                      <option key={template.id} value={template.name} className="bg-white text-[#1A1A1A]">
                         {template.name}
                       </option>
                     ))}
@@ -126,30 +126,30 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
                   <FileText size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
                 {selectedTemplateName && (
-                  <p className="text-xs text-amber-500 ml-1 mt-2">
+                  <p className="text-xs text-amber-600 ml-1 mt-2 font-bold">
                     Custom text is disabled for templates, but you can still attach an Image if your template requires a Media Header!
                   </p>
                 )}
               </div>
 
               <div className={`space-y-2 transition-opacity duration-300 ${selectedTemplateName ? 'opacity-50 pointer-events-none' : ''}`}>
-                <label className="text-sm font-bold text-muted-foreground ml-1">Standard Message Content</label>
+                <label className="text-sm font-bold text-slate-600 ml-1">Standard Message Content</label>
                 <textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Type your custom message here..."
-                  className="w-full h-32 bg-muted border border-border rounded-2xl p-4 text-sm outline-none focus:ring-2 ring-primary/20 transition-all resize-none text-foreground font-medium"
+                  className="w-full h-32 bg-gray-50 border border-black/10 rounded-[8px] p-4 text-sm outline-none focus:ring-2 focus:ring-black/10 transition-all resize-none text-[#1A1A1A] font-medium"
                   disabled={!!selectedTemplateName}
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-muted-foreground ml-1">Attach Photo/Media (For Custom or Template Headers)</label>
+              <label className="text-sm font-bold text-slate-600 ml-1">Attach Photo/Media (For Custom or Template Headers)</label>
               {!imageUrl ? (
                 <div 
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full h-32 border-2 border-dashed border-border rounded-2xl flex flex-col items-center justify-center gap-2 hover:border-primary/50 hover:bg-muted transition-all group"
+                  className="w-full h-32 border-2 border-dashed border-black/10 rounded-[12px] flex flex-col items-center justify-center gap-2 hover:border-black/20 hover:bg-gray-50/50 transition-all group cursor-pointer bg-gray-50/20"
                 >
                   <input 
                     type="file" 
@@ -159,10 +159,10 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
                     className="hidden" 
                   />
                   {isUploading ? (
-                    <Loader2 size={24} className="text-primary animate-spin" />
+                    <Loader2 size={24} className="text-[#1A1A1A] animate-spin" />
                   ) : (
                     <>
-                      <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform text-slate-400 group-hover:text-primary">
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-black/5 group-hover:scale-110 transition-transform text-slate-400 group-hover:text-[#1A1A1A] shadow-sm">
                         <Upload size={20} />
                       </div>
                       <p className="text-xs text-slate-500 font-medium">Click to upload photo</p>
@@ -170,18 +170,18 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
                   )}
                 </div>
               ) : (
-                <div className="relative rounded-2xl overflow-hidden border border-white/10 group aspect-video">
+                <div className="relative rounded-[12px] overflow-hidden border border-black/10 group aspect-video shadow-sm">
                   <img src={imageUrl} alt="Upload preview" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-slate-950/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4">
                     <button 
                       onClick={() => setImageUrl(null)}
-                      className="p-3 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/40 transition-colors"
+                      className="p-3 bg-rose-50 text-rose-600 rounded-[8px] hover:bg-rose-100 transition-colors border border-rose-200"
                     >
                       <Trash2 size={20} />
                     </button>
                     <button 
                       onClick={() => fileInputRef.current?.click()}
-                      className="p-3 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-colors"
+                      className="p-3 bg-white text-[#1A1A1A] rounded-[8px] hover:bg-gray-100 transition-colors border border-black/10"
                     >
                       <Upload size={20} />
                     </button>
@@ -197,12 +197,12 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
               )}
             </div>
 
-            <div className="bg-muted rounded-2xl p-4 border border-border">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 ml-1">Recipients ({selectedLeads.length})</h3>
+            <div className="bg-gray-50 rounded-[12px] p-4 border border-black/5">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 ml-1">Recipients ({selectedLeads.length})</h3>
               <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
                 {selectedLeads.map(lead => (
-                  <div key={lead.id} className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-[11px] font-medium flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/50" />
+                  <div key={lead.id} className="px-3 py-1.5 rounded-[8px] bg-white border border-black/10 text-[11px] font-medium flex items-center gap-2 shadow-sm text-[#1A1A1A]">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     {lead.name}
                   </div>
                 ))}
@@ -211,11 +211,11 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
           </div>
         </div>
 
-        <div className="p-6 border-t border-white/5 bg-white/[0.02]">
+        <div className="p-6 border-t border-black/10 bg-gray-50">
           <button
             onClick={handleSend}
             disabled={isSending || (!message.trim() && !selectedTemplateName)}
-            className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-3 rounded-2xl transition-all shadow-lg shadow-emerald-900/20 disabled:opacity-50 disabled:grayscale"
+            className="w-full flex items-center justify-center gap-2 bg-[#1A1A1A] hover:bg-black/90 text-[#F5F1EB] font-bold py-3 rounded-[8px] transition-all shadow-sm disabled:opacity-50 disabled:grayscale cursor-pointer"
           >
             {isSending ? (
               <>
@@ -229,7 +229,7 @@ export function BulkWhatsAppDrawer({ isOpen, onClose, selectedLeadIds, onSuccess
               </>
             )}
           </button>
-          <p className="text-[10px] text-center text-muted-foreground mt-4 leading-relaxed font-medium">
+          <p className="text-[10px] text-center text-slate-500 mt-4 leading-relaxed font-medium">
             By sending this message, you agree to comply with WhatsApp's anti-spam policies. Message delivery may take a few moments.
           </p>
         </div>

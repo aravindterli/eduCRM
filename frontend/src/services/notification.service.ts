@@ -6,19 +6,19 @@ export const notificationService = {
     return response.data;
   },
 
-  markAsRead: async (id: string) => {
+  markAsRead: async (id: string, token?: string | null) => {
     await api.put(`/notifications/${id}/read`);
   },
 
-  markAllRead: async () => {
+  markAllRead: async (token?: string | null) => {
     await api.put('/notifications/mark-all-read');
   },
 
-  clearAll: async () => {
+  clearAll: async (token?: string | null) => {
     await api.delete('/notifications/clear-all');
   },
 
-  delete: async (id: string) => {
+  delete: async (id: string, token?: string | null) => {
     await api.delete(`/notifications/${id}`);
   }
 };

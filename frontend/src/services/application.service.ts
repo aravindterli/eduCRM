@@ -25,5 +25,14 @@ export const applicationService = {
   uploadDocument: async (applicationId: string, data: { type: string; url: string }) => {
     const response = await API.post(`/applications/${applicationId}/documents`, data);
     return response.data;
+  },
+
+  uploadDocumentFile: async (formData: FormData) => {
+    const response = await API.post('/documents/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
   }
 };

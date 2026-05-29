@@ -4,7 +4,7 @@ import ReportService from '../services/report.service';
 
 export const getLeadReports = async (req: any, res: Response) => {
   try {
-    const reports = await ReportService.getLeadAnalytics(req.user.id, req.user.role);
+    const reports = await ReportService.getLeadAnalytics(req.user.id, req.user.role, req.user.tenantId);
     res.json(reports);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -22,7 +22,7 @@ export const getCounselerStats = async (req: any, res: Response) => {
 
 export const getConversionFunnel = async (req: any, res: Response) => {
   try {
-    const funnel = await ReportService.getConversionFunnel(req.user.id, req.user.role);
+    const funnel = await ReportService.getConversionFunnel(req.user.id, req.user.role, req.user.tenantId);
     res.json(funnel);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

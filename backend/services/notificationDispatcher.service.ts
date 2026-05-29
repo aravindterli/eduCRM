@@ -95,34 +95,35 @@ class NotificationDispatcherService {
     const to = n.contactInfo;
     if (!to) return { success: false, error: 'No email address' };
     const templateKey = n.templateKey || n.templateId || 'generic';
-    return CommunicationService.sendEmail(to, templateKey, payload, n.leadId ?? undefined);
+    return CommunicationService.sendEmail(n.tenantId, to, templateKey, payload, n.leadId ?? undefined);
   }
 
   private async sendSMS(n: any, payload: Record<string, any>) {
     const phone = n.contactInfo;
     if (!phone) return { success: false, error: 'No phone number' };
     const body = n.body || this.renderTemplate(payload.message || `Hi ${payload.name || 'there'}, you have a notification from CentraCRM.`, payload);
-    return CommunicationService.sendSMS(phone, body, n.leadId ?? undefined);
+    return CommunicationService.sendSMS(n.tenantId, phone, body, n.leadId ?? undefined);
   }
 
   private async sendRCS(n: any, payload: Record<string, any>) {
     const phone = n.contactInfo;
     if (!phone) return { success: false, error: 'No phone number' };
     const body = n.body || this.renderTemplate(payload.message || `Hi ${payload.name || 'there'}, you have a notification from CentraCRM.`, payload);
-    return (CommunicationService as any).sendRCS(phone, body, n.leadId ?? undefined);
+    return (CommunicationService as any).sendRCS(n.tenantId, phone, body, n.leadId ?? undefined);
   }
 
   private async sendWhatsApp(n: any, payload: Record<string, any>) {
     const phone = n.contactInfo;
     if (!phone) return { success: false, error: 'No phone number' };
     const body = n.body || this.renderTemplate(payload.message || `Hi ${payload.name || 'there'}, you have a notification from CentraCRM.`, payload);
-    return CommunicationService.sendWhatsApp(phone, body, n.leadId ?? undefined);
+    return CommunicationService.sendWhatsApp(n.tenantId, phone, body, n.leadId ?? undefined);
   }
 
   private async sendInternal(n: any, _payload: Record<string, any>) {
     const userId = n.recipientId;
+    const tenantId = n.tenantId;
     if (!userId) return { success: false, error: 'No recipientId for internal notification' };
-    await NotificationService.create({
+    await NotificationService.create(tenantId, {
       userId,
       title: n.subject || 'Notification',
       message: n.body || 'You have a new notification.',
@@ -141,6 +142,7 @@ class NotificationDispatcherService {
   // RULE ENGINE — enqueue notifications based on active rules for a trigger
   // ─────────────────────────────────────────────────────────────────────────────
   async enqueueFromTrigger(opts: {
+    tenantId: string;
     trigger: string;
     eventTime: Date;
     leadId?: string;
@@ -148,7 +150,7 @@ class NotificationDispatcherService {
     contactInfo?: string;
     payload?: Record<string, any>;
   }): Promise<void> {
-    const { trigger, eventTime, leadId, recipientId, contactInfo, payload = {} } = opts;
+    const { tenantId, trigger, eventTime, leadId, recipientId, contactInfo, payload = {} } = opts;
 
     // Resolve user details if recipientId is present but contactInfo is missing
     let resolvedUser: any = null;
@@ -157,7 +159,7 @@ class NotificationDispatcherService {
     }
 
     const rules = await (prisma as any).notificationRule.findMany({
-      where: { trigger, isActive: true },
+      where: { tenantId, trigger, isActive: true },
       include: { template: true },
     });
 
@@ -196,6 +198,7 @@ class NotificationDispatcherService {
         }
 
         rows.push({
+          tenantId,
           ruleId: rule.id,
           trigger,
           channel: rule.channel,
@@ -220,7 +223,7 @@ class NotificationDispatcherService {
   }
 
   // ─── MANUAL SCHEDULE ─────────────────────────────────────────────────────
-  async scheduleOne(data: {
+  async scheduleOne(tenantId: string, data: {
     trigger: string;
     channel: string;
     recipientId?: string;
@@ -236,6 +239,7 @@ class NotificationDispatcherService {
     return (prisma as any).scheduledNotification.create({
       data: {
         ...data,
+        tenantId,
         ruleId: null,
         status: 'PENDING',
         payload: data.payload ?? {},

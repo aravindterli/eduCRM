@@ -70,7 +70,7 @@ export default function TemplatesPage() {
                     </h1>
                   </div>
                 </div>
-                
+
                 {/* Email Body */}
                 <div className="p-8 md:p-12 bg-[#111111]">
                   <div className="prose prose-invert max-w-none">
@@ -78,15 +78,15 @@ export default function TemplatesPage() {
                       {template.content.replace(/\${(\w+)}/g, '[$1]')}
                     </p>
                   </div>
-                  
+
                   <div className="mt-16 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="flex flex-col items-center md:items-start">
                       <p className="text-sm font-black text-white uppercase tracking-[0.2em]">The Foundrys</p>
                       <p className="text-[10px] text-slate-600 mt-1 uppercase tracking-widest font-bold">© 2026 CentraCRM System</p>
                     </div>
                     <div className="flex gap-6">
-                       <div className="text-slate-500 hover:text-white transition-colors cursor-pointer"><MessageSquare size={16} /></div>
-                       <div className="text-slate-500 hover:text-white transition-colors cursor-pointer"><Mail size={16} /></div>
+                      <div className="text-slate-500 hover:text-white transition-colors cursor-pointer"><MessageSquare size={16} /></div>
+                      <div className="text-slate-500 hover:text-white transition-colors cursor-pointer"><Mail size={16} /></div>
                     </div>
                   </div>
                 </div>
@@ -120,7 +120,6 @@ export default function TemplatesPage() {
               </div>
             ) : (
               <div className="w-[300px] h-[550px] bg-slate-800 rounded-[3rem] border-[8px] border-slate-700 shadow-xl relative overflow-hidden flex flex-col animate-in slide-in-from-bottom-8 duration-300">
->
                 <div className="bg-slate-900 p-4 pt-10 flex items-center gap-3 border-b border-white/5 relative">
                   <div className="absolute top-2 left-1/2 -translate-x-1/2 w-20 h-1 bg-white/20 rounded-full" />
                   <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-700 to-slate-600 flex items-center justify-center font-bold text-xs shadow-lg">TF</div>
@@ -132,18 +131,18 @@ export default function TemplatesPage() {
                   </div>
                 </div>
                 <div className="flex-grow p-4 bg-[#0b141a] overflow-y-auto space-y-4">
-                   <div className="flex justify-center">
-                     <span className="bg-white/5 text-[9px] px-2 py-0.5 rounded text-slate-500 uppercase font-bold tracking-widest">Today</span>
-                   </div>
-                   <div className={`max-w-[85%] p-3 rounded-2xl text-sm relative shadow-sm ${template.channel === 'WHATSAPP' ? 'bg-[#005c4b] text-white rounded-tl-none ml-2' : 'bg-blue-600 text-white rounded-bl-none'}`}>
-                     <p className="whitespace-pre-wrap leading-tight text-slate-100">{template.content.replace(/\${(\w+)}/g, '[$1]')}</p>
-                     <span className="text-[9px] text-white/50 block mt-1 text-right italic">16:16</span>
-                   </div>
+                  <div className="flex justify-center">
+                    <span className="bg-white/5 text-[9px] px-2 py-0.5 rounded text-slate-500 uppercase font-bold tracking-widest">Today</span>
+                  </div>
+                  <div className={`max-w-[85%] p-3 rounded-2xl text-sm relative shadow-sm ${template.channel === 'WHATSAPP' ? 'bg-[#005c4b] text-white rounded-tl-none ml-2' : 'bg-blue-600 text-white rounded-bl-none'}`}>
+                    <p className="whitespace-pre-wrap leading-tight text-slate-100">{template.content.replace(/\${(\w+)}/g, '[$1]')}</p>
+                    <span className="text-[9px] text-white/50 block mt-1 text-right italic">16:16</span>
+                  </div>
                 </div>
 
                 <div className="p-4 bg-slate-900 flex items-center gap-2">
-                   <div className="flex-grow h-8 bg-slate-800 rounded-full" />
-                   <div className="w-8 h-8 rounded-full bg-emerald-500" />
+                  <div className="flex-grow h-8 bg-slate-800 rounded-full" />
+                  <div className="w-8 h-8 rounded-full bg-emerald-500" />
                 </div>
               </div>
             )}
@@ -161,7 +160,7 @@ export default function TemplatesPage() {
           <p className="text-slate-400 text-sm">Manage automated outbound communication formats</p>
         </div>
         <div className="flex gap-3">
-          <button 
+          <button
             onClick={() => { setFormData({ id: '', name: '', content: '', subject: '', channel: 'WHATSAPP' }); setIsFormOpen(true); }}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2"
           >
@@ -176,20 +175,20 @@ export default function TemplatesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Template Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required
                   value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. welcome_whatsapp"
                   className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-white"
                 />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Channel Type</label>
-                <select 
+                <select
                   value={formData.channel}
-                  onChange={e => setFormData({...formData, channel: e.target.value})}
+                  onChange={e => setFormData({ ...formData, channel: e.target.value })}
                   className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-white"
                 >
                   <option value="WHATSAPP">WhatsApp</option>
@@ -199,11 +198,11 @@ export default function TemplatesPage() {
               </div>
               <div className={`space-y-1 ${formData.channel !== 'EMAIL' ? 'opacity-50 pointer-events-none' : ''}`}>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Subject</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   required={formData.channel === 'EMAIL'}
                   value={formData.subject}
-                  onChange={e => setFormData({...formData, subject: e.target.value})}
+                  onChange={e => setFormData({ ...formData, subject: e.target.value })}
                   placeholder="Only for Email"
                   className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-white"
                 />
@@ -211,25 +210,25 @@ export default function TemplatesPage() {
             </div>
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Message Content</label>
-              <textarea 
+              <textarea
                 required
                 rows={4}
                 value={formData.content}
-                onChange={e => setFormData({...formData, content: e.target.value})}
+                onChange={e => setFormData({ ...formData, content: e.target.value })}
                 placeholder="Hi ${name}, welcome to CentraCRM!..."
                 className="w-full bg-slate-900/50 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-blue-500 text-white resize-none"
               />
             </div>
             <div className="flex justify-end gap-3 pt-2">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setIsFormOpen(false)}
                 className="px-4 py-2 rounded-xl text-sm font-bold text-slate-400 hover:text-white transition-colors"
               >
                 Cancel
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-colors disabled:opacity-50"
               >
@@ -273,7 +272,7 @@ export default function TemplatesPage() {
                 <span className="text-[10px] font-black tracking-widest text-slate-500 uppercase">{t.channel}</span>
               </div>
               <div className="col-span-2 flex justify-end gap-2">
-                <button 
+                <button
                   onClick={() => setPreviewTemplate(t)}
                   className="p-2 hover:bg-emerald-500/20 text-emerald-400 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
                   title="Preview"
@@ -294,9 +293,9 @@ export default function TemplatesPage() {
       </div>
 
       {previewTemplate && (
-        <PreviewModal 
-          template={previewTemplate} 
-          onClose={() => setPreviewTemplate(null)} 
+        <PreviewModal
+          template={previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
         />
       )}
     </MainLayout>

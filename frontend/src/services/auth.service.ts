@@ -9,6 +9,26 @@ export const authService = {
     const response = await api.post('/auth/register', userData);
     return response.data;
   },
+  invite: async (userData: any) => {
+    const response = await api.post('/auth/invite', userData);
+    return response.data;
+  },
+  getInvitations: async () => {
+    const response = await api.get('/auth/invitations');
+    return response.data;
+  },
+  resendInvitation: async (id: string) => {
+    const response = await api.post(`/auth/invitations/${id}/resend`);
+    return response.data;
+  },
+  getRoles: async () => {
+    const response = await api.get('/auth/roles');
+    return response.data;
+  },
+  acceptInvite: async (data: any) => {
+    const response = await api.post('/auth/accept-invite', data);
+    return response.data;
+  },
   getMe: async () => {
     const response = await api.get('/auth/me');
     return response.data;

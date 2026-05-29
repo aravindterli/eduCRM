@@ -1,8 +1,19 @@
 import { Router } from 'express';
-import { createApplication, updateStatus, getApplications, confirmAdmission, uploadDocument, getAdmissionLetter } from '../controllers/application.controller';
+import { 
+  createApplication, 
+  updateStatus, 
+  getApplications, 
+  confirmAdmission, 
+  uploadDocument, 
+  getAdmissionLetter,
+  getPublicApplicationDetails
+} from '../controllers/application.controller';
 import { authenticate, authorize } from '../middleware/auth';
 
 const router = Router();
+
+// Public route for onboarding paperwork
+router.get('/public/:id', getPublicApplicationDetails);
 
 router.use(authenticate);
 router.use(authorize(['ADMIN', 'COUNSELOR']));

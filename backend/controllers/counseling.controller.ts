@@ -32,6 +32,7 @@ export const logCounseling = async (req: any, res: Response) => {
     const log = await CounselingService.logCounseling({
       ...req.body,
       assignedId,
+      tenantId: req.user?.tenantId,
     });
     res.status(201).json(log);
   } catch (error: any) {
@@ -58,9 +59,9 @@ export const getMySchedule = async (req: any, res: Response) => {
   }
 };
 
-export const getStudents = async (req: Request, res: Response) => {
+export const getStudents = async (req: any, res: Response) => {
   try {
-    const students = await CounselingService.getStudentsForCounseling();
+    const students = await CounselingService.getStudentsForCounseling(req.user);
     res.json(students);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

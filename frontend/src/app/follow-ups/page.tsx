@@ -32,7 +32,7 @@ export default function FollowUpsPage() {
             <CalendarClock size={20} />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-tight">follow-ups</h1>
+            <h1 className="text-xl font-bold tracking-tight">Follow-ups</h1>
             <p className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">meeting agenda</p>
           </div>
         </div>
@@ -71,9 +71,9 @@ export default function FollowUpsPage() {
 
       {/* calendar / agenda - FITTED */}
       <div className="h-[calc(100vh-210px)]">
-        <FollowUpCalendar 
-          tasks={upcoming.filter(f => f.meetingUrl)} 
-          onSelectTask={(lead) => setSelectedLead(lead)} 
+        <FollowUpCalendar
+          tasks={upcoming.filter(f => f.meetingUrl)}
+          onSelectTask={(lead) => setSelectedLead(lead)}
           onCompleteTask={async (id) => {
             const { useFollowUpStore } = await import('@/store/useFollowUpStore');
             useFollowUpStore.getState().complete(id);
@@ -82,10 +82,10 @@ export default function FollowUpsPage() {
       </div>
 
       {/* lead context drawer */}
-      <LeadDetails 
-        isOpen={!!selectedLead} 
-        onClose={() => setSelectedLead(null)} 
-        lead={selectedLead} 
+      <LeadDetails
+        isOpen={!!selectedLead}
+        onClose={() => setSelectedLead(null)}
+        lead={selectedLead}
       />
     </MainLayout>
   );

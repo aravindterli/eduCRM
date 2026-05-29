@@ -6,60 +6,50 @@ import { useLeadStore } from '@/store/useLeadStore';
 import { useAuthStore } from '@/store/auth.store';
 import React from 'react';
 
-// Modular Views
+// Three role-type dashboards only — aligned with RoleType enum (SUPERADMIN | ADMIN | STANDARDUSER)
 import { AdminDashboard } from '@/components/dashboard/views/AdminDashboard';
-import { TelecallerDashboard } from '@/components/dashboard/views/TelecallerDashboard';
-import { CounselorDashboard } from '@/components/dashboard/views/CounselorDashboard';
-import { FinanceDashboard } from '@/components/dashboard/views/FinanceDashboard';
+import { SuperadminDashboard } from '@/components/dashboard/views/SuperadminDashboard';
+import { StandardUserDashboard } from '@/components/dashboard/views/StandardUserDashboard';
 
 export default function Dashboard() {
   const { fetchStats } = useLeadStore();
-  const { 
-    funnelData, 
-    financeData, 
-    leadStats, 
+  const {
+    funnelData,
+    financeData,
+    leadStats,
     programData,
     counselorData,
-    fetchFunnel, 
-    fetchFinance, 
+    fetchFunnel,
+    fetchFinance,
     fetchLeadStats,
     fetchPrograms,
     fetchCounselors,
     fetchActivities,
-    loading 
+    loading,
   } = useReportStore();
 
   const { user } = useAuthStore();
+  const [adminTab, setAdminTab] = React.useState<'overview' | 'agents' | 'deals'>('overview');
 
   React.useEffect(() => {
     if (!user) return;
 
-    // Data fetching strategy based on role
-    const role = user.role;
+    if (user.role === 'SUPERADMIN') return; // superadmin loads its own data
 
-    if (['ADMIN', 'MARKETING_TEAM'].includes(role)) {
+    if (user.role === 'ADMIN') {
       fetchFunnel();
       fetchLeadStats();
       fetchActivities();
       fetchPrograms();
       fetchCounselors();
       fetchFinance();
-    } else if (role === 'TELECALLER') {
+      fetchStats();
+    } else {
+      // STANDARDUSER — load lead stats and funnel only
       fetchFunnel();
       fetchLeadStats();
-    } else if (role === 'COUNSELOR') {
-      fetchFunnel();
-      fetchLeadStats();
-      fetchPrograms();
-    } else if (role === 'FINANCE') {
-      fetchFinance();
-    }
-
-    // Basic lead stats for everyone except maybe finance
-    if (role !== 'FINANCE') {
       fetchStats();
     }
-
   }, [user, fetchStats, fetchFunnel, fetchFinance, fetchLeadStats, fetchPrograms, fetchCounselors, fetchActivities]);
 
   if (!user || loading) {
@@ -67,47 +57,87 @@ export default function Dashboard() {
       <MainLayout>
         <div className="flex items-center justify-center h-[60vh]">
           <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
-            <p className="text-slate-500 font-black text-[10px] uppercase tracking-widest animate-pulse">Initialising Dashboards...</p>
+            <div className="w-12 h-12 border-4 border-black/20 border-t-black animate-spin" />
+            <p className="text-slate-500 font-black text-[10px] uppercase tracking-widest animate-pulse">
+              Initialising Dashboard...
+            </p>
           </div>
         </div>
       </MainLayout>
     );
   }
 
-  // Common derived metrics
-  const acquisitionData = (leadStats?.dailyLeads || []).map((d: any) => ({
-    label: new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' }),
-    value: d.count
-  })).reverse().slice(-7);
+  // Derived metrics shared between dashboards
+  const acquisitionData = (leadStats?.dailyLeads || [])
+    .map((d: any) => ({
+      label: new Date(d.date).toLocaleDateString(undefined, { weekday: 'short' }),
+      value: d.count,
+    }))
+    .reverse()
+    .slice(-7);
 
   const revenueTrend = (financeData?.revenueByMonth || []).map((d: any) => ({
     label: new Date(d.month).toLocaleDateString(undefined, { month: 'short' }),
-    value: d.revenue
+    value: d.revenue,
   }));
 
-  const totalFees = financeData?.feesByStatus?.reduce((acc: number, curr: any) => acc + (curr._sum.amount || 0), 0) || 0;
+  const totalFees =
+    financeData?.feesByStatus?.reduce(
+      (acc: number, curr: any) => acc + (curr._sum.amount || 0),
+      0
+    ) || 0;
+
   const metrics = {
-    totalLeads: funnelData.find(f => f.stage === 'Leads')?.count || 0,
-    applications: funnelData.find(f => f.stage === 'Applications')?.count || 0,
-    admissions: funnelData.find(f => f.stage === 'Admissions')?.count || 0,
+    totalLeads: funnelData.find((f: any) => f.stage === 'Leads')?.count || 0,
+    applications: funnelData.find((f: any) => f.stage === 'Applications')?.count || 0,
+    admissions: funnelData.find((f: any) => f.stage === 'Admissions')?.count || 0,
     revenue: revenueTrend.reduce((acc: number, curr: any) => acc + curr.value, 0),
-    collectionRate: totalFees > 0 ? Math.round((revenueTrend.reduce((acc: number, curr: any) => acc + curr.value, 0) / totalFees) * 100) : 0
+    collectionRate:
+      totalFees > 0
+        ? Math.round(
+          (revenueTrend.reduce((acc: number, curr: any) => acc + curr.value, 0) / totalFees) * 100
+        )
+        : 0,
   };
 
   return (
     <MainLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-black text-white tracking-tight mb-1">
-          Welcome back, {user.name.split(' ')[0]}!
-        </h1>
-        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-          {user.role.replace('_', ' ')} Command Center • {new Date().toLocaleDateString(undefined, { dateStyle: 'full' })}
-        </p>
+      {/* page header */}
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-[#1A1A1A] tracking-tight mb-1">
+            Welcome back, {user.name.split(' ')[0]}!
+          </h1>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            {user.role.replace(/_/g, ' ')} Command Center &bull;{' '}
+            {new Date().toLocaleDateString(undefined, { dateStyle: 'full' })}
+          </p>
+        </div>
+
+        {/* admin tab switcher — only shown to ADMIN */}
+        {user.role === 'ADMIN' && (
+          <div className="flex items-center gap-1 bg-white border border-black/10 shadow-sm p-1 rounded-[12px]">
+            {(['overview', 'agents', 'deals'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setAdminTab(tab)}
+                className={`px-5 py-1.5 text-xs font-bold capitalize transition-all rounded-[8px] ${adminTab === tab
+                  ? 'bg-[#1A1A1A] text-[#F5F1EB] shadow-sm'
+                  : 'text-slate-600 hover:text-[#1A1A1A] hover:bg-[#F5F1EB]/50'
+                  }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {user.role === 'ADMIN' || user.role === 'MARKETING_TEAM' ? (
-        <AdminDashboard 
+      {/* role-type branching — exactly three branches */}
+      {user.role === 'SUPERADMIN' && <SuperadminDashboard />}
+
+      {user.role === 'ADMIN' && (
+        <AdminDashboard
           metrics={metrics}
           leadStats={leadStats}
           funnelData={funnelData}
@@ -115,31 +145,17 @@ export default function Dashboard() {
           acquisitionData={acquisitionData}
           programData={programData}
           counselorData={counselorData}
+          activeTab={adminTab}
         />
-      ) : user.role === 'TELECALLER' ? (
-        <TelecallerDashboard 
+      )}
+
+      {user.role === 'STANDARDUSER' && (
+        <StandardUserDashboard
           metrics={metrics}
           leadStats={leadStats}
           acquisitionData={acquisitionData}
           funnelData={funnelData}
         />
-      ) : user.role === 'COUNSELOR' ? (
-        <CounselorDashboard 
-          metrics={metrics}
-          leadStats={leadStats}
-          programData={programData}
-          funnelData={funnelData}
-        />
-      ) : user.role === 'FINANCE' ? (
-        <FinanceDashboard 
-          metrics={metrics}
-          revenueTrend={revenueTrend}
-          financeData={financeData}
-        />
-      ) : (
-        <div className="p-20 text-center glass rounded-3xl border-white/5">
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">No dashboard assigned to this role</p>
-        </div>
       )}
     </MainLayout>
   );

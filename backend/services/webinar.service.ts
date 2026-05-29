@@ -45,7 +45,7 @@ export class WebinarService {
 
     await prisma.lead.update({
       where: { id: leadId },
-      data: { stage: 'WEBINAR_REGISTERED' },
+      data: { stage: 'RESPONDED' },
     });
 
     // Send confirmation + enqueue multi-timing reminders
@@ -100,7 +100,7 @@ export class WebinarService {
     if (attended) {
       const lead = await prisma.lead.update({
         where: { id: registration.leadId },
-        data: { stage: 'WEBINAR_ATTENDED' },
+        data: { stage: 'RESPONDED' },
       });
 
       // Notify lead (Post-Webinar thank you)
@@ -181,13 +181,13 @@ export class WebinarService {
           phone: data.phone || '',
           eduBackground: data.eduBackground,
           leadSource: 'WEBINAR',
-          stage: 'WEBINAR_REGISTERED',
+          stage: 'RESPONDED',
         }
       });
     } else {
       lead = await prisma.lead.update({
         where: { id: lead.id },
-        data: { stage: 'WEBINAR_REGISTERED' }
+        data: { stage: 'RESPONDED' }
       });
     }
 

@@ -7,11 +7,52 @@ import { MetricCard } from '@/components/dashboard/MetricCard';
 import { IndianRupee, CreditCard, TrendingUp, Download, Search, FileText } from 'lucide-react';
 import { PaymentModal } from '@/components/finances/PaymentModal';
 import { useFinanceStore } from '@/store/useFinanceStore';
+import { useAuthStore } from '@/store/auth.store';
 
 export default function FinancesPage() {
   const { fees, stats, fetchFees, fetchStats, loading } = useFinanceStore();
   const [selectedFee, setSelectedFee] = React.useState<any>(null);
   const [search, setSearch] = React.useState('');
+  const { user } = useAuthStore();
+  const sector = user?.sector || 'GENERIC';
+
+  const labels = {
+    GENERIC: {
+      subtitle: 'Monitor fee collections and revenue',
+      metricCollections: 'UniqueFees',
+      metricAdmissions: 'ActiveAdmissions',
+      metricEnrolments: 'UniqueEnrolments',
+      tableTitle: 'StudentFeeStatus',
+      searchPlaceholder: 'Search student or Fee ID...',
+      thStudent: 'Student',
+      thProgram: 'Program',
+      thFeeId: 'FeeID',
+    },
+    REAL_ESTATE: {
+      subtitle: 'Monitor payment collections and revenue',
+      metricCollections: 'UniquePayments',
+      metricAdmissions: 'ActiveBookings',
+      metricEnrolments: 'UniqueBookings',
+      tableTitle: 'ClientPaymentStatus',
+      searchPlaceholder: 'Search client or Payment ID...',
+      thStudent: 'Client',
+      thProgram: 'Property',
+      thFeeId: 'PaymentID',
+    },
+    HEALTHCARE: {
+      subtitle: 'Monitor billing and revenue',
+      metricCollections: 'UniqueBills',
+      metricAdmissions: 'ActiveCases',
+      metricEnrolments: 'UniquePatients',
+      tableTitle: 'PatientBillingStatus',
+      searchPlaceholder: 'Search patient or Bill ID...',
+      thStudent: 'Patient',
+      thProgram: 'Service',
+      thFeeId: 'BillID',
+    },
+  };
+
+  const currentLabels = (labels as any)[sector] || labels.GENERIC;
 
   React.useEffect(() => {
     fetchFees();
@@ -39,94 +80,94 @@ export default function FinancesPage() {
         fee={selectedFee} 
       />
       
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 text-[#1A1A1A]">
         <div>
-          <h1 className="text-2xl font-bold">Financial Management</h1>
-          <p className="text-slate-400 text-sm">Monitor fee collections and revenue</p>
+          <h1 className="text-3xl font-black text-[#1A1A1A] tracking-tight">FinancialManagement</h1>
+          <p className="text-[#1A1A1A]/60 text-sm mt-1">{currentLabels.subtitle}</p>
         </div>
-        <button className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl transition-all shadow-lg shadow-emerald-500/20">
+        <button className="flex items-center gap-2 bg-[#1A1A1A] hover:bg-[#1A1A1A]/90 text-white px-4 py-2 rounded-[8px] border border-black/10 transition-all font-semibold tracking-wider text-sm shadow-sm">
           <Download size={18} />
-          <span>Export Report</span>
+          <span>ExportReport</span>
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <MetricCard 
-          label="Total Revenue" 
+          label="TotalRevenue" 
           value={`₹${stats?.total?.toLocaleString() || '0'}`} 
           trend="+8% this week" 
           icon={IndianRupee} 
           color="emerald"
         />
         <MetricCard 
-          label="Total Collections" 
+          label="TotalCollections" 
           value={fees.length.toString()} 
           icon={CreditCard} 
           color="amber"
-          trend="Unique Fees"
+          trend={currentLabels.metricCollections}
         />
         <MetricCard 
-          label="Active Admissions" 
+          label={currentLabels.metricAdmissions} 
           value={new Set(fees.map(f => f.admissionId)).size.toString()} 
-          trend="Unique Enrolments" 
+          trend={currentLabels.metricEnrolments} 
           icon={TrendingUp} 
           color="blue"
         />
       </div>
 
-      <div className="glass rounded-2xl border-white/5 overflow-hidden">
-        <div className="p-6 border-b border-white/5 flex items-center justify-between">
-          <h3 className="font-semibold">Student Fee Status</h3>
+      <div className="bg-white border border-black/10 rounded-[16px] shadow-sm overflow-hidden text-[#1A1A1A]">
+        <div className="p-6 border-b border-black/10 bg-[#F5F1EB]/30 flex items-center justify-between">
+          <h3 className="font-bold text-[#1A1A1A]">{currentLabels.tableTitle}</h3>
           <div className="relative w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
             <input 
-              placeholder="Search student or Fee ID..." 
+              placeholder={currentLabels.searchPlaceholder} 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full bg-white/5 border-none rounded-lg pl-9 pr-4 py-2 text-xs outline-none focus:ring-1 ring-white/10"
+              className="w-full bg-gray-50 border border-black/10 text-[#1A1A1A] placeholder-slate-450 rounded-[8px] pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-black/20 focus:ring-1 focus:ring-black/10"
             />
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="text-slate-500 font-medium border-b border-white/5">
-                <th className="px-6 py-4">Fee ID</th>
-                <th className="px-6 py-4">Student</th>
-                <th className="px-6 py-4">Program</th>
+              <tr className="border-b border-black/10 bg-gray-50 text-slate-500 text-xs font-black uppercase tracking-wider">
+                <th className="px-6 py-4">{currentLabels.thFeeId}</th>
+                <th className="px-6 py-4">{currentLabels.thStudent}</th>
+                <th className="px-6 py-4">{currentLabels.thProgram}</th>
                 <th className="px-6 py-4">Amount</th>
-                <th className="px-6 py-4">Paid</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">PaidAmount</th>
+                <th className="px-6 py-4">PaymentStatus</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className="divide-y divide-black/5">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-slate-500">Loading financial records...</td>
+                  <td colSpan={7} className="px-6 py-10 text-center text-slate-400 font-semibold">Loading financial records...</td>
                 </tr>
               ) : filteredFees.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-slate-500 italic">No financial records found.</td>
+                  <td colSpan={7} className="px-6 py-10 text-center text-slate-400 font-semibold italic">No financial records found.</td>
                 </tr>
               ) : (
                 filteredFees.map((fee) => {
                   const paid = calculatePaid(fee.payments);
                   return (
-                    <tr key={fee.id} className="hover:bg-white/[0.02] transition-colors">
-                      <td className="px-6 py-4 font-mono text-[10px] text-slate-500 italic">{fee.id.split('-')[0]}</td>
+                    <tr key={fee.id} className="hover:bg-[#F5F1EB]/30 transition-all">
+                      <td className="px-6 py-4 font-mono text-[10px] text-slate-400 italic">{fee.id.split('-')[0]}</td>
                       <td className="px-6 py-4">
-                        <div className="font-medium text-slate-200">{fee.admission?.application?.lead?.name}</div>
-                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{fee.admission?.enrollmentId}</div>
+                        <div className="font-bold text-[#1A1A1A]">{fee.admission?.application?.lead?.name}</div>
+                        <div className="text-[10px] text-slate-400 font-black uppercase tracking-wider">{fee.admission?.enrollmentId}</div>
                       </td>
-                      <td className="px-6 py-4 text-slate-400 text-xs">{fee.admission?.application?.program?.name}</td>
-                      <td className="px-6 py-4 font-bold text-slate-200">₹{fee.amount.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-emerald-400 font-semibold">₹{paid.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-slate-600 text-xs font-medium">{fee.admission?.application?.program?.name}</td>
+                      <td className="px-6 py-4 font-bold text-[#1A1A1A]">₹{fee.amount.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-emerald-600 font-bold">₹{paid.toLocaleString()}</td>
                       <td className="py-4 px-6">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black tracking-tighter uppercase ${
-                          fee.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-400' : 
-                          fee.status === 'PARTIAL' ? 'bg-blue-500/10 text-blue-400' : 
-                          'bg-amber-500/10 text-amber-400'
+                        <span className={`px-3 py-1 rounded-[6px] text-[10px] font-black tracking-tighter uppercase border ${
+                          fee.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                          fee.status === 'PARTIAL' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                          'bg-amber-50 text-amber-700 border-amber-200'
                         }`}>
                           {fee.status}
                         </span>
@@ -135,10 +176,10 @@ export default function FinancesPage() {
                         {fee.status !== 'COMPLETED' && (
                           <button 
                             onClick={() => setSelectedFee(fee)}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ml-auto"
+                            className="bg-[#1A1A1A] hover:bg-[#1A1A1A]/90 text-white px-3 py-1.5 rounded-[8px] text-xs font-bold transition-all flex items-center gap-1 ml-auto"
                           >
                             <IndianRupee size={14} />
-                            Pay Now
+                            PayNow
                           </button>
                         )}
                         {fee.status === 'COMPLETED' && (
@@ -147,10 +188,10 @@ export default function FinancesPage() {
                               const token = localStorage.getItem('centracrm_token');
                               window.open(`${process.env.NEXT_PUBLIC_API_URL}/reports/payments/${fee.id}/receipt?token=${token}`, '_blank');
                             }}
-                            className="p-2 hover:bg-white/5 rounded-lg text-slate-500 hover:text-blue-400 transition-all ml-auto" 
-                            title="Download Receipt"
+                            className="p-2 bg-gray-50 hover:bg-blue-50 border border-black/10 hover:border-blue-200 text-slate-500 hover:text-blue-600 transition-all rounded-[8px] ml-auto flex items-center justify-center" 
+                            title="DownloadReceipt"
                           >
-                             <FileText size={18} />
+                             <FileText size={16} />
                           </button>
                         )}
                       </td>

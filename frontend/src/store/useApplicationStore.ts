@@ -10,6 +10,7 @@ interface ApplicationState {
   confirmAdmission: (id: string) => Promise<boolean>;
   createApplication: (data: { leadId: string; programId: string }) => Promise<boolean>;
   uploadDocument: (applicationId: string, data: { type: string; url: string }) => Promise<boolean>;
+  uploadDocumentFile: (formData: FormData) => Promise<boolean>;
 }
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({
@@ -72,6 +73,20 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
       return true;
     } catch (error) {
       console.error('Failed to upload document:', error);
+      set({ loading: false });
+      return false;
+    }
+  },
+
+  uploadDocumentFile: async (formData: FormData) => {
+    set({ loading: true });
+    try {
+      await applicationService.uploadDocumentFile(formData);
+      get().fetchApplications();
+      set({ loading: false });
+      return true;
+    } catch (error) {
+      console.error('Failed to upload file document:', error);
       set({ loading: false });
       return false;
     }

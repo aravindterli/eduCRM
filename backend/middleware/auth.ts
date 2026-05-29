@@ -1,9 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken } from '../utils/auth';
 import prisma from '../config/prisma';
+import { Sector } from '@prisma/client';
 
 export interface AuthRequest extends Request {
   user?: any;
+  tenantId?: string;
+  sector?: Sector;
 }
 
 export const authenticate = async (req: AuthRequest, res: Response, next: NextFunction) => {
@@ -20,7 +23,10 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
 
   const user = await prisma.user.findUnique({
     where: { id: decoded.id },
-    include: { role: true },
+    include: { 
+      role: true,
+      tenant: true
+    },
   });
 
   if (!user) {
@@ -28,14 +34,46 @@ export const authenticate = async (req: AuthRequest, res: Response, next: NextFu
   }
 
   req.user = user;
+  req.tenantId = user.tenantId;
+  req.sector = user.tenant?.sector || 'GENERIC';
+
+  // Read-Only Mode for inactive tenants
+  if (user.tenant && user.tenant.subscriptionStatus !== 'ACTIVE' && user.role.type !== 'SUPERADMIN') {
+    if (req.method !== 'GET') {
+      return res.status(403).json({ message: 'Account is inactive. Read-only mode active.' });
+    }
+  }
+
   next();
 };
 
 export const authorize = (roles: string[]) => {
   return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user || !roles.includes(req.user.role.type)) {
+    if (!req.user) {
       return res.status(403).json({ message: 'Unauthorized access' });
     }
-    next();
+
+    const userRoleType = req.user.role.type;
+
+    // 1. Super Admins and Admins are always authorized for everything
+    if (userRoleType === 'SUPERADMIN' || userRoleType === 'ADMIN') {
+      return next();
+    }
+
+    // 2. Standard users are authorized if standard or legacy roles are permitted
+    const isStandardPermitted = roles.some(r => 
+      ['STANDARDUSER', 'STANDARD', 'COUNSELOR', 'TELECALLER', 'MARKETING_TEAM', 'FINANCE'].includes(r)
+    );
+
+    if (userRoleType === 'STANDARDUSER' && isStandardPermitted) {
+      return next();
+    }
+
+    // 3. Exact match check
+    if (roles.includes(userRoleType)) {
+      return next();
+    }
+
+    return res.status(403).json({ message: 'Unauthorized access' });
   };
 };

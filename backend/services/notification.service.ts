@@ -2,7 +2,7 @@ import prisma from '../config/prisma';
 import { emitToUser } from '../src/config/socket';
 
 class NotificationService {
-  async create(data: {
+  async create(tenantId: string, data: {
     userId: string;
     title: string;
     message: string;
@@ -14,6 +14,7 @@ class NotificationService {
     const notification = await prisma.notification.create({
       data: {
         ...data,
+        tenantId,
         isRead: false
       }
     });
@@ -24,37 +25,37 @@ class NotificationService {
     return notification;
   }
 
-  async getByUser(userId: string, limit = 50) {
+  async getByUser(tenantId: string, userId: string, limit = 50) {
     return prisma.notification.findMany({
-      where: { userId },
+      where: { userId, tenantId },
       orderBy: { createdAt: 'desc' },
       take: limit
     });
   }
 
-  async markAsRead(id: string) {
+  async markAsRead(tenantId: string, id: string) {
     return prisma.notification.update({
-      where: { id },
+      where: { id, tenantId },
       data: { isRead: true }
     });
   }
 
-  async markAllRead(userId: string) {
+  async markAllRead(tenantId: string, userId: string) {
     return prisma.notification.updateMany({
-      where: { userId, isRead: false },
+      where: { userId, tenantId, isRead: false },
       data: { isRead: true }
     });
   }
 
-  async delete(id: string) {
+  async delete(tenantId: string, id: string) {
     return prisma.notification.delete({
-      where: { id }
+      where: { id, tenantId }
     });
   }
 
-  async clearAll(userId: string) {
+  async clearAll(tenantId: string, userId: string) {
     return prisma.notification.deleteMany({
-      where: { userId }
+      where: { userId, tenantId }
     });
   }
 }

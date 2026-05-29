@@ -16,10 +16,11 @@ export class CounselingService {
   async logCounseling(data: any) {
     const log = await prisma.counselingLog.create({
       data: {
-        leadId: data.leadId,
-        assignedId: data.assignedId,
         notes: data.notes,
         recommendation: data.recommendation,
+        assignedTo: { connect: { id: data.assignedId } },
+        lead: { connect: { id: data.leadId } },
+        tenant: { connect: { id: data.tenantId } }
       },
     });
 
@@ -43,13 +44,30 @@ export class CounselingService {
     });
   }
 
-  async getStudentsForCounseling() {
+  async getStudentsForCounseling(user?: any) {
+    const where: Prisma.LeadWhereInput = {
+      stage: {
+        in: [
+          'QUALIFIED',
+          'MEETING SCHEDULED',
+          'MEETING_SCHEDULED',
+          'PROPOSAL SENT',
+          'PROPOSAL_SENT',
+          'NEGOTIATION'
+        ]
+      }
+    };
+
+    if (user && user.role) {
+      const roleName = typeof user.role === 'string' ? user.role : (user.role.name || user.role.type);
+      const roleUpper = roleName.toUpperCase();
+      if (roleUpper !== 'SUPERADMIN' && roleUpper !== 'ADMIN') {
+        where.assignedId = user.id;
+      }
+    }
+
     return await prisma.lead.findMany({
-      where: {
-        stage: {
-          in: ['NEW_LEAD', 'RESPONDED', 'COUNSELING_SCHEDULED']
-        }
-      },
+      where,
       orderBy: { createdAt: 'desc' }
     });
   }

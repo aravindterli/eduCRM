@@ -1,5 +1,5 @@
 import express, { Router } from 'express';
-import { createLead, createPublicLead, getLeads, getLeadDetail, updateLead, deleteLead, getLeadStats, importLeads, addLeadNote, logLeadInteraction, sendLeadTemplate, reactivateLead, bulkSendWhatsApp, whatsappMediaUpload, uploadWhatsAppMedia, googleAdsWebhook, metaWebhook, syncMetaLeads, getMetaPages, getMetaForms, subscribeToMetaPage } from '../controllers/lead.controller';
+import { createLead, createPublicLead, getLeads, getLeadDetail, updateLead, deleteLead, getLeadStats, importLeads, addLeadNote, logLeadInteraction, sendLeadTemplate, reactivateLead, bulkSendWhatsApp, whatsappMediaUpload, uploadWhatsAppMedia, googleAdsWebhook, metaWebhook, syncMetaLeads, getMetaPages, getMetaForms, subscribeToMetaPage, getLeadFormStructure, getLeadMessages, sendLeadMessage, getLeadCalls, initiateLeadCall, getTwilioToken, handleTwilioVoice, handleTwilioStatus } from '../controllers/lead.controller';
 import { authenticate, authorize } from '../middleware/auth';
 import path from 'path';
 
@@ -14,12 +14,16 @@ router.post('/webhook/meta/sync', syncMetaLeads);
 router.post('/webhook/meta/subscribe', subscribeToMetaPage);
 router.get('/meta/pages', getMetaPages);
 router.get('/meta/forms/:pageId', getMetaForms);
+router.post('/twilio/voice', handleTwilioVoice);
+router.post('/twilio/status', handleTwilioStatus);
 
 router.use(authenticate);
 router.use('/uploads/whatsapp', express.static(path.join(__dirname, '../../uploads/whatsapp')));
 router.use(authorize(['ADMIN', 'MARKETING_TEAM', 'TELECALLER', 'COUNSELOR']));
 
 router.post('/', createLead);
+router.get('/form-structure', getLeadFormStructure);
+router.get('/twilio/token', getTwilioToken);
 router.get('/stats', getLeadStats);
 router.post('/import', importLeads);
 router.post('/bulk-whatsapp', bulkSendWhatsApp);
@@ -86,6 +90,10 @@ router.post('/:id/follow-up', async (req: any, res) => {
 
 router.post('/:id/notes', addLeadNote);
 router.post('/:id/log-interaction', logLeadInteraction);
+router.get('/:id/messages', getLeadMessages);
+router.post('/:id/messages', sendLeadMessage);
+router.get('/:id/calls', getLeadCalls);
+router.post('/:id/calls', initiateLeadCall);
 router.patch('/:id/stage', updateLead);
 router.patch('/:id', updateLead);
 router.delete('/:id', deleteLead);

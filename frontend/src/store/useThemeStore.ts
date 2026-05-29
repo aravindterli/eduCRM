@@ -20,11 +20,11 @@ export const useThemeStore = create<ThemeState>()(
       accent: 'blue',
       setTheme: (theme) => {
         set({ theme });
-        api.patch('/auth/profile', { theme }).catch(() => {});
+        api.patch('/auth/profile', { theme }).catch(() => { });
       },
       setAccent: (accent) => {
         set({ accent });
-        api.patch('/auth/profile', { accent }).catch(() => {});
+        api.patch('/auth/profile', { accent }).catch(() => { });
       },
       syncWithUser: (userData) => {
         if (userData.theme) set({ theme: userData.theme as ThemeType });

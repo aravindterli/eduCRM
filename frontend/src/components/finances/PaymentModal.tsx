@@ -1,9 +1,9 @@
-
 'use client';
 
 import React from 'react';
 import { X, CreditCard, IndianRupee, Calendar, Hash, Save, Link as LinkIcon, Copy, RefreshCw } from 'lucide-react';
 import { useFinanceStore } from '@/store/useFinanceStore';
+import { useAuthStore } from '@/store/auth.store';
 import { Toast } from '../ui/Toast';
 
 interface PaymentModalProps {
@@ -14,6 +14,10 @@ interface PaymentModalProps {
 
 export const PaymentModal = ({ isOpen, onClose, fee }: PaymentModalProps) => {
   const { recordPayment, generatePaymentLink, syncPaymentStatus, getExistingLink } = useFinanceStore();
+  const { user } = useAuthStore();
+  const sector = user?.sector || 'GENERIC';
+  const shareLabel = sector === 'REAL_ESTATE' ? 'ShareLinkWithClient' : sector === 'HEALTHCARE' ? 'ShareLinkWithPatient' : 'ShareLinkWithStudent';
+
   const [loading, setLoading] = React.useState(false);
   const [paymentLink, setPaymentLink] = React.useState('');
   const [formData, setFormData] = React.useState({
@@ -92,66 +96,66 @@ export const PaymentModal = ({ isOpen, onClose, fee }: PaymentModalProps) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
       
-      <div className="relative w-full max-w-md glass rounded-3xl border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-        <div className="p-6 border-b border-white/5 flex justify-between items-center bg-emerald-500/5">
+      <div className="relative w-full max-w-md bg-white border border-black/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden flex flex-col rounded-[16px] text-[#1A1A1A]">
+        <div className="p-6 border-b border-black/10 flex justify-between items-center bg-gray-50">
           <div className="flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+             <div className="w-10 h-10 rounded-[8px] bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center">
                <IndianRupee size={20} />
              </div>
              <div>
-               <h2 className="text-xl font-bold">Record Payment</h2>
-               <p className="text-xs text-slate-500 uppercase tracking-widest mt-1">{fee.admission?.application?.lead?.name}</p>
+               <h2 className="text-xl font-bold text-[#1A1A1A]">RecordPayment</h2>
+               <p className="text-xs text-slate-400 font-black tracking-wider leading-none mt-1">{fee.admission?.application?.lead?.name}</p>
              </div>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 transition-colors">
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-[8px] text-slate-400 hover:text-[#1A1A1A] transition-colors">
             <X size={20} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Payment Amount (₹)</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">PaymentAmount</label>
             <div className="relative">
-              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <IndianRupee className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input 
                 type="number"
                 required
                 value={formData.amount}
                 onChange={(e) => setFormData(prev => ({ ...prev, amount: parseFloat(e.target.value) }))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:border-emerald-500/50 transition-all text-slate-200 font-semibold"
+                className="w-full bg-gray-50 border border-black/10 rounded-[8px] pl-12 pr-4 py-3 outline-none focus:border-black/20 text-[#1A1A1A] font-semibold"
               />
             </div>
-            <p className="text-[10px] text-slate-500 italic px-1">Total Fee: ₹{fee.amount} | Remaining: ₹{fee.amount - (fee.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0)}</p>
+            <p className="text-[10px] text-slate-400 italic px-1">TotalFee: ₹{fee.amount} | Remaining: ₹{fee.amount - (fee.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0)}</p>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Payment Method</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">PaymentMethod</label>
             <div className="relative">
-              <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <select 
                 value={formData.method}
                 onChange={(e) => setFormData(prev => ({ ...prev, method: e.target.value }))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:border-emerald-500/50 transition-all text-slate-200 appearance-none cursor-pointer"
+                className="w-full bg-gray-50 border border-black/10 rounded-[8px] pl-12 pr-4 py-3 outline-none focus:border-black/20 text-[#1A1A1A] appearance-none cursor-pointer"
               >
-                <option value="UPI" className="bg-slate-900">UPI</option>
-                <option value="BANK_TRANSFER" className="bg-slate-900">Bank Transfer</option>
-                <option value="CARD" className="bg-slate-900">Credit/Debit Card</option>
-                <option value="CASH" className="bg-slate-900">Cash</option>
+                <option value="UPI" className="text-[#1A1A1A] bg-white">UPI</option>
+                <option value="BANK_TRANSFER" className="text-[#1A1A1A] bg-white">BankTransfer</option>
+                <option value="CARD" className="text-[#1A1A1A] bg-white">CreditDebitCard</option>
+                <option value="CASH" className="text-[#1A1A1A] bg-white">Cash</option>
               </select>
             </div>
           </div>
 
           <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">Transaction ID / Reference</label>
+            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">TransactionIdReference</label>
             <div className="relative">
-              <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+              <Hash className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input 
                 placeholder="Ex: TXN12345678"
                 value={formData.transactionId}
                 onChange={(e) => setFormData(prev => ({ ...prev, transactionId: e.target.value }))}
-                className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-3 outline-none focus:border-emerald-500/50 transition-all text-slate-200"
+                className="w-full bg-gray-50 border border-black/10 rounded-[8px] pl-12 pr-4 py-3 outline-none focus:border-black/20 text-[#1A1A1A]"
               />
             </div>
           </div>
@@ -160,16 +164,16 @@ export const PaymentModal = ({ isOpen, onClose, fee }: PaymentModalProps) => {
             <button 
               type="submit"
               disabled={loading || formData.amount <= 0}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-600/50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+              className="w-full bg-[#1A1A1A] hover:bg-[#1A1A1A]/90 disabled:bg-[#1A1A1A]/50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-[8px] transition-all shadow-sm flex items-center justify-center gap-2"
             >
-              {loading ? 'Processing...' : 'Record Payment Manually'}
-              <Save size={20} />
+              {loading ? 'Processing...' : 'RecordPaymentManually'}
+              <Save size={18} />
             </button>
             
             <div className="relative flex items-center gap-2">
-              <div className="flex-grow border-t border-white/10"></div>
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">OR</span>
-              <div className="flex-grow border-t border-white/10"></div>
+              <div className="flex-grow border-t border-black/10"></div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Or</span>
+              <div className="flex-grow border-t border-black/10"></div>
             </div>
 
             {!paymentLink ? (
@@ -177,17 +181,17 @@ export const PaymentModal = ({ isOpen, onClose, fee }: PaymentModalProps) => {
                 type="button"
                 onClick={generateLink}
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-blue-600/50 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2"
+                className="w-full bg-blue-50 border border-blue-100 text-blue-600 hover:bg-blue-100/50 text-blue font-bold py-3.5 rounded-[8px] transition-all flex items-center justify-center gap-2"
               >
-                <LinkIcon size={20} />
-                Generate Online Payment Link
+                <LinkIcon size={18} />
+                GenerateOnlinePaymentLink
               </button>
             ) : (
-              <div className="bg-slate-900 rounded-xl p-4 border border-blue-500/30">
-                <p className="text-xs font-bold text-blue-400 mb-2 uppercase tracking-widest">Share this link with the student:</p>
-                <div className="flex bg-black/50 rounded-lg overflow-hidden border border-white/10">
-                  <input readOnly value={paymentLink} className="bg-transparent text-sm w-full p-3 outline-none text-slate-300" />
-                  <button type="button" onClick={copyToClipboard} className="p-3 bg-white/5 hover:bg-white/10 transition-colors text-slate-300">
+              <div className="bg-[#F5F1EB]/40 border border-black/10 rounded-[12px] p-4 text-[#1A1A1A]">
+                <p className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-widest">{shareLabel}:</p>
+                <div className="flex bg-white rounded-[8px] overflow-hidden border border-black/10">
+                  <input readOnly value={paymentLink} className="bg-transparent text-sm w-full p-3 outline-none text-[#1A1A1A]" />
+                  <button type="button" onClick={copyToClipboard} className="p-3 bg-gray-50 hover:bg-gray-100 transition-colors text-slate-500 border-l border-black/10 flex items-center justify-center">
                     <Copy size={16} />
                   </button>
                 </div>
@@ -195,10 +199,10 @@ export const PaymentModal = ({ isOpen, onClose, fee }: PaymentModalProps) => {
                   type="button"
                   onClick={handleSync}
                   disabled={loading}
-                  className="mt-4 w-full bg-white/5 hover:bg-white/10 text-slate-300 py-3 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-bold border border-white/5"
+                  className="mt-4 w-full bg-white hover:bg-gray-50 text-slate-700 py-3 rounded-[8px] border border-black/10 transition-all flex items-center justify-center gap-2 text-xs font-bold"
                 >
                   <RefreshCw className={loading ? 'animate-spin' : ''} size={16} />
-                  Verify & Sync Payment State
+                  VerifySyncPaymentState
                 </button>
               </div>
             )}

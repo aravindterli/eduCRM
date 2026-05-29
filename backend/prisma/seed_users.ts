@@ -11,10 +11,10 @@ async function main() {
   
   const userPresets = [
     { name: 'Admin User', email: 'admin@test.com', role: RoleType.ADMIN },
-    { name: 'Marketing User', email: 'marketing@test.com', role: RoleType.MARKETING_TEAM },
-    { name: 'Telecaller User', email: 'telecaller@test.com', role: RoleType.TELECALLER },
-    { name: 'assignedTo User', email: 'assignedTo@test.com', role: RoleType.COUNSELOR },
-    { name: 'Finance User', email: 'finance@test.com', role: RoleType.FINANCE },
+    { name: 'Marketing User', email: 'marketing@test.com', role: RoleType.STANDARDUSER },
+    { name: 'Telecaller User', email: 'telecaller@test.com', role: RoleType.STANDARDUSER },
+    { name: 'assignedTo User', email: 'assignedTo@test.com', role: RoleType.STANDARDUSER },
+    { name: 'Finance User', email: 'finance@test.com', role: RoleType.STANDARDUSER },
   ];
 
   for (const preset of userPresets) {

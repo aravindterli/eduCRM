@@ -31,14 +31,15 @@ export class CommunicationService {
     }
   }
 
-  async sendEmail(to: string, templateKey: string, data: any, leadId?: string) {
-    console.log(`[Email] Dispatching ${templateKey} to ${to}...`);
+  async sendEmail(tenantId: string, to: string, templateKey: string, data: any, leadId?: string) {
+    console.log(`[Email] Dispatching ${templateKey} to ${to} for tenant ${tenantId}...`);
 
     try {
       if (!to) return { success: false, error: 'No email provided' };
 
       const dbTemplate = await prisma.messageTemplate.findFirst({
         where: {
+          tenantId,
           OR: [{ name: templateKey }, { id: templateKey }],
           channel: 'EMAIL'
         }
@@ -71,6 +72,7 @@ export class CommunicationService {
         await prisma.communicationLog.create({
           data: {
             leadId,
+            tenantId,
             type: 'EMAIL',
             direction: 'OUTBOUND',
             message: `Subject: ${formattedSubject}`,
@@ -85,13 +87,120 @@ export class CommunicationService {
     }
   }
 
-  async sendSMS(phone: string, message: string, leadId?: string) {
-    console.log(`[SMS] Dispatching to ${phone}...`);
+  async sendOnboardingEmail(tenantId: string, lead: any, application: any, program: any, tenant: any) {
+    console.log(`[Onboarding Email] Preparing message for ${lead.email} in tenant ${tenantId}...`);
     try {
-      if (this.twilioClient && process.env.TWILIO_PHONE_NUMBER) {
-        await this.twilioClient.messages.create({
+      if (!lead.email) return { success: false, error: 'Lead has no email' };
+
+      const frontendUrl = process.env.CORS_ORIGIN || 'http://localhost:3000';
+      const uploadLink = `${frontendUrl}/apply?applicationId=${application.id}&tenantId=${tenantId}`;
+
+      const sector = tenant.sector || 'GENERIC';
+      let bookingTypeLabel = 'Booking Details';
+      let itemLabel = 'Program / Course';
+
+      if (sector === 'REAL_ESTATE') {
+        bookingTypeLabel = 'Property Booking Details';
+        itemLabel = 'Property Name';
+      } else if (sector === 'HEALTHCARE') {
+        bookingTypeLabel = 'Case / Service Details';
+        itemLabel = 'Assigned Service';
+      } else if (sector === 'EDUCATION') {
+        bookingTypeLabel = 'Course Enrollment Details';
+        itemLabel = 'Program / Course';
+      }
+
+      const subject = `Complete Your Onboarding Paperwork - ${tenant.name}`;
+
+      const bodyContent = `Dear ${lead.name},
+
+Thank you for choosing ${tenant.name}! We are absolutely delighted to welcome you.
+
+Your booking has been successfully registered. To complete the onboarding process and finalize your registration, we kindly request you to upload your required identification and qualification paperwork.
+
+Please find your booking details and your secure document upload link below:
+
+--------------------------------------------------
+${bookingTypeLabel.toUpperCase()}
+--------------------------------------------------
+Customer Name: ${lead.name}
+Email Address: ${lead.email || 'N/A'}
+Phone Number: ${lead.phone || 'N/A'}
+${itemLabel}: ${program?.name || 'N/A'}
+Description: ${program?.description || 'N/A'}
+Base Fee: ${program?.baseFee ? `${program.baseFee} INR` : 'N/A'}
+Booking ID: ${application.id.split('-')[0].toUpperCase()}
+--------------------------------------------------
+
+Please click the secure link below to upload your Passport/ID, Academic Transcripts, or Resume:
+
+${uploadLink}
+
+If you have any questions or require assistance during your onboarding process, please reply to this email or contact your assigned coordinator.
+
+Sincerely,
+Admissions & Onboarding Team
+${tenant.name}`;
+
+      const html = this.getBaseTemplate(
+        subject,
+        bodyContent,
+        { label: 'Upload Onboarding Documents', url: uploadLink }
+      );
+
+      const info = await this.transporter.sendMail({
+        from: process.env.EMAIL_FROM || '"The Foundrys" <noreply@thefoundrys.com>',
+        to: lead.email,
+        subject: subject,
+        text: bodyContent.replace(/<[^>]*>?/gm, ''),
+        html
+      });
+
+      console.log(`[Onboarding Email] Dispatched successfully: ${info.messageId}`);
+
+      await prisma.communicationLog.create({
+        data: {
+          leadId: lead.id,
+          tenantId,
+          type: 'EMAIL',
+          direction: 'OUTBOUND',
+          message: `Onboarding Link Sent. Subject: ${subject}`,
+          status: 'SENT'
+        }
+      });
+
+      return { success: true, messageId: info.messageId };
+    } catch (error: any) {
+      console.error(`[Onboarding Email] Failed to send to ${lead.email}:`, error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async sendSMS(tenantId: string, phone: string, message: string, leadId?: string) {
+    console.log(`[SMS] Dispatching to ${phone} for tenant ${tenantId}...`);
+    try {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { config: true }
+      });
+      
+      const config = (tenant?.config as any) || {};
+      const twilioConfig = config.twilio || {};
+      
+      const accountSid = twilioConfig.accountSid || process.env.TWILIO_ACCOUNT_SID;
+      const authToken = twilioConfig.authToken || process.env.TWILIO_AUTH_TOKEN;
+      const phoneNumber = twilioConfig.phoneNumber || process.env.TWILIO_PHONE_NUMBER;
+      
+      let client = this.twilioClient;
+      
+      if (twilioConfig.accountSid && twilioConfig.authToken) {
+        client = twilio(twilioConfig.accountSid, twilioConfig.authToken);
+      }
+
+      if (client && phoneNumber) {
+        await client.messages.create({
           body: message,
-          from: process.env.TWILIO_PHONE_NUMBER,
+          from: phoneNumber,
           to: phone
         });
       } else {
@@ -99,7 +208,7 @@ export class CommunicationService {
       }
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, type: 'SMS', direction: 'OUTBOUND', message, status: 'SENT' }
+          data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message, status: 'SENT' }
         });
       }
       return { success: true };
@@ -107,18 +216,29 @@ export class CommunicationService {
       console.error(`[SMS] Failed to send to ${phone}:`, error.message);
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, type: 'SMS', direction: 'OUTBOUND', message: `FAILED: ${message}`, status: 'FAILED' }
+          data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message: `FAILED: ${message}`, status: 'FAILED' }
         });
       }
       return { success: false, error: error.message };
     }
   }
 
-  async sendWhatsApp(phone: string, message: string, leadId?: string, imageUrl?: string, templateName?: string) {
+  async sendWhatsApp(tenantId: string, phone: string, message: string, leadId?: string, imageUrl?: string, templateName?: string) {
     const formattedPhone = phone.length === 10 ? `91${phone}` : phone.replace('+', '');
-    console.log(`[WhatsApp] Dispatching to ${formattedPhone}... ${templateName ? `(Template: ${templateName})` : ''}`);
+    console.log(`[WhatsApp] Dispatching to ${formattedPhone} for tenant ${tenantId}... ${templateName ? `(Template: ${templateName})` : ''}`);
     try {
-      if (process.env.META_WHATSAPP_TOKEN && process.env.META_PHONE_NUMBER_ID) {
+      const tenant = await prisma.tenant.findUnique({
+        where: { id: tenantId },
+        select: { config: true }
+      });
+      
+      const config = (tenant?.config as any) || {};
+      const metaConfig = config.meta || {};
+      
+      const whatsappToken = metaConfig.whatsappToken || process.env.META_WHATSAPP_TOKEN;
+      const phoneNumberId = metaConfig.phoneNumberId || process.env.META_PHONE_NUMBER_ID;
+
+      if (whatsappToken && phoneNumberId) {
         let payload: any = {};
         if (templateName) {
           payload = {
@@ -140,9 +260,9 @@ export class CommunicationService {
         }
 
         await axios.post(
-          `https://graph.facebook.com/v17.0/${process.env.META_PHONE_NUMBER_ID}/messages`,
+          `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`,
           payload,
-          { headers: { 'Authorization': `Bearer ${process.env.META_WHATSAPP_TOKEN}`, 'Content-Type': 'application/json' } }
+          { headers: { 'Authorization': `Bearer ${whatsappToken}`, 'Content-Type': 'application/json' } }
         );
       } else {
         console.log(`[WhatsApp][Simulation] Meta API not configured. Simulated msg sent to ${phone}: ${message}`);
@@ -150,7 +270,7 @@ export class CommunicationService {
 
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, type: 'WHATSAPP', direction: 'OUTBOUND', message, status: 'SENT' }
+          data: { leadId, tenantId, type: 'WHATSAPP', direction: 'OUTBOUND', message, status: 'SENT' }
         });
       }
       return { success: true, provider: 'Meta' };
@@ -159,15 +279,15 @@ export class CommunicationService {
       console.error(`[WhatsApp] Failed to send to ${phone}:`, metaErrorDetails);
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, type: 'WHATSAPP', direction: 'OUTBOUND', message: `FAILED: ${metaErrorDetails}`, status: 'FAILED' }
+          data: { leadId, tenantId, type: 'WHATSAPP', direction: 'OUTBOUND', message: `FAILED: ${metaErrorDetails}`, status: 'FAILED' }
         });
       }
       return { success: false, error: metaErrorDetails };
     }
   }
 
-  async sendRCS(phone: string, message: string, leadId?: string) {
-    console.log(`[RCS] Attempting RCS to ${phone}...`);
+  async sendRCS(tenantId: string, phone: string, message: string, leadId?: string) {
+    console.log(`[RCS] Attempting RCS to ${phone} for tenant ${tenantId}...`);
     try {
       if (this.twilioClient && process.env.TWILIO_RCS_MESSAGING_SID) {
         await this.twilioClient.messages.create({
@@ -178,17 +298,17 @@ export class CommunicationService {
         console.log(`[RCS] Sent successfully to ${phone}`);
       } else {
         console.log(`[RCS][Fallback] RCS not configured or failed, falling back to SMS.`);
-        return this.sendSMS(phone, message, leadId);
+        return this.sendSMS(tenantId, phone, message, leadId);
       }
       if (leadId) {
         await prisma.communicationLog.create({
-          data: { leadId, type: 'SMS', direction: 'OUTBOUND', message: `[RCS] ${message}`, status: 'SENT' }
+          data: { leadId, tenantId, type: 'SMS', direction: 'OUTBOUND', message: `[RCS] ${message}`, status: 'SENT' }
         });
       }
       return { success: true };
     } catch (error: any) {
       console.error(`[RCS] Failed, falling back to SMS:`, error.message);
-      return this.sendSMS(phone, message, leadId);
+      return this.sendSMS(tenantId, phone, message, leadId);
     }
   }
 

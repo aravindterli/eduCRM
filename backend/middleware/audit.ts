@@ -15,10 +15,18 @@ export const auditMiddleware = async (req: any, res: Response, next: NextFunctio
     const isSuccess = res.statusCode >= 200 && res.statusCode < 300;
 
     if (isStateChanging && isSuccess) {
+      const tenantId = req.user?.tenantId || req.body?.tenantId;
+      
+      if (!tenantId) {
+        console.warn(`[Audit] Skipping log for ${req.method} ${req.originalUrl} - No tenantId found`);
+        return;
+      }
+
       try {
         await prisma.auditLog.create({
           data: {
             userId: req.user?.id || null,
+            tenantId: tenantId,
             action: `${req.method} ${req.originalUrl}`,
             details: {
               requestBody: req.body,

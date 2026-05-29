@@ -6,9 +6,9 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get('/', authorize(['ADMIN', 'MARKETING_TEAM', 'COUNSELOR']), getTemplates);
-router.post('/', authorize(['ADMIN', 'MARKETING_TEAM']), createTemplate);
-router.put('/:id', authorize(['ADMIN', 'MARKETING_TEAM']), updateTemplate);
-router.delete('/:id', authorize(['ADMIN', 'MARKETING_TEAM']), deleteTemplate);
+router.get('/', authorize(['ADMIN', 'MARKETING_TEAM', 'COUNSELOR', 'TELECALLER']), getTemplates);
+router.post('/', authorize(['ADMIN', 'MARKETING_TEAM', 'TELECALLER']), createTemplate);
+router.put('/:id', authorize(['ADMIN', 'MARKETING_TEAM', 'TELECALLER']), updateTemplate);
+router.delete('/:id', authorize(['ADMIN', 'MARKETING_TEAM', 'TELECALLER']), deleteTemplate);
 
 export default router;

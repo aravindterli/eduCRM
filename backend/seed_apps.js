@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 async function seed() {
   try {
     const lead = await prisma.lead.findFirst({
-        where: { stage: 'NEW_LEAD' }
+        where: { stage: 'NEW' }
     });
     const program = await prisma.program.findFirst();
 
@@ -23,9 +23,9 @@ async function seed() {
       
       await prisma.lead.update({
         where: { id: lead.id },
-        data: { stage: 'APPLICATION_STARTED' }
+        data: { stage: 'NEGOTIATION' }
       });
-      console.log('Lead Stage Updated to APPLICATION_STARTED');
+      console.log('Lead Stage Updated to NEGOTIATION');
     } else {
       console.log('No lead or program found to seed application');
     }

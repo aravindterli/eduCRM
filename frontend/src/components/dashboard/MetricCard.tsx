@@ -12,43 +12,35 @@ interface MetricCardProps {
 
 export const MetricCard = ({ label, value, trend, icon: Icon, color }: MetricCardProps) => {
   const colorClasses = {
-    blue: 'bg-blue-500/10 text-blue-400 ring-blue-500/20',
-    indigo: 'bg-indigo-500/10 text-indigo-400 ring-indigo-500/20',
-    emerald: 'bg-emerald-500/10 text-emerald-400 ring-emerald-500/20',
-    purple: 'bg-purple-500/10 text-purple-400 ring-purple-500/20',
-    amber: 'bg-amber-500/10 text-amber-400 ring-amber-500/20',
-    primary: 'bg-primary/10 text-primary ring-primary/20',
+    blue: 'bg-blue-50 text-blue-600 border-blue-100 group-hover:bg-blue-100/70',
+    indigo: 'bg-indigo-50 text-indigo-600 border-indigo-100 group-hover:bg-indigo-100/70',
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-100 group-hover:bg-emerald-100/70',
+    purple: 'bg-purple-50 text-purple-600 border-purple-100 group-hover:bg-purple-100/70',
+    amber: 'bg-amber-50 text-amber-600 border-amber-100 group-hover:bg-amber-100/70',
+    primary: 'bg-slate-50 text-slate-800 border-slate-200 group-hover:bg-slate-100',
   };
 
   return (
-    <div className="p-6 rounded-3xl glass border-white/5 relative overflow-hidden group hover:border-white/10 transition-all">
+    <div className="p-5 rounded-[16px] bg-white border border-black/10 shadow-sm relative overflow-hidden group hover:border-black/20 transition-all duration-300">
+      <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#1A1A1A] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <div className="flex justify-between items-start relative z-10">
         <div>
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest mb-1">{label}</p>
-          <h3 className="text-3xl font-black text-foreground">{value}</h3>
+          <p className="text-[9px] font-bold tracking-[0.15em] text-slate-500 uppercase mb-1">{label}</p>
+          <h3 className="text-xl font-black text-[#1A1A1A] tracking-tight group-hover:scale-[1.02] origin-left transition-transform duration-300">{value}</h3>
         </div>
-        <div className={`p-3 rounded-2xl ${colorClasses[color]} ring-1 group-hover:scale-110 transition-transform`}>
-          <Icon size={24} />
+        <div className={`p-2.5 rounded-[8px] border ${colorClasses[color]} transition-all duration-300 group-hover:scale-105`}>
+          <Icon size={18} className="transition-transform duration-500" />
         </div>
       </div>
-      
+
       {trend && (
-        <div className="mt-4 flex items-center gap-2 relative z-10">
-          <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-lg">
+        <div className="mt-3.5 flex items-center gap-2 relative z-10">
+          <span className="flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-[6px]">
             {trend}
           </span>
-          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">vs last month</span>
+          <span className="text-[9px] font-bold uppercase tracking-wider text-slate-400">vs last month</span>
         </div>
       )}
-
-      {/* Decorative background element */}
-      <div className={`absolute -bottom-6 -right-6 w-24 h-24 rounded-full blur-3xl opacity-20 pointer-events-none ${
-        color === 'blue' ? 'bg-blue-500' :
-        color === 'indigo' ? 'bg-indigo-500' :
-        color === 'emerald' ? 'bg-emerald-500' :
-        color === 'purple' ? 'bg-purple-500' : 
-        color === 'primary' ? 'bg-primary' : 'bg-amber-500'
-      }`} />
     </div>
   );
 };

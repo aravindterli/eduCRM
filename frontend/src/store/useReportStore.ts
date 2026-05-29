@@ -18,6 +18,10 @@ interface ReportState {
   fetchActivities: () => Promise<void>;
 }
 
+// Silently swallow auth errors — never surface as unhandled runtime crashes
+const isAuthError = (err: any) =>
+  err.response?.status === 401 || err.response?.status === 403;
+
 export const useReportStore = create<ReportState>((set) => ({
   funnelData: [],
   programData: [],
@@ -33,8 +37,8 @@ export const useReportStore = create<ReportState>((set) => ({
       const data = await reportService.getFunnel();
       set({ funnelData: data });
     } catch (err: any) {
-      if (err.response?.status === 401) return;
-      console.error('[ReportStore] Funnel fetch error:', err);
+      if (isAuthError(err)) return;
+      console.error('[ReportStore] Funnel fetch error:', err.response?.data?.message || err.message);
     } finally {
       set({ loading: false });
     }
@@ -46,8 +50,8 @@ export const useReportStore = create<ReportState>((set) => ({
       const data = await reportService.getPrograms();
       set({ programData: data });
     } catch (err: any) {
-      if (err.response?.status === 401) return;
-      console.error('[ReportStore] Programs fetch error:', err);
+      if (isAuthError(err)) return;
+      console.error('[ReportStore] Programs fetch error:', err.response?.data?.message || err.message);
     } finally {
       set({ loading: false });
     }
@@ -59,8 +63,8 @@ export const useReportStore = create<ReportState>((set) => ({
       const data = await reportService.getFinance();
       set({ financeData: data });
     } catch (err: any) {
-      if (err.response?.status === 401) return;
-      console.error('[ReportStore] Finance fetch error:', err);
+      if (isAuthError(err)) return;
+      console.error('[ReportStore] Finance fetch error:', err.response?.data?.message || err.message);
     } finally {
       set({ loading: false });
     }
@@ -72,8 +76,8 @@ export const useReportStore = create<ReportState>((set) => ({
       const data = await reportService.getLeadAnalytics();
       set({ leadStats: data });
     } catch (err: any) {
-      if (err.response?.status === 401) return;
-      console.error('[ReportStore] LeadStats fetch error:', err);
+      if (isAuthError(err)) return;
+      console.error('[ReportStore] LeadStats fetch error:', err.response?.data?.message || err.message);
     } finally {
       set({ loading: false });
     }
@@ -85,8 +89,8 @@ export const useReportStore = create<ReportState>((set) => ({
       const data = await reportService.getassignedTos();
       set({ counselorData: data });
     } catch (err: any) {
-      if (err.response?.status === 401) return;
-      console.error('[ReportStore] Counselors fetch error:', err);
+      if (isAuthError(err)) return;
+      console.error('[ReportStore] Counselors fetch error:', err.response?.data?.message || err.message);
     } finally {
       set({ loading: false });
     }
@@ -98,8 +102,8 @@ export const useReportStore = create<ReportState>((set) => ({
       const data = await reportService.getActivities();
       set({ activityLogs: data });
     } catch (err: any) {
-      if (err.response?.status === 401) return;
-      console.error('[ReportStore] Activities fetch error:', err);
+      if (isAuthError(err)) return;
+      console.error('[ReportStore] Activities fetch error:', err.response?.data?.message || err.message);
     } finally {
       set({ loading: false });
     }

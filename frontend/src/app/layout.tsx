@@ -20,7 +20,7 @@ export default function RootLayout({
         {/* <link rel="manifest" href="/manifest.json" /> */}
         <meta name="theme-color" content="#2563eb" />
       </head>
-      <body className={`${inter.className} bg-slate-950 text-slate-100 antialiased`}>
+      <body className={`${inter.className} bg-background text-foreground antialiased`}>
         {children}
       </body>
     </html>

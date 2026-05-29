@@ -2,11 +2,16 @@ import { Prisma } from '@prisma/client';
 import prisma from '../config/prisma';
 
 export class LeadRepository {
-  async create(data: Prisma.LeadCreateInput) {
-    return await prisma.lead.create({ data });
+  async create(tenantId: string, data: Prisma.LeadCreateInput) {
+    return await prisma.lead.create({
+      data: {
+        ...data,
+        tenant: { connect: { id: tenantId } }
+      }
+    });
   }
 
-  async findMany(options: { 
+  async findMany(tenantId: string, options: { 
     skip?: number; 
     take?: number; 
     where?: Prisma.LeadWhereInput; 
@@ -14,6 +19,10 @@ export class LeadRepository {
   }) {
     return await prisma.lead.findMany({
       ...options,
+      where: {
+        ...options.where,
+        tenantId
+      },
       include: {
         program: true,
         campaign: true,
@@ -34,9 +43,9 @@ export class LeadRepository {
     });
   }
 
-  async findUnique(id: string) {
-    return await prisma.lead.findUnique({
-      where: { id },
+  async findUnique(tenantId: string, id: string) {
+    return await prisma.lead.findFirst({
+      where: { id, tenantId },
       include: {
         program: true,
         campaign: true,
@@ -57,19 +66,26 @@ export class LeadRepository {
     });
   }
 
-  async update(id: string, data: Prisma.LeadUpdateInput) {
+  async update(tenantId: string, id: string, data: Prisma.LeadUpdateInput) {
     return await prisma.lead.update({
-      where: { id },
+      where: { id, tenantId },
       data,
     });
   }
 
-  async delete(id: string) {
-    return await prisma.lead.delete({ where: { id } });
+  async delete(tenantId: string, id: string) {
+    return await prisma.lead.delete({
+      where: { id, tenantId }
+    });
   }
 
-  async count(where?: Prisma.LeadWhereInput) {
-    return await prisma.lead.count({ where });
+  async count(tenantId: string, where?: Prisma.LeadWhereInput) {
+    return await prisma.lead.count({
+      where: {
+        ...where,
+        tenantId
+      }
+    });
   }
 }
 

@@ -10,6 +10,12 @@ export interface Lead {
   tag?: string;
   campaignId?: string;
   createdAt: string;
+  assignedId?: string;
+  assignedTo?: {
+    id: string;
+    name: string;
+    role: string;
+  };
 }
 
 export const leadService = {
@@ -22,6 +28,11 @@ export const leadService = {
 
   create: async (data: Partial<Lead>) => {
     const response = await api.post('/leads', data);
+    return response.data;
+  },
+
+  getFormStructure: async () => {
+    const response = await api.get('/leads/form-structure');
     return response.data;
   },
 
